@@ -1,0 +1,38 @@
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  padding: 1rem;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+}
+
+.app h1 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+}
+
+button, input {
+  font: inherit;
+  color: var(--vscode-button-foreground, inherit);
+  background: var(--vscode-button-background, transparent);
+  border: 1px solid var(--vscode-button-border, var(--vscode-input-border, #555));
+  padding: 0.35rem 0.75rem;
+  border-radius: 2px;
+  margin-right: 0.5rem;
+}
+
+input {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  min-width: 16rem;
+}
+
+button:hover { background: var(--vscode-button-hoverBackground); }
+
+ul { padding-left: 1.25rem; }
+li { line-height: 1.6; }

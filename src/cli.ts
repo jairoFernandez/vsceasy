@@ -1,19 +1,23 @@
 import { CLI } from '@ideascol/cli-maker';
 
-import CommandGreet from './commands/greetCommand';
+import CommandCreate from './commands/createCommand';
 
-const cli = new CLI('@ideascol/vscode-extension-framework', 'Framework para crear VSCode extensions rapido con UI React/Svelte/Vue/Vanilla, RPC tipado webview-extension, y file-based routing de panels/commands', {
-  interactive: true,
-  version: '1.0.0',
-  introAnimation: {
-    enabled: true,
-    preset: 'retro-space', // Change to other presets or override fields below
-    title: '{{cliName}}',
-    subtitle: '{{cliDescription}}',
+const cli = new CLI(
+  '@ideascol/vscode-extension-framework',
+  'Build VS Code extensions fast — React UI + typed RPC bridge + zero-config build.',
+  {
+    interactive: true,
+    version: '0.1.0',
+    introAnimation: {
+      enabled: true,
+      preset: 'retro-space',
+      title: 'vsxf',
+      subtitle: 'VS Code Extension Framework',
+    },
   },
-});
+);
 
-cli.command(CommandGreet);
+cli.command(CommandCreate);
 
 cli.parse(process.argv);
 

@@ -1,43 +1,85 @@
 # @ideascol/vscode-extension-framework
 
-Framework para crear VSCode extensions rapido con UI React/Svelte/Vue/Vanilla, RPC tipado webview-extension, y file-based routing de panels/commands
+Build VS Code extensions fast. React UI + typed RPC bridge between extension and webview + zero-config build.
+
+> Status: v0.1 — MVP. React template only. Svelte/Vue/Vanilla coming.
 
 ## Quick start
-```bash
-# Using npm
-npx @ideascol/vscode-extension-framework
-
-# Using bun
-bunx @ideascol/vscode-extension-framework
-```
-
-## Installation
 
 ```bash
-# Using npm
-npm install -g @ideascol/vscode-extension-framework
-
-# Using bun
-bun install -g @ideascol/vscode-extension-framework
+bunx @ideascol/vscode-extension-framework create my-extension
+cd my-extension
+bun install
+bun run dev
+# press F5 in VS Code to launch the Extension Development Host
 ```
 
-## Usage as cli
+Or with flags:
+
 ```bash
-# Using npm
-npm link # to test the cli locally
-
-# Using bun
-bun link # to test the cli locally
-
-vscode-extension-framework greet --name=John
+bunx @ideascol/vscode-extension-framework create \
+  --name my-extension \
+  --displayName "My Extension" \
+  --description "Does cool things" \
+  --publisher my-publisher \
+  --ui react
 ```
 
-## Usage as library
+## What you get
+
+```
+my-extension/
+├── src/
+│   ├── extension/
+│   │   ├── extension.ts            # entry, command registration
+│   │   └── panels/DashboardPanel.ts # webview panel + RPC handlers
+│   ├── webview/
+│   │   ├── App.tsx                 # React UI (typed RPC client)
+│   │   ├── main.tsx
+│   │   └── styles.css              # VS Code theme tokens
+│   └── shared/
+│       ├── api.ts                  # RPC contract (types both sides)
+│       └── rpc.ts                  # bridge implementation
+├── vite.config.ts                  # webview build
+└── package.json                    # esbuild for extension, vite for UI
+```
+
+## Typed RPC
+
+Define the contract once:
 
 ```ts
-import { Greet } from '@ideascol/vscode-extension-framework';
-
-Greet('John'); // should print 'Hello, John!'
-
+// src/shared/api.ts
+export interface DashboardApi {
+  listFiles(pattern: string): Promise<string[]>;
+}
 ```
 
+Extension side — implement:
+
+```ts
+const handlers: DashboardApi = {
+  async listFiles(pattern) {
+    const uris = await vscode.workspace.findFiles(pattern);
+    return uris.map(u => vscode.workspace.asRelativePath(u));
+  },
+};
+createRpcServer(webviewTransport(panel.webview), handlers);
+```
+
+Webview side — call with full type inference:
+
+```tsx
+const api = createRpcClient<DashboardApi>(vscodeApiTransport(vscode));
+const files = await api.listFiles('**/*.ts');  // typed string[]
+```
+
+No manual `postMessage`. No string-typed message channels.
+
+## Architecture
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+## License
+
+MIT

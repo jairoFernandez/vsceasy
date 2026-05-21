@@ -15,11 +15,13 @@
   "license": "MIT",
   "type": "commonjs",
   "bin": {
+    "vsxf": "dist/bin/cli.js",
     "vscode-extension-framework": "dist/bin/cli.js"
   },
   "types": "dist/index.d.ts",
   "files": [
     "dist/**/*",
+    "templates/**/*",
     "!src/tests/**/*"
   ],
   "engines": {
