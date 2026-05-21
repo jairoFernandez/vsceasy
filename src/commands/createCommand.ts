@@ -1,17 +1,7 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
-import * as fs from 'fs';
 import { scaffold } from '../lib/scaffold';
-
-function findTemplatesRoot(): string {
-  // Walk up from compiled file looking for `templates/` sibling.
-  const candidates = [
-    path.resolve(__dirname, '..', 'templates'),       // dist/commands -> dist/../templates
-    path.resolve(__dirname, '..', '..', 'templates'), // src/commands -> src/../../templates
-  ];
-  for (const c of candidates) if (fs.existsSync(c)) return c;
-  throw new Error('templates/ directory not found near ' + __dirname);
-}
+import { findTemplatesRoot } from '../lib/findProject';
 
 const createCommand: Command = {
   name: 'create',
@@ -38,15 +28,15 @@ const createCommand: Command = {
         publisher: args.publisher ?? 'your-publisher',
         ui,
         targetDir,
-        templatesRoot: findTemplatesRoot(),
+        templatesRoot: findTemplatesRoot(__dirname),
       });
       const rel = path.relative(process.cwd(), targetDir) || '.';
       console.log(`\n✓ Created ${name} at ${rel}\n`);
       console.log('Next steps:');
       console.log(`  cd ${rel}`);
       console.log('  bun install');
-      console.log('  bun run dev');
-      console.log('  # then press F5 in VS Code to launch the extension host\n');
+      console.log('  bun run launch        # builds + opens Extension Development Host');
+      console.log('  # or `bun run dev` + F5 inside VS Code for watch mode\n');
     } catch (err: any) {
       console.error(`\n✗ Failed to scaffold: ${err.message}\n`);
       process.exitCode = 1;

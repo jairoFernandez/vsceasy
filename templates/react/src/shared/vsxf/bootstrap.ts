@@ -65,11 +65,68 @@ function openPanel(context: vscode.ExtensionContext, prefix: string, id: string,
   return panel;
 }
 
+interface ViteManifestEntry {
+  file: string;
+  css?: string[];
+  assets?: string[];
+  imports?: string[];
+}
+type ViteManifest = Record<string, ViteManifestEntry>;
+
+let cachedManifest: { mtime: number; data: ViteManifest } | null = null;
+
+function loadManifest(extensionUri: vscode.Uri): ViteManifest | null {
+  const fs = require('fs') as typeof import('fs');
+  const path = require('path') as typeof import('path');
+  // Vite manifest can land at either `manifest.json` (new) or `.vite/manifest.json` (default).
+  const webviewRoot = vscode.Uri.joinPath(extensionUri, 'dist', 'webview').fsPath;
+  for (const rel of ['manifest.json', '.vite/manifest.json']) {
+    const p = path.join(webviewRoot, rel);
+    if (!fs.existsSync(p)) continue;
+    const mtime = fs.statSync(p).mtimeMs;
+    if (cachedManifest?.mtime === mtime) return cachedManifest.data;
+    cachedManifest = { mtime, data: JSON.parse(fs.readFileSync(p, 'utf8')) };
+    return cachedManifest.data;
+  }
+  return null;
+}
+
+function resolveAssets(extensionUri: vscode.Uri, ui: string): { js: string[]; css: string[] } {
+  const manifest = loadManifest(extensionUri);
+  if (!manifest) {
+    // Fallback to convention: <ui>/index.js + <ui>/index.css
+    return { js: [`${ui}/index.js`], css: [`${ui}/index.css`] };
+  }
+  // Manifest keys for HTML entries look like `<ui>/index.html`.
+  const key = `${ui}/index.html`;
+  const entry = manifest[key];
+  if (!entry) return { js: [`${ui}/index.js`], css: [] };
+  const js = [entry.file];
+  const css = [...(entry.css ?? [])];
+  // Recursively pull CSS from imported chunks.
+  const seen = new Set<string>();
+  const walk = (imp: string) => {
+    if (seen.has(imp)) return;
+    seen.add(imp);
+    const e = manifest[imp];
+    if (!e) return;
+    if (e.css) css.push(...e.css);
+    e.imports?.forEach(walk);
+  };
+  entry.imports?.forEach(walk);
+  return { js, css };
+}
+
 function renderHtml(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, ui: string, title: string): string {
   const webview = panel.webview;
-  const root = vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview', ui);
-  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(root, 'index.js'));
-  const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(root, 'index.css'));
+  const root = vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview');
+  const { js, css } = resolveAssets(context.extensionUri, ui);
+  const toUri = (rel: string) =>
+    webview.asWebviewUri(vscode.Uri.joinPath(root, ...rel.split('/'))).toString();
+  const scriptTags = js
+    .map((f) => `<script type="module" nonce="{{NONCE}}" src="${toUri(f)}"></script>`)
+    .join('\n    ');
+  const styleTags = css.map((f) => `<link rel="stylesheet" href="${toUri(f)}" />`).join('\n    ');
   const nonce = Array.from({ length: 16 }, () => Math.random().toString(36)[2]).join('');
   const csp = [
     `default-src 'none'`,
@@ -84,10 +141,12 @@ function renderHtml(panel: vscode.WebviewPanel, context: vscode.ExtensionContext
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Security-Policy" content="${csp}" />
-    <link rel="stylesheet" href="${styleUri}" />
+    ${styleTags}
     <title>${escapeHtml(title)}</title>
   </head>
-  <body><div id="root"></div><script type="module" nonce="${nonce}" src="${scriptUri}"></script></body>
+  <body><div id="root"></div>
+    ${scriptTags.replace(/\{\{NONCE\}\}/g, nonce)}
+  </body>
 </html>`;
 }
 

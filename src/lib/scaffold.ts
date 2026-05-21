@@ -64,6 +64,6 @@ async function copyTree(srcDir: string, destDir: string, vars: Record<string, st
   }
 }
 
-function substitute(input: string, vars: Record<string, string>): string {
+export function substitute(input: string, vars: Record<string, string>): string {
   return input.replace(/\{\{(\w+)\}\}/g, (_m, key) => vars[key] ?? `{{${key}}}`);
 }

@@ -24,16 +24,13 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, 'dist/webview'),
     emptyOutDir: true,
+    manifest: 'manifest.json',
     rollupOptions: {
       input: entries,
       output: {
-        // Each panel's main JS lands at <id>/index.js, CSS at <id>/index.css.
         entryFileNames: '[name]/index.js',
         chunkFileNames: 'chunks/[name]-[hash].js',
-        assetFileNames: (info) => {
-          if (info.name?.endsWith('.css')) return '[name]/index.css';
-          return 'assets/[name]-[hash].[ext]';
-        },
+        assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
   },
