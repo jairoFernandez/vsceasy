@@ -1,5 +1,4 @@
-// Shared RPC contract between extension and webview.
-// Types defined here flow into both sides.
+// RPC contracts — one interface per panel. Imported by both extension and webview.
 
 export interface DashboardApi {
   getInfo(): Promise<{ workspace: string | null; vscodeVersion: string }>;

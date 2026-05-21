@@ -121,3 +121,13 @@ export function vscodeApiTransport(vscode: { postMessage(m: any): void }): Trans
     },
   };
 }
+
+declare global {
+  function acquireVsCodeApi(): { postMessage(m: any): void };
+}
+
+/** One-liner for webview: returns a typed RPC client. */
+export function connectWebview<H extends Handlers>(): RpcClient<H> {
+  const vscode = acquireVsCodeApi();
+  return createRpcClient<H>(vscodeApiTransport(vscode));
+}

@@ -1,6 +1,4 @@
-:root {
-  color-scheme: light dark;
-}
+:root { color-scheme: light dark; }
 
 body {
   margin: 0;
@@ -11,10 +9,7 @@ body {
   background: var(--vscode-editor-background);
 }
 
-.app h1 {
-  font-size: 1.25rem;
-  margin: 0 0 1rem;
-}
+.app h1 { font-size: 1.25rem; margin: 0 0 1rem; }
 
 button, input {
   font: inherit;

@@ -1,15 +1,5 @@
-import * as vscode from 'vscode';
-import { DashboardPanel } from './panels/DashboardPanel';
+import { bootstrap } from '../shared/vsxf';
+import { registry } from './_registry';
 
-export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand('{{commandPrefix}}.hello', () => {
-      vscode.window.showInformationMessage('Hello from {{displayName}}!');
-    }),
-    vscode.commands.registerCommand('{{commandPrefix}}.openDashboard', () => {
-      DashboardPanel.show(context);
-    }),
-  );
-}
-
+export const activate = bootstrap(registry);
 export function deactivate() {}

@@ -1,23 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { createRpcClient, vscodeApiTransport } from '../shared/rpc';
-import type { DashboardApi } from '../shared/api';
+import { connectWebview } from '../../../shared/vsxf/client';
+import type { DashboardApi } from '../../../shared/api';
 
-declare function acquireVsCodeApi(): { postMessage(m: any): void };
-const vscode = acquireVsCodeApi();
-const api = createRpcClient<DashboardApi>(vscodeApiTransport(vscode));
+const api = connectWebview<DashboardApi>();
 
 export function App() {
   const [info, setInfo] = useState<{ workspace: string | null; vscodeVersion: string } | null>(null);
   const [files, setFiles] = useState<string[]>([]);
   const [pattern, setPattern] = useState('**/*.ts');
 
-  useEffect(() => {
-    api.getInfo().then(setInfo);
-  }, []);
-
-  const search = async () => {
-    setFiles(await api.listFiles(pattern));
-  };
+  useEffect(() => { api.getInfo().then(setInfo); }, []);
 
   return (
     <div className="app">
@@ -30,7 +22,7 @@ export function App() {
       )}
       <section>
         <input value={pattern} onChange={(e) => setPattern(e.target.value)} />
-        <button onClick={search}>Find files</button>
+        <button onClick={async () => setFiles(await api.listFiles(pattern))}>Find files</button>
         <button onClick={() => api.showMessage('Hello from the webview!')}>Toast</button>
         <ul>{files.map((f) => <li key={f}>{f}</li>)}</ul>
       </section>
