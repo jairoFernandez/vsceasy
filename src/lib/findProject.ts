@@ -13,7 +13,10 @@ export function findProjectRoot(start: string = process.cwd()): string {
     if (fs.existsSync(pkgPath)) {
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-        if (pkg?.scripts?.gen === 'bun scripts/gen.ts') return dir;
+        // Match both old single-step gen and new gen:scan layouts.
+        const genScript: string | undefined = pkg?.scripts?.gen;
+        const hasScan: boolean = typeof pkg?.scripts?.['gen:scan'] === 'string';
+        if (genScript === 'bun scripts/gen.ts' || hasScan) return dir;
       } catch {
         // ignore malformed package.json and keep walking
       }
