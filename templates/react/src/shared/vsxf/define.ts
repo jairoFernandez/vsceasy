@@ -38,3 +38,46 @@ export function definePanel<H extends Handlers = Handlers>(def: PanelDef<H>): Pa
 export function defineCommand(def: CommandDef): CommandDef {
   return def;
 }
+
+// --- Menus (Activity Bar + Tree View) ---
+
+export type MenuIcon =
+  | string                                     // codicon name, e.g. 'rocket'
+  | { path: string }                           // single SVG path relative to project root
+  | { light: string; dark: string };           // theme-aware SVG paths
+
+export interface MenuItem {
+  /** Display label. */
+  label: string;
+  /** Optional icon (codicon name or asset path). */
+  icon?: MenuIcon;
+  /** Optional tooltip / hover description. */
+  description?: string;
+  /** Open a panel by id (file basename in src/panels/). */
+  panel?: string;
+  /** Execute a command by id (file basename in src/commands/). */
+  command?: string;
+  /** Open an external URL in the user's browser. */
+  url?: string;
+  /** Run an arbitrary handler (full vscode access). */
+  run?: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext) => unknown | Promise<unknown>;
+  /** Nested items — renders as a collapsible group. */
+  children?: MenuItem[];
+  /** Initial collapsed state for groups. Default: 'expanded'. */
+  collapsed?: 'expanded' | 'collapsed';
+}
+
+export interface MenuDef {
+  /** Stable id. Default: file basename. Becomes the view container id. */
+  id?: string;
+  /** Title shown at the top of the sidebar panel and as the activity bar tooltip. */
+  title: string;
+  /** Activity bar icon. Codicon string OR SVG path(s). */
+  icon: MenuIcon;
+  /** Items shown in the tree view. */
+  items: MenuItem[];
+}
+
+export function defineMenu(def: MenuDef): MenuDef {
+  return def;
+}

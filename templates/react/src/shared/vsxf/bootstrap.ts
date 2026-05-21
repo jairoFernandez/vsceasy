@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
-import type { PanelDef, CommandDef } from './define';
+import type { PanelDef, CommandDef, MenuDef, MenuItem } from './define';
 import { createRpcServer, webviewTransport } from './rpc';
 
 export interface Registry {
   panels: Record<string, PanelDef>;
   commands: Record<string, CommandDef>;
+  menus?: Record<string, MenuDef>;
   /** Command prefix from package.json (e.g. "myExt"). */
   prefix: string;
 }
@@ -28,7 +29,127 @@ export function bootstrap(registry: Registry) {
         );
       }
     }
+
+    if (registry.menus) {
+      for (const [id, def] of Object.entries(registry.menus)) {
+        registerMenu(context, registry, id, def);
+      }
+    }
   };
+}
+
+// --- Menus ---
+
+function registerMenu(
+  context: vscode.ExtensionContext,
+  registry: Registry,
+  id: string,
+  def: MenuDef,
+) {
+  // Must match the id gen.ts writes into package.json#viewsContainers/views.
+  // VS Code disallows '.' in view ids, so we use '-' as separator.
+  const viewId = `${registry.prefix}-${def.id ?? id}`;
+  const provider = new MenuTreeDataProvider(def.items, context);
+  const view = vscode.window.createTreeView(viewId, {
+    treeDataProvider: provider,
+    showCollapseAll: true,
+  });
+  context.subscriptions.push(view);
+
+  // Single dispatch command per menu — passes the item through arguments[0] of contributes.commands.
+  const dispatchCmd = `${registry.prefix}._menu.${def.id ?? id}.run`;
+  context.subscriptions.push(
+    vscode.commands.registerCommand(dispatchCmd, (item: MenuItem) =>
+      dispatchMenuItem(context, registry, item),
+    ),
+  );
+
+  provider.setDispatchCommand(dispatchCmd);
+}
+
+async function dispatchMenuItem(
+  context: vscode.ExtensionContext,
+  registry: Registry,
+  item: MenuItem,
+) {
+  if (item.url) {
+    await vscode.env.openExternal(vscode.Uri.parse(item.url));
+    return;
+  }
+  if (item.panel) {
+    const panel = registry.panels[item.panel];
+    if (!panel) {
+      vscode.window.showErrorMessage(`Menu item references unknown panel: ${item.panel}`);
+      return;
+    }
+    openPanel(context, registry.prefix, item.panel, panel);
+    return;
+  }
+  if (item.command) {
+    const cmd = registry.commands[item.command];
+    if (!cmd) {
+      vscode.window.showErrorMessage(`Menu item references unknown command: ${item.command}`);
+      return;
+    }
+    await cmd.run(vscode, context);
+    return;
+  }
+  if (item.run) {
+    await item.run(vscode, context);
+    return;
+  }
+}
+
+class MenuTreeDataProvider implements vscode.TreeDataProvider<MenuItem> {
+  private _onDidChange = new vscode.EventEmitter<MenuItem | undefined>();
+  readonly onDidChangeTreeData = this._onDidChange.event;
+  private dispatchCmd = '';
+
+  constructor(private readonly items: MenuItem[], private readonly context: vscode.ExtensionContext) {}
+
+  setDispatchCommand(cmd: string) {
+    this.dispatchCmd = cmd;
+    this._onDidChange.fire(undefined);
+  }
+
+  getTreeItem(item: MenuItem): vscode.TreeItem {
+    const hasChildren = !!item.children?.length;
+    const collapsibleState = hasChildren
+      ? item.collapsed === 'collapsed'
+        ? vscode.TreeItemCollapsibleState.Collapsed
+        : vscode.TreeItemCollapsibleState.Expanded
+      : vscode.TreeItemCollapsibleState.None;
+    const node = new vscode.TreeItem(item.label, collapsibleState);
+    node.tooltip = item.description ?? item.label;
+    node.description = item.description;
+    node.iconPath = resolveIcon(this.context, item.icon);
+    if (!hasChildren && this.dispatchCmd) {
+      node.command = {
+        command: this.dispatchCmd,
+        title: item.label,
+        arguments: [item],
+      };
+    }
+    return node;
+  }
+
+  getChildren(item?: MenuItem): MenuItem[] {
+    if (!item) return this.items;
+    return item.children ?? [];
+  }
+}
+
+function resolveIcon(
+  context: vscode.ExtensionContext,
+  icon: MenuItem['icon'],
+): vscode.TreeItem['iconPath'] {
+  if (!icon) return undefined;
+  if (typeof icon === 'string') return new vscode.ThemeIcon(icon);
+  const path = require('path') as typeof import('path');
+  const toUri = (p: string) =>
+    path.isAbsolute(p) ? vscode.Uri.file(p) : vscode.Uri.joinPath(context.extensionUri, p);
+  if ('path' in icon) return toUri(icon.path);
+  return { light: toUri(icon.light), dark: toUri(icon.dark) };
 }
 
 function openPanel(context: vscode.ExtensionContext, prefix: string, id: string, def: PanelDef) {

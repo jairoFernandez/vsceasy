@@ -2,6 +2,7 @@ import { CLI } from '@ideascol/cli-maker';
 
 import CommandCreate from './commands/createCommand';
 import CommandAddPanel from './commands/addPanelCommand';
+import CommandAddMenu from './commands/addMenuCommand';
 
 const cli = new CLI(
   '@ideascol/vscode-extension-framework',
@@ -20,6 +21,7 @@ const cli = new CLI(
 
 cli.command(CommandCreate);
 cli.command(CommandAddPanel);
+cli.command(CommandAddMenu);
 
 cli.parse(process.argv);
 
