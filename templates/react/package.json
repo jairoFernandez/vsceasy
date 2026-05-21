@@ -25,6 +25,7 @@
     "dev": "concurrently -k -n ext,ui -c blue,magenta \"bun run dev:ext\" \"bun run dev:ui\"",
     "dev:ext": "esbuild src/extension/extension.ts --bundle --platform=node --target=node18 --external:vscode --outfile=dist/extension.js --watch --sourcemap",
     "dev:ui": "vite build --watch --mode development",
+    "launch": "bun run build && code --extensionDevelopmentPath=$PWD --new-window",
     "build": "bun run build:ext && bun run build:ui",
     "build:ext": "esbuild src/extension/extension.ts --bundle --platform=node --target=node18 --external:vscode --outfile=dist/extension.js --minify",
     "build:ui": "vite build",

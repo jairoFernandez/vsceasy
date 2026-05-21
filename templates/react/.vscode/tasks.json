@@ -2,12 +2,24 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "type": "npm",
-      "script": "dev",
-      "problemMatcher": "$tsc-watch",
+      "label": "vsxf: dev",
+      "type": "shell",
+      "command": "bun run dev",
       "isBackground": true,
-      "presentation": { "reveal": "never" },
-      "group": { "kind": "build", "isDefault": true }
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": {
+        "owner": "esbuild-watch",
+        "pattern": {
+          "regexp": "^\\s*✘\\s*\\[ERROR\\]\\s+(.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*build started.*|.*\\[watch\\] build started.*",
+          "endsPattern": ".*built in.*|.*\\[watch\\] build finished.*"
+        }
+      }
     }
   ]
 }

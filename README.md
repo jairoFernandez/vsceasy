@@ -83,3 +83,6 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md).
 ## License
 
 MIT
+
+
+bun run start -- create --name example-1 --displayName "example 1" --description "test" --publisher "demo" --ui "react" --dir "example-1"
