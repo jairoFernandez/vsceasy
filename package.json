@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "bun test",
-    "build": "tsc --emitDeclarationOnly && bun build ./src/index.ts ./src/bin/cli.ts --target=node --outdir ./dist --format cjs",
+    "gen:types": "bun scripts/genCodiconTypes.ts",
+    "build": "bun run gen:types && tsc --emitDeclarationOnly && bun build ./src/index.ts ./src/bin/cli.ts --target=node --outdir ./dist --format cjs",
     "build:test": "bun build ./src/tests/*.ts --target=node --outdir dist/tests --format cjs",
     "prepublishOnly": "bun run build",
     "start": "bun run src/cli.ts"
@@ -32,7 +33,8 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@types/vscode": "^1.43.2"
   },
   "dependencies": {
     "@ideascol/cli-maker": "^2.0.0"

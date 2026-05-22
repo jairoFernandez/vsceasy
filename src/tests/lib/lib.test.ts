@@ -38,6 +38,13 @@ describe('scaffold', () => {
     expect(ext).toContain('bootstrap(registry)');
     expect(ext).not.toContain('{{');
 
+    const codiconTypes = fs.readFileSync(path.join(target, 'src/shared/vsxf/codiconNames.ts'), 'utf8');
+    expect(codiconTypes).toContain('export type CodiconName');
+    expect(codiconTypes).toContain("'rocket'");
+    const defineSrc = fs.readFileSync(path.join(target, 'src/shared/vsxf/define.ts'), 'utf8');
+    expect(defineSrc).toContain("from './codiconNames'");
+    expect(defineSrc).toContain('CodiconName');
+
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 

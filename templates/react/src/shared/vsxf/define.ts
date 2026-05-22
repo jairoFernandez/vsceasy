@@ -1,5 +1,6 @@
 import type * as vscode from 'vscode';
 import type { Handlers } from './rpc';
+import type { CodiconName } from './codiconNames';
 
 export interface PanelDef<H extends Handlers = Handlers> {
   /** Stable id. Default: file basename. Used as command suffix and webview key. */
@@ -42,9 +43,12 @@ export function defineCommand(def: CommandDef): CommandDef {
 // --- Menus (Activity Bar + Tree View) ---
 
 export type MenuIcon =
-  | string                                     // codicon name, e.g. 'rocket'
+  | CodiconName                                // known codicon (autocompletes)
+  | (string & {})                              // any codicon name (escape hatch, keeps autocomplete)
   | { path: string }                           // single SVG path relative to project root
   | { light: string; dark: string };           // theme-aware SVG paths
+
+export type { CodiconName };
 
 export interface MenuItem {
   /** Display label. */
