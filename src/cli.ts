@@ -23,6 +23,12 @@ cli.command(CommandCreate);
 cli.command(CommandAddPanel);
 cli.command(CommandAddMenu);
 
+const commands = cli.getCommands();
+const rotateIdx = commands.findIndex((c) => c.name === 'rotate-passphrase');
+if (rotateIdx !== -1) {
+  commands.splice(rotateIdx, 1);
+}
+
 cli.parse(process.argv);
 
 export { cli };
