@@ -3,6 +3,7 @@ import { CLI } from '@ideascol/cli-maker';
 import CommandCreate from './commands/createCommand';
 import CommandAddPanel from './commands/addPanelCommand';
 import CommandAddMenu from './commands/addMenuCommand';
+import CommandEditMenu from './commands/editMenuCommand';
 
 const cli = new CLI(
   '@ideascol/vscode-extension-framework',
@@ -22,6 +23,7 @@ const cli = new CLI(
 cli.command(CommandCreate);
 cli.command(CommandAddPanel);
 cli.command(CommandAddMenu);
+cli.command(CommandEditMenu);
 
 const commands = cli.getCommands();
 const rotateIdx = commands.findIndex((c) => c.name === 'rotate-passphrase');

@@ -2,6 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "vsxf: build",
+      "type": "shell",
+      "command": "bun run build",
+      "presentation": { "reveal": "silent", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
       "label": "vsxf: dev",
       "type": "shell",
       "command": "bun run dev",

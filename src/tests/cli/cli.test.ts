@@ -28,4 +28,13 @@ describe('CLI', () => {
     const nameParam = cmd!.params.find((p) => p.name === 'name');
     expect(nameParam?.required).toBe(true);
   });
+
+  test('editMenu command registered with optional name', () => {
+    const cmd = cli.getCommands().find((c) => c.name === 'editMenu');
+    expect(cmd).toBeDefined();
+    const nameParam = cmd!.params.find((p) => p.name === 'name');
+    expect(nameParam?.required).toBeFalsy();
+    const kindParam = cmd!.params.find((p) => p.name === 'kind');
+    expect(kindParam?.options).toEqual(['panel', 'command', 'url', 'group']);
+  });
 });
