@@ -2,8 +2,9 @@ import { describe, test, expect } from 'bun:test';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { scaffold } from '../../lib/scaffold';
+import { scaffold, substitute } from '../../lib/scaffold';
 import { addPanel } from '../../lib/addPanel';
+import { addMenu } from '../../lib/addMenu';
 import { findProjectRoot } from '../../lib/findProject';
 
 describe('scaffold', () => {
@@ -140,5 +141,95 @@ describe('findProjectRoot', () => {
 
   test('throws when no project found', () => {
     expect(() => findProjectRoot(os.tmpdir())).toThrow(/Not inside a vsxf project/);
+  });
+});
+
+describe('substitute', () => {
+  test('replaces placeholders', () => {
+    expect(substitute('hi {{name}}!', { name: 'bob' })).toBe('hi bob!');
+  });
+
+  test('replaces multiple occurrences and keys', () => {
+    expect(substitute('{{a}}-{{b}}-{{a}}', { a: '1', b: '2' })).toBe('1-2-1');
+  });
+
+  test('leaves unknown placeholders untouched', () => {
+    expect(substitute('{{x}} {{y}}', { x: 'X' })).toBe('X {{y}}');
+  });
+});
+
+describe('addMenu', () => {
+  const templatesRoot = path.resolve(__dirname, '../../../templates');
+
+  async function scaffoldProject(): Promise<string> {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-addmenu-'));
+    const target = path.join(tmp, 'demo');
+    await scaffold({
+      name: 'demo',
+      displayName: 'Demo',
+      description: 'demo',
+      publisher: 'acme',
+      ui: 'react',
+      targetDir: target,
+      templatesRoot,
+    });
+    return target;
+  }
+
+  test('creates menu with defaults', async () => {
+    const project = await scaffoldProject();
+    const result = addMenu({ name: 'main', projectRoot: project, templatesRoot, runGen: false });
+    const menuFile = path.join(project, 'src/menus/main.ts');
+    expect(result.created).toContain(menuFile);
+    const body = fs.readFileSync(menuFile, 'utf8');
+    expect(body).toContain("title: 'Main'");
+    expect(body).toContain("icon: 'symbol-misc'");
+    expect(body).not.toContain('{{');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('uses custom title and icon', async () => {
+    const project = await scaffoldProject();
+    addMenu({
+      name: 'tools',
+      title: 'My Tools',
+      icon: 'tools',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const body = fs.readFileSync(path.join(project, 'src/menus/tools.ts'), 'utf8');
+    expect(body).toContain("title: 'My Tools'");
+    expect(body).toContain("icon: 'tools'");
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('normalizes kebab/snake to camelCase filename', async () => {
+    const project = await scaffoldProject();
+    const result = addMenu({
+      name: 'my-cool_menu',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    expect(result.created[0]).toMatch(/myCoolMenu\.ts$/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('refuses if menu already exists', async () => {
+    const project = await scaffoldProject();
+    addMenu({ name: 'dup', projectRoot: project, templatesRoot, runGen: false });
+    expect(() =>
+      addMenu({ name: 'dup', projectRoot: project, templatesRoot, runGen: false }),
+    ).toThrow(/already exists/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('rejects invalid name', async () => {
+    const project = await scaffoldProject();
+    expect(() =>
+      addMenu({ name: '---', projectRoot: project, templatesRoot, runGen: false }),
+    ).toThrow(/Invalid menu name/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 });

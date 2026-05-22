@@ -14,4 +14,18 @@ describe('CLI', () => {
     const nameParam = create!.params.find((p) => p.name === 'name');
     expect(nameParam?.required).toBe(true);
   });
+
+  test('addPanel command registered with required name', () => {
+    const cmd = cli.getCommands().find((c) => c.name === 'addPanel');
+    expect(cmd).toBeDefined();
+    const nameParam = cmd!.params.find((p) => p.name === 'name');
+    expect(nameParam?.required).toBe(true);
+  });
+
+  test('addMenu command registered with required name', () => {
+    const cmd = cli.getCommands().find((c) => c.name === 'addMenu');
+    expect(cmd).toBeDefined();
+    const nameParam = cmd!.params.find((p) => p.name === 'name');
+    expect(nameParam?.required).toBe(true);
+  });
 });
