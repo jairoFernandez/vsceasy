@@ -13,7 +13,7 @@ import {
 } from '../lib/editMenu';
 import { select, askText, style, confirm } from '../lib/interactive';
 import { parseMenu, renderMenuTree, RenderOptions } from '../lib/menuTree';
-import { CODICONS, CODICON_CATEGORIES, CodiconCategory, isKnownCodicon } from '../data/codicons';
+import { pickIcon as pickIconShared } from '../lib/iconPicker';
 
 const editMenuCommand: Command = {
   name: 'editMenu',
@@ -168,36 +168,7 @@ async function askLabel(tree: ReturnType<typeof parseMenu>, opts: RenderOptions,
 }
 
 async function pickIcon(tree: ReturnType<typeof parseMenu>, opts: RenderOptions): Promise<string> {
-  renderHeader(tree, opts, 'Choose icon');
-  const mode = await select<'category' | 'all' | 'custom' | 'none'>('Icon?', [
-    { label: 'Browse by category', value: 'category', hint: '10 groups' },
-    { label: 'Search all icons', value: 'all', hint: `${CODICONS.length}+ codicons, type to filter` },
-    { label: 'Type custom codicon name', value: 'custom' },
-    { label: 'No icon', value: 'none' },
-  ]);
-  if (mode === 'none') return '';
-  if (mode === 'custom') {
-    renderHeader(tree, opts, 'Type custom codicon');
-    const name = await askText('Codicon name');
-    if (name && !isKnownCodicon(name)) {
-      console.log(`  ${style.DIM}(note: "${name}" not in bundled list — assuming valid)${style.RST}`);
-    }
-    return name;
-  }
-  let pool = CODICONS;
-  if (mode === 'category') {
-    renderHeader(tree, opts, 'Pick icon category');
-    const cat = await select<CodiconCategory>('Category?', CODICON_CATEGORIES.map((c) => ({
-      label: c, value: c, hint: `${CODICONS.filter((x) => x.category === c).length} icons`,
-    })));
-    pool = CODICONS.filter((c) => c.category === cat);
-  }
-  renderHeader(tree, opts, mode === 'all' ? 'Search icon' : 'Pick icon');
-  return select<string>('Icon (type to filter)', pool.map((c) => ({
-    label: c.name,
-    value: c.name,
-    hint: c.category,
-  })), { filter: true, pageSize: 12 });
+  return pickIconShared({ onBeforeStep: (label) => renderHeader(tree, opts, label) });
 }
 
 function defaultLabel(kind: MenuItemKind, target?: string): string {

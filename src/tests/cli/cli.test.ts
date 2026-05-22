@@ -22,11 +22,12 @@ describe('CLI', () => {
     expect(nameParam?.required).toBe(true);
   });
 
-  test('addMenu command registered with required name', () => {
+  test('addMenu command registered (name optional, prompted interactively)', () => {
     const cmd = cli.getCommands().find((c) => c.name === 'addMenu');
     expect(cmd).toBeDefined();
     const nameParam = cmd!.params.find((p) => p.name === 'name');
-    expect(nameParam?.required).toBe(true);
+    expect(nameParam?.required).toBeFalsy();
+    expect(cmd!.params.find((p) => p.name === 'icon')).toBeDefined();
   });
 
   test('editMenu command registered with optional name', () => {
