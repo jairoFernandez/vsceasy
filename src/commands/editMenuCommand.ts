@@ -11,64 +11,120 @@ import {
   MenuItemKind,
   NewMenuItem,
 } from '../lib/editMenu';
-import { select, askText, style, confirm } from '../lib/interactive';
-import { parseMenu, renderMenuTree, RenderOptions } from '../lib/menuTree';
-import { pickIcon as pickIconShared } from '../lib/iconPicker';
+import { CODICONS, isKnownCodicon } from '../data/codicons';
+
+const ROOT_SENTINEL = '(root)';
+const KIND_OPTIONS: MenuItemKind[] = ['panel', 'command', 'url', 'group'];
+
+function readMenuSource(projectRoot: string, name: string): string | null {
+  const file = path.join(projectRoot, 'src', 'menus', `${name}.ts`);
+  return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+}
 
 const editMenuCommand: Command = {
   name: 'editMenu',
-  description: 'Edit an existing menu: add an item that opens a panel, runs a command, opens a URL, or groups items',
+  description: 'Add an item (panel, command, URL, or group) to an existing menu',
   params: [
-    { name: 'name', description: 'Menu id (file basename in src/menus/). Prompted if omitted', required: false, type: ParamType.Text },
-    { name: 'label', description: 'Item label. Prompted if omitted', required: false, type: ParamType.Text },
-    { name: 'kind', description: 'Item kind: panel | command | url | group', required: false, type: ParamType.List, options: ['panel', 'command', 'url', 'group'] },
-    { name: 'target', description: 'Panel/command id or URL', required: false, type: ParamType.Text },
-    { name: 'icon', description: 'Codicon name', required: false, type: ParamType.Text },
-    { name: 'group', description: 'Parent group label (empty = root)', required: false, type: ParamType.Text },
+    {
+      name: 'name',
+      description: 'Menu id (file basename in src/menus/)',
+      required: true,
+      type: ParamType.List,
+      optionsLoader: () => {
+        const menus = listMenus(findProjectRoot());
+        if (menus.length === 0) throw new Error('No menus found. Run `addMenu` first.');
+        return menus;
+      },
+    },
+    {
+      name: 'kind',
+      description: 'Item kind: panel | command | url | group',
+      required: true,
+      type: ParamType.List,
+      options: KIND_OPTIONS as unknown as any[],
+    },
+    {
+      name: 'group',
+      description: 'Parent group label',
+      required: false,
+      type: ParamType.List,
+      optionsLoader: (answers) => {
+        const src = readMenuSource(findProjectRoot(), answers.name);
+        const groups = src ? listGroups(src) : [];
+        return [ROOT_SENTINEL, ...groups];
+      },
+      defaultValue: ROOT_SENTINEL,
+    },
+    {
+      name: 'panel',
+      description: 'Panel id (only when kind=panel)',
+      required: true,
+      type: ParamType.List,
+      when: (a) => a.kind === 'panel',
+      optionsLoader: () => {
+        const panels = listPanels(findProjectRoot());
+        if (panels.length === 0) throw new Error('No panels found. Run `addPanel` first.');
+        return panels;
+      },
+    },
+    {
+      name: 'command',
+      description: 'Command id (only when kind=command)',
+      required: true,
+      type: ParamType.List,
+      when: (a) => a.kind === 'command',
+      optionsLoader: () => {
+        const cmds = listCommands(findProjectRoot());
+        if (cmds.length === 0) throw new Error('No commands found.');
+        return cmds;
+      },
+    },
+    {
+      name: 'url',
+      description: 'External URL (https://...)',
+      required: true,
+      type: ParamType.Url,
+      when: (a) => a.kind === 'url',
+    },
+    {
+      name: 'label',
+      description: 'Item label shown in the menu',
+      required: true,
+      type: ParamType.Text,
+      defaultValue: (a: Record<string, any>) => defaultLabel(a.kind, targetOf(a)),
+    },
+    {
+      name: 'icon',
+      description: 'Codicon name',
+      required: true,
+      type: ParamType.List,
+      when: (a) => a.kind !== 'group',
+      optionsLoader: () => CODICONS.map((c) => c.name),
+      optionLabel: (name: string) => {
+        const c = CODICONS.find((x) => x.name === name);
+        return c ? `${name}  \x1b[90m— ${c.category}\x1b[0m` : name;
+      },
+      pageSize: 12,
+    },
   ],
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-
-      // ── Step 1: menu
-      const menuName = args.name || await pickMenu(projectRoot);
+      const menuName = String(args.name).trim();
       const menuFile = path.join(projectRoot, 'src', 'menus', `${menuName}.ts`);
       if (!fs.existsSync(menuFile)) throw new Error(`Menu not found: src/menus/${menuName}.ts`);
-      const src = fs.readFileSync(menuFile, 'utf8');
-      const tree = parseMenu(src);
 
-      const previewOpts: RenderOptions = {};
-
-      // ── Step 2: parent group
-      const parentLabel = args.group !== undefined
-        ? (args.group || undefined)
-        : await pickGroup(src, tree, previewOpts);
-      previewOpts.insertUnder = parentLabel ?? 'root';
-
-      // ── Step 3: kind
-      const kind: MenuItemKind = (args.kind as MenuItemKind) || await pickKind(tree, previewOpts);
-      previewOpts.ghost = { label: '(new)', kind: kind === 'group' ? 'group' : kind, target: '', icon: '' };
-
-      // ── Step 4: target
-      const target = args.target || await pickTarget(projectRoot, kind, tree, previewOpts);
-      if (previewOpts.ghost) previewOpts.ghost.target = target;
-
-      // ── Step 5: label
-      const labelDefault = defaultLabel(kind, target);
-      const label = args.label || await askLabel(tree, previewOpts, labelDefault);
+      const kind = args.kind as MenuItemKind;
+      const target = targetOf(args);
+      const label = String(args.label).trim();
       if (!label) throw new Error('Label is required');
-      if (previewOpts.ghost) previewOpts.ghost.label = label;
 
-      // ── Step 6: icon
-      const icon = kind === 'group'
-        ? (args.icon || '')
-        : (args.icon || await pickIcon(tree, previewOpts));
-      if (previewOpts.ghost) previewOpts.ghost.icon = icon;
+      const icon = args.icon ? String(args.icon).trim() : undefined;
+      if (icon && !isKnownCodicon(icon)) {
+        console.warn(`  (note: "${icon}" not in bundled codicon list — assuming valid)`);
+      }
 
-      // ── Final confirm
-      renderHeader(tree, previewOpts, 'Ready to insert');
-      const ok = await confirm('Confirm insert?', true);
-      if (!ok) { console.log(`${style.YELLOW}Cancelled.${style.RST}`); return; }
+      const parentLabel = !args.group || args.group === ROOT_SENTINEL ? undefined : String(args.group);
 
       const item: NewMenuItem = {
         label,
@@ -79,96 +135,25 @@ const editMenuCommand: Command = {
       };
 
       const result = editMenu({ projectRoot, menuName, item });
-      console.log(`\n${style.GREEN}✓${style.RST} Added to ${path.relative(projectRoot, result.file)}\n`);
+      console.log(`\n✓ Added to ${path.relative(projectRoot, result.file)}\n`);
       console.log(indent(result.inserted, '  '));
       console.log(
         result.genRan
-          ? `\n  ${style.DIM}Registry + package.json regenerated.${style.RST}\n`
-          : `\n  ${style.DIM}Run \`bun run gen\` to regenerate registry.${style.RST}\n`,
+          ? '\n  Registry + package.json regenerated.\n'
+          : '\n  Run `bun run gen` to regenerate registry.\n',
       );
     } catch (err: any) {
-      if (err?.message === 'Cancelled') {
-        console.log(`\n${style.YELLOW}Cancelled.${style.RST}`);
-        return;
-      }
-      console.error(`\n${style.YELLOW}✗${style.RST} ${err.message}\n`);
+      console.error(`\n✗ ${err.message}\n`);
       process.exitCode = 1;
     }
   },
 };
 
-function clearScreen() {
-  if (process.stdout.isTTY) {
-    process.stdout.write('\x1b[2J\x1b[H');
-  }
-}
-
-function renderHeader(tree: ReturnType<typeof parseMenu>, opts: RenderOptions, breadcrumb?: string) {
-  clearScreen();
-  console.log(`${style.BOLD}${style.CYAN}vsxf editMenu${style.RST}${breadcrumb ? `  ${style.DIM}— ${breadcrumb}${style.RST}` : ''}`);
-  console.log();
-  console.log(renderMenuTree(tree, opts));
-  console.log();
-}
-
-async function pickMenu(projectRoot: string): Promise<string> {
-  const menus = listMenus(projectRoot);
-  if (menus.length === 0) throw new Error('No menus found. Run `addMenu` first.');
-  if (menus.length === 1) return menus[0];
-  clearScreen();
-  console.log(`${style.BOLD}${style.CYAN}vsxf editMenu${style.RST}\n`);
-  return select<string>('Which menu?', menus.map((m) => ({ label: m, value: m })));
-}
-
-async function pickGroup(src: string, tree: ReturnType<typeof parseMenu>, opts: RenderOptions): Promise<string | undefined> {
-  const groups = listGroups(src);
-  renderHeader(tree, opts, 'Choose location');
-  return select<string | undefined>('Add under which group?', [
-    { label: '(root)', value: undefined, hint: 'top-level item' },
-    ...groups.map((g) => ({ label: g, value: g as string | undefined, badge: `${style.YELLOW}▾${style.RST}` })),
-  ]);
-}
-
-async function pickKind(tree: ReturnType<typeof parseMenu>, opts: RenderOptions): Promise<MenuItemKind> {
-  renderHeader(tree, opts, 'Choose item kind');
-  return select<MenuItemKind>('Item kind?', [
-    { label: 'Panel', value: 'panel', hint: 'opens a webview panel', badge: `${style.CYAN}■${style.RST}` },
-    { label: 'Command', value: 'command', hint: 'runs a registered command', badge: `${style.GREEN}▶${style.RST}` },
-    { label: 'URL', value: 'url', hint: 'opens an external link', badge: `${style.CYAN}↗${style.RST}` },
-    { label: 'Group', value: 'group', hint: 'collapsible group with children', badge: `${style.YELLOW}▾${style.RST}` },
-  ]);
-}
-
-async function pickTarget(projectRoot: string, kind: MenuItemKind, tree: ReturnType<typeof parseMenu>, opts: RenderOptions): Promise<string | undefined> {
-  if (kind === 'group') return undefined;
-  if (kind === 'panel') {
-    const panels = listPanels(projectRoot);
-    if (panels.length === 0) throw new Error('No panels found. Run `addPanel` first.');
-    renderHeader(tree, opts, 'Choose panel');
-    return select<string>('Which panel?', panels.map((p) => ({ label: p, value: p, badge: `${style.CYAN}■${style.RST}` })));
-  }
-  if (kind === 'command') {
-    const cmds = listCommands(projectRoot);
-    if (cmds.length === 0) {
-      renderHeader(tree, opts, 'Enter command id');
-      return askText('Command id');
-    }
-    renderHeader(tree, opts, 'Choose command');
-    return select<string>('Which command?', cmds.map((c) => ({ label: c, value: c, badge: `${style.GREEN}▶${style.RST}` })));
-  }
-  renderHeader(tree, opts, 'Enter URL');
-  const url = await askText('URL (https://...)');
-  if (!/^https?:\/\//i.test(url)) throw new Error('URL must start with http:// or https://');
-  return url;
-}
-
-async function askLabel(tree: ReturnType<typeof parseMenu>, opts: RenderOptions, defaultValue: string): Promise<string> {
-  renderHeader(tree, opts, 'Set label');
-  return askText('Label', defaultValue);
-}
-
-async function pickIcon(tree: ReturnType<typeof parseMenu>, opts: RenderOptions): Promise<string> {
-  return pickIconShared({ onBeforeStep: (label) => renderHeader(tree, opts, label) });
+function targetOf(a: Record<string, any>): string | undefined {
+  if (a.kind === 'panel') return a.panel;
+  if (a.kind === 'command') return a.command;
+  if (a.kind === 'url') return a.url;
+  return undefined;
 }
 
 function defaultLabel(kind: MenuItemKind, target?: string): string {

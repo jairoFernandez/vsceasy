@@ -32,12 +32,19 @@ describe('CLI', () => {
     expect(typeof (iconParam as any)?.optionsLoader).toBe('function');
   });
 
-  test('editMenu command registered with optional name', () => {
+  test('editMenu command uses cli-maker standard UI (required + conditional params)', () => {
     const cmd = cli.getCommands().find((c) => c.name === 'editMenu');
     expect(cmd).toBeDefined();
     const nameParam = cmd!.params.find((p) => p.name === 'name');
-    expect(nameParam?.required).toBeFalsy();
+    expect(nameParam?.required).toBe(true);
     const kindParam = cmd!.params.find((p) => p.name === 'kind');
     expect(kindParam?.options).toEqual(['panel', 'command', 'url', 'group']);
+    const urlParam = cmd!.params.find((p) => p.name === 'url');
+    expect(typeof (urlParam as any)?.when).toBe('function');
+    expect((urlParam as any).when({ kind: 'url' })).toBe(true);
+    expect((urlParam as any).when({ kind: 'panel' })).toBe(false);
+    const iconParam = cmd!.params.find((p) => p.name === 'icon');
+    expect((iconParam as any).when({ kind: 'group' })).toBe(false);
+    expect((iconParam as any).when({ kind: 'panel' })).toBe(true);
   });
 });
