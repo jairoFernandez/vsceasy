@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef } from './define';
+import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem } from './define';
 import { createRpcServer, webviewTransport } from './rpc';
 
 export interface Registry {
@@ -58,18 +58,78 @@ function registerStatusBar(
     : vscode.StatusBarAlignment.Left;
   const item = vscode.window.createStatusBarItem(alignment, def.priority ?? 100);
   item.text = def.icon ? `$(${def.icon}) ${def.text}` : def.text;
-  if (def.tooltip) item.tooltip = def.tooltip;
-  if (def.command) {
-    // If the command id matches a registry command, prefix it; else assume it's a full vscode command id.
+
+  // Tooltip: markdown takes precedence over plain string
+  if (def.tooltipMarkdown) {
+    const md = new vscode.MarkdownString(def.tooltipMarkdown, true);
+    md.supportHtml = true;
+    md.isTrusted = true;
+    item.tooltip = md;
+  } else if (def.tooltip) {
+    item.tooltip = def.tooltip;
+  }
+
+  // Click behaviour priority: menu > panel > command
+  if (def.menu && def.menu.length > 0) {
+    const dispatchCmd = `${registry.prefix}._statusBar.${id}.click`;
+    context.subscriptions.push(
+      vscode.commands.registerCommand(dispatchCmd, () => openStatusBarMenu(context, registry, def.menu!)),
+    );
+    item.command = dispatchCmd;
+  } else if (def.panel) {
+    const panelDef = registry.panels[def.panel];
+    if (panelDef) {
+      const suffix = capitalize(panelDef.id ?? def.panel);
+      item.command = `${registry.prefix}.open${suffix}`;
+    } else {
+      console.warn(`[vsxf] statusBar "${id}" references unknown panel "${def.panel}"`);
+    }
+  } else if (def.command) {
     item.command = registry.commands[def.command]
       ? `${registry.prefix}.${registry.commands[def.command].id ?? def.command}`
       : def.command;
   }
+
   if (def.backgroundColor) {
     item.backgroundColor = new vscode.ThemeColor(def.backgroundColor);
   }
   item.show();
   context.subscriptions.push(item);
+}
+
+async function openStatusBarMenu(
+  context: vscode.ExtensionContext,
+  registry: Registry,
+  items: StatusBarMenuItem[],
+) {
+  type QP = vscode.QuickPickItem & { __item: StatusBarMenuItem };
+  const picks: QP[] = items.map((it) => ({
+    label: it.label,
+    description: it.description,
+    detail: it.detail,
+    __item: it,
+  }));
+  const selected = await vscode.window.showQuickPick(picks, { placeHolder: 'Choose action' });
+  if (!selected) return;
+  const it = selected.__item;
+  if (it.url) {
+    await vscode.env.openExternal(vscode.Uri.parse(it.url));
+    return;
+  }
+  if (it.panel) {
+    const panelDef = registry.panels[it.panel];
+    if (panelDef) {
+      const cmd = `${registry.prefix}.open${capitalize(panelDef.id ?? it.panel)}`;
+      await vscode.commands.executeCommand(cmd);
+    }
+    return;
+  }
+  if (it.command) {
+    const cmd = registry.commands[it.command]
+      ? `${registry.prefix}.${registry.commands[it.command].id ?? it.command}`
+      : it.command;
+    await vscode.commands.executeCommand(cmd);
+  }
 }
 
 // --- Menus ---

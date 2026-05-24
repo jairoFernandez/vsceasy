@@ -46,11 +46,15 @@ describe('CLI', () => {
     expect(nameParam?.required).toBe(true);
     const textParam = cmd!.params.find((p) => p.name === 'text');
     expect(textParam?.required).toBe(true);
+    const bindTo = cmd!.params.find((p) => p.name === 'bindTo');
+    expect((bindTo as any)?.options).toEqual(['command', 'panel', 'create new command']);
     const cmdParam = cmd!.params.find((p) => p.name === 'command');
-    expect(typeof (cmdParam as any)?.optionsLoader).toBe('function');
+    expect((cmdParam as any).when({ bindTo: 'command' })).toBe(true);
+    expect((cmdParam as any).when({ bindTo: 'panel' })).toBe(false);
+    const panelParam = cmd!.params.find((p) => p.name === 'panel');
+    expect((panelParam as any).when({ bindTo: 'panel' })).toBe(true);
     const newTitleParam = cmd!.params.find((p) => p.name === 'newCommandTitle');
-    expect((newTitleParam as any).when({ command: '(create new)' })).toBe(true);
-    expect((newTitleParam as any).when({ command: 'foo' })).toBe(false);
+    expect((newTitleParam as any).when({ bindTo: 'create new command' })).toBe(true);
   });
 
   test('doctor command registered with optional fix flag', () => {

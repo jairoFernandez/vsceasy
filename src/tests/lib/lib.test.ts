@@ -670,6 +670,41 @@ describe('addStatusBar', () => {
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 
+  test('emits tooltipMarkdown as backtick string when provided', async () => {
+    const project = await scaffoldProject();
+    const md = '### Title\n\n[Click](command:foo)';
+    const result = addStatusBar({
+      name: 'rich',
+      text: 'Rich',
+      command: 'hello',
+      tooltipMarkdown: md,
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const body = fs.readFileSync(result.created[0], 'utf8');
+    expect(body).toContain('tooltipMarkdown: `### Title');
+    expect(body).toContain('[Click](command:foo)');
+    expect(body).not.toMatch(/\btooltip:/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('binds to a panel (uses panel field, omits command)', async () => {
+    const project = await scaffoldProject();
+    const result = addStatusBar({
+      name: 'openDash',
+      text: 'Dash',
+      panel: 'dashboard',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const body = fs.readFileSync(result.created[0], 'utf8');
+    expect(body).toContain("panel: 'dashboard'");
+    expect(body).not.toMatch(/\bcommand:/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
   test('writes optional fields when present', async () => {
     const project = await scaffoldProject();
     addStatusBar({

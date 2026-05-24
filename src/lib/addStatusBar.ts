@@ -10,9 +10,12 @@ export interface AddStatusBarOptions {
   alignment?: 'left' | 'right';
   priority?: number;
   tooltip?: string;
+  tooltipMarkdown?: string;
   icon?: string;
   /** Existing command id (basename in src/commands/) OR full vscode command id. */
   command?: string;
+  /** Panel id (basename in src/panels/). Takes precedence over command when set. */
+  panel?: string;
   /** When set, bootstraps a new command via addCommand lib and binds it. */
   newCommandTitle?: string;
   projectRoot: string;
@@ -64,8 +67,13 @@ export function addStatusBar(opts: AddStatusBarOptions): AddStatusBarResult {
     alignment,
     priority,
     iconLine: opts.icon ? `\n  icon: '${escapeSingleQuotes(opts.icon)}',` : '',
-    tooltipLine: opts.tooltip ? `\n  tooltip: '${escapeSingleQuotes(opts.tooltip)}',` : '',
-    commandLine: commandId ? `\n  command: '${escapeSingleQuotes(commandId)}',` : '',
+    tooltipLine: opts.tooltipMarkdown
+      ? `\n  tooltipMarkdown: ${asBacktickString(opts.tooltipMarkdown)},`
+      : opts.tooltip
+        ? `\n  tooltip: '${escapeSingleQuotes(opts.tooltip)}',`
+        : '',
+    commandLine: !opts.panel && commandId ? `\n  command: '${escapeSingleQuotes(commandId)}',` : '',
+    panelLine: opts.panel ? `\n  panel: '${escapeSingleQuotes(opts.panel)}',` : '',
   };
 
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -79,6 +87,10 @@ export function addStatusBar(opts: AddStatusBarOptions): AddStatusBarResult {
 
 function escapeSingleQuotes(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+function asBacktickString(s: string): string {
+  return '`' + s.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${') + '`';
 }
 
 function runGen(cwd: string): boolean {

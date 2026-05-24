@@ -103,8 +103,36 @@ export interface StatusBarDef {
   priority?: number;
   /** Command id to run on click (basename in src/commands/, or full vscode command id). */
   command?: string;
+  /** Open a panel by id (basename in src/panels/). Takes precedence over `command` when set. */
+  panel?: string;
   /** Background color theme key (e.g. 'statusBarItem.warningBackground'). */
   backgroundColor?: string;
+  /**
+   * Rich markdown tooltip (overrides `tooltip`). Supports command links
+   * (`[text](command:ext.foo)`), codicons (`$(rocket)`), and HTML.
+   * Rendered on hover. Mimics Copilot/GitLens popup style.
+   */
+  tooltipMarkdown?: string;
+  /**
+   * Open a popup menu on click instead of running a single command/panel.
+   * Each item runs its `command`, opens its `panel`, or opens its `url`.
+   */
+  menu?: StatusBarMenuItem[];
+}
+
+export interface StatusBarMenuItem {
+  /** Display label. May include `$(codicon)`. */
+  label: string;
+  /** Inline secondary text. */
+  description?: string;
+  /** Detail line (smaller, below). */
+  detail?: string;
+  /** Command id (basename in src/commands/) or full vscode command id. */
+  command?: string;
+  /** Panel id (basename in src/panels/). */
+  panel?: string;
+  /** External URL. */
+  url?: string;
 }
 
 export function defineStatusBar(def: StatusBarDef): StatusBarDef {

@@ -2,10 +2,8 @@ import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
 import { addStatusBar } from '../lib/addStatusBar';
 import { findProjectRoot, findTemplatesRoot } from '../lib/findProject';
-import { listCommands } from '../lib/editMenu';
+import { listCommands, listPanels } from '../lib/editMenu';
 import { CODICONS, isKnownCodicon } from '../data/codicons';
-
-const NEW_CMD_SENTINEL = '(create new)';
 
 const addStatusBarCommand: Command = {
   name: 'addStatusBar',
@@ -29,13 +27,31 @@ const addStatusBarCommand: Command = {
       defaultValue: 100,
     },
     {
+      name: 'bindTo',
+      description: 'What to do on click',
+      required: true,
+      type: ParamType.List,
+      options: ['command', 'panel', 'create new command'],
+      defaultValue: 'command',
+    },
+    {
       name: 'command',
       description: 'Command to run on click',
       required: true,
       type: ParamType.List,
+      when: (a) => a.bindTo === 'command',
+      optionsLoader: () => listCommands(findProjectRoot()),
+    },
+    {
+      name: 'panel',
+      description: 'Panel to open on click',
+      required: true,
+      type: ParamType.List,
+      when: (a) => a.bindTo === 'panel',
       optionsLoader: () => {
-        const cmds = listCommands(findProjectRoot());
-        return [NEW_CMD_SENTINEL, ...cmds];
+        const panels = listPanels(findProjectRoot());
+        if (panels.length === 0) throw new Error('No panels found. Run `addPanel` first.');
+        return panels;
       },
     },
     {
@@ -43,12 +59,18 @@ const addStatusBarCommand: Command = {
       description: 'Title of the new command to create',
       required: true,
       type: ParamType.Text,
-      when: (a) => a.command === NEW_CMD_SENTINEL,
+      when: (a) => a.bindTo === 'create new command',
       defaultValue: (a: Record<string, any>) => a.text ?? '',
     },
     {
       name: 'tooltip',
-      description: 'Hover tooltip',
+      description: 'Plain hover tooltip',
+      required: false,
+      type: ParamType.Text,
+    },
+    {
+      name: 'tooltipMarkdown',
+      description: 'Rich markdown tooltip (overrides tooltip). Supports $(codicon), [text](command:id), HTML',
       required: false,
       type: ParamType.Text,
     },
@@ -70,8 +92,10 @@ const addStatusBarCommand: Command = {
       const projectRoot = findProjectRoot();
       const templatesRoot = findTemplatesRoot(__dirname);
 
-      const isNewCmd = args.command === NEW_CMD_SENTINEL;
-      const commandId = isNewCmd ? undefined : String(args.command);
+      const isNewCmd = args.bindTo === 'create new command';
+      const isPanel = args.bindTo === 'panel';
+      const commandId = !isNewCmd && !isPanel ? String(args.command) : undefined;
+      const panelId = isPanel ? String(args.panel) : undefined;
 
       const icon = args.icon ? String(args.icon).trim() : undefined;
       if (icon && !isKnownCodicon(icon)) {
@@ -84,8 +108,10 @@ const addStatusBarCommand: Command = {
         alignment: args.alignment as 'left' | 'right' | undefined,
         priority: args.priority != null ? Number(args.priority) : undefined,
         tooltip: args.tooltip ? String(args.tooltip) : undefined,
+        tooltipMarkdown: args.tooltipMarkdown ? String(args.tooltipMarkdown) : undefined,
         icon,
         command: commandId,
+        panel: panelId,
         newCommandTitle: isNewCmd ? String(args.newCommandTitle) : undefined,
         projectRoot,
         templatesRoot,
