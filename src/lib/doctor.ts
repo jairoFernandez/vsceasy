@@ -12,6 +12,13 @@ export interface CheckResult {
   message: string;
   /** Optional details printed indented under the line. */
   details?: string[];
+  /** Safe auto-fix. Returns a one-line description of what was done. */
+  fix?: () => string;
+}
+
+export interface FixApplied {
+  id: string;
+  message: string;
 }
 
 export interface DoctorReport {
@@ -143,6 +150,12 @@ function checkRpcContracts(root: string): CheckResult[] {
           ...missing.map((m) => `missing handler: ${m}`),
           ...extra.map((m) => `extra handler (not in api): ${m}`),
         ],
+        fix: missing.length > 0
+          ? () => {
+              addRpcHandlerStubs(file, missing);
+              return `added ${missing.length} handler stub(s) to ${path.relative(root, file)}: ${missing.join(', ')}`;
+            }
+          : undefined,
       });
     }
   }
@@ -179,11 +192,24 @@ function checkMenus(root: string): CheckResult[] {
       out.push({ id: `menu.${id}`, level: 'ok', message: `menu ${id}       refs OK` });
     } else {
       if (orphans.length) {
+        const orphanTargets: { kind: 'panel' | 'command'; target: string }[] = [];
+        walk(tree.items, (n) => {
+          if (n.kind === 'panel' && n.target && !panels.has(n.target)) {
+            orphanTargets.push({ kind: 'panel', target: n.target });
+          }
+          if (n.kind === 'command' && n.target && !commands.has(n.target)) {
+            orphanTargets.push({ kind: 'command', target: n.target });
+          }
+        });
         out.push({
           id: `menu.${id}.refs`,
           level: 'error',
           message: `menu ${id}: ${orphans.length} orphan ref(s)`,
           details: orphans,
+          fix: () => {
+            const removed = removeOrphanMenuItems(file, orphanTargets);
+            return `removed ${removed} orphan item(s) from ${path.relative(root, file)}`;
+          },
         });
       }
       if (badIcons.length) {
@@ -264,7 +290,15 @@ function checkGitignore(root: string): CheckResult {
   const file = path.join(root, '.gitignore');
   const required = ['dist', 'node_modules'];
   if (!fs.existsSync(file)) {
-    return { id: 'gitignore', level: 'warn', message: '.gitignore missing' };
+    return {
+      id: 'gitignore',
+      level: 'warn',
+      message: '.gitignore missing',
+      fix: () => {
+        fs.writeFileSync(file, required.join('\n') + '\n');
+        return `created .gitignore with ${required.join(', ')}`;
+      },
+    };
   }
   const lines = fs.readFileSync(file, 'utf8').split('\n').map((l) => l.trim());
   const missing = required.filter((p) => !lines.some((l) => l === p || l === `/${p}` || l === `${p}/`));
@@ -273,6 +307,12 @@ function checkGitignore(root: string): CheckResult {
     id: 'gitignore',
     level: 'warn',
     message: `.gitignore missing entries: ${missing.join(', ')}`,
+    fix: () => {
+      const raw = fs.readFileSync(file, 'utf8');
+      const suffix = raw.endsWith('\n') ? '' : '\n';
+      fs.writeFileSync(file, raw + suffix + missing.join('\n') + '\n');
+      return `appended to .gitignore: ${missing.join(', ')}`;
+    },
   };
 }
 
@@ -353,4 +393,111 @@ function walk(items: MenuNode[], fn: (n: MenuNode) => void) {
     fn(n);
     if (n.children) walk(n.children, fn);
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// fix helpers
+
+/** Apply every fix on the report and return what was done. */
+export function applyFixes(report: DoctorReport): FixApplied[] {
+  const applied: FixApplied[] = [];
+  for (const r of report.results) {
+    if (!r.fix) continue;
+    try {
+      const msg = r.fix();
+      applied.push({ id: r.id, message: msg });
+    } catch (e: any) {
+      applied.push({ id: r.id, message: `fix failed: ${e?.message ?? e}` });
+    }
+  }
+  return applied;
+}
+
+/** Insert async handler stubs into a panel's rpc block. Creates the block if missing. */
+function addRpcHandlerStubs(panelFile: string, methods: string[]): void {
+  let src = fs.readFileSync(panelFile, 'utf8');
+  const stubs = methods.map((m) =>
+    `    async ${m}() {\n      // TODO: implement\n      throw new Error('Not implemented');\n    },`,
+  );
+  const range = findRpcBodyRange(src);
+  if (range) {
+    const inner = src.slice(range.start, range.end).replace(/\s+$/, '');
+    const sep = inner ? '\n' : '';
+    const newInner = `${inner}${sep}${stubs.join('\n')}\n  `;
+    src = src.slice(0, range.start) + newInner + src.slice(range.end);
+  } else {
+    // Insert a fresh rpc block right after `title: '...'`,
+    const block = `\n  rpc: (vscode) => ({\n${stubs.join('\n')}\n  }),`;
+    if (/title\s*:\s*['"][^'"]*['"]\s*,/.test(src)) {
+      src = src.replace(/(title\s*:\s*['"][^'"]*['"]\s*,)/, `$1${block}`);
+    } else {
+      src = src.replace(/\}\s*\)\s*;?\s*$/, `${block}\n});\n`);
+    }
+  }
+  fs.writeFileSync(panelFile, src);
+}
+
+function findRpcBodyRange(src: string): { start: number; end: number } | null {
+  const re = /\brpc\s*:\s*\([^)]*\)\s*=>\s*\(\s*\{/m;
+  const m = re.exec(src);
+  if (!m) return null;
+  const start = m.index + m[0].length;
+  const end = matchBrace(src, start);
+  if (end === -1) return null;
+  return { start, end };
+}
+
+/** Remove menu items whose command/panel target is in the orphan list. Returns count removed. */
+function removeOrphanMenuItems(
+  menuFile: string,
+  orphans: { kind: 'panel' | 'command'; target: string }[],
+): number {
+  let src = fs.readFileSync(menuFile, 'utf8');
+  let removed = 0;
+  for (const o of orphans) {
+    // Find object literals containing `<kind>: '<target>'`. Walk balanced braces back/forward.
+    const targetRe = new RegExp(`${o.kind}\\s*:\\s*(['"\`])${escapeRe(o.target)}\\1`);
+    while (true) {
+      const m = targetRe.exec(src);
+      if (!m) break;
+      const idx = m.index;
+      // Find the opening `{` of the object literal containing this match.
+      const openIdx = findEnclosingObjectStart(src, idx);
+      if (openIdx === -1) {
+        // Cannot locate enclosing object; bail to avoid corruption.
+        break;
+      }
+      const closeIdx = matchBrace(src, openIdx + 1);
+      if (closeIdx === -1) break;
+      // Consume trailing comma + whitespace
+      let end = closeIdx + 1;
+      while (end < src.length && /[\s,]/.test(src[end]) && src[end] !== '\n') end++;
+      if (src[end] === ',') end++;
+      // Drop the leading whitespace before the object too (clean newline)
+      let start = openIdx;
+      while (start > 0 && /[ \t]/.test(src[start - 1])) start--;
+      src = src.slice(0, start) + src.slice(end);
+      removed++;
+    }
+  }
+  fs.writeFileSync(menuFile, src);
+  return removed;
+}
+
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Walk backwards counting braces to find the `{` opening the enclosing object. */
+function findEnclosingObjectStart(src: string, from: number): number {
+  let depth = 0;
+  for (let i = from; i >= 0; i--) {
+    const c = src[i];
+    if (c === '}') depth++;
+    else if (c === '{') {
+      if (depth === 0) return i;
+      depth--;
+    }
+  }
+  return -1;
 }

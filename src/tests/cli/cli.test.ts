@@ -64,6 +64,15 @@ describe('CLI', () => {
     expect(fixParam?.required).toBeFalsy();
   });
 
+  test('upgrade command registered with optional apply flag', () => {
+    const cmd = cli.getCommands().find((c) => c.name === 'upgrade');
+    expect(cmd).toBeDefined();
+    const applyParam = cmd!.params.find((p) => p.name === 'apply');
+    expect(applyParam?.required).toBeFalsy();
+    const uiParam = cmd!.params.find((p) => p.name === 'ui');
+    expect((uiParam as any)?.defaultValue).toBe('react');
+  });
+
   test('addPanel command registered with required name', () => {
     const cmd = cli.getCommands().find((c) => c.name === 'addPanel');
     expect(cmd).toBeDefined();

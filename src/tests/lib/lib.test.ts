@@ -8,7 +8,8 @@ import { addMenu } from '../../lib/addMenu';
 import { addCommand } from '../../lib/addCommand';
 import { addRpcMethod } from '../../lib/addRpcMethod';
 import { addStatusBar } from '../../lib/addStatusBar';
-import { runDoctor } from '../../lib/doctor';
+import { runDoctor, applyFixes } from '../../lib/doctor';
+import { upgrade } from '../../lib/upgrade';
 import { editMenu, insertItem, listGroups, listMenus, listPanels } from '../../lib/editMenu';
 import { findProjectRoot } from '../../lib/findProject';
 import { parseMenu, renderMenuTree } from '../../lib/menuTree';
@@ -816,6 +817,128 @@ describe('doctor', () => {
     const report = runDoctor({ projectRoot: project });
     const icons = report.results.find((r) => r.id === 'menu.tools.icons');
     expect(icons?.level).toBe('warn');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('--fix adds missing RPC handler stubs', async () => {
+    const project = await scaffoldProject();
+    const apiFile = path.join(project, 'src/shared/api.ts');
+    let api = fs.readFileSync(apiFile, 'utf8');
+    api = api.replace(/(interface DashboardApi[^{]*\{)/, '$1\n  newOne(): Promise<void>;');
+    fs.writeFileSync(apiFile, api);
+
+    const report = runDoctor({ projectRoot: project });
+    const applied = applyFixes(report);
+    expect(applied.some((a) => a.id === 'rpc.dashboard' && /added.*newOne/.test(a.message))).toBe(true);
+
+    const panelBody = fs.readFileSync(path.join(project, 'src/panels/dashboard.ts'), 'utf8');
+    expect(panelBody).toContain('async newOne()');
+    expect(panelBody).toContain("throw new Error('Not implemented')");
+
+    const re = runDoctor({ projectRoot: project });
+    expect(re.results.find((r) => r.id === 'rpc.dashboard')?.level).toBe('ok');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('--fix removes orphan menu command refs', async () => {
+    const project = await scaffoldProject();
+    addMenu({ name: 'main', projectRoot: project, templatesRoot, runGen: false });
+    const editMenuLib = require('../../lib/editMenu');
+    editMenuLib.editMenu({
+      projectRoot: project,
+      menuName: 'main',
+      runGen: false,
+      item: { label: 'Ghost', kind: 'command', target: 'doesNotExist' },
+    });
+
+    const report = runDoctor({ projectRoot: project });
+    expect(report.results.find((r) => r.id === 'menu.main.refs')?.level).toBe('error');
+    applyFixes(report);
+
+    const menuBody = fs.readFileSync(path.join(project, 'src/menus/main.ts'), 'utf8');
+    expect(menuBody).not.toContain('doesNotExist');
+    expect(menuBody).not.toContain("label: 'Ghost'");
+
+    const after = runDoctor({ projectRoot: project });
+    expect(after.results.find((r) => r.id === 'menu.main.refs')).toBeUndefined();
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('--fix appends missing .gitignore entries', async () => {
+    const project = await scaffoldProject();
+    const gi = path.join(project, '.gitignore');
+    fs.writeFileSync(gi, 'foo\n');
+
+    const report = runDoctor({ projectRoot: project });
+    const giResult = report.results.find((r) => r.id === 'gitignore');
+    expect(giResult?.level).toBe('warn');
+    applyFixes(report);
+
+    const content = fs.readFileSync(gi, 'utf8');
+    expect(content).toContain('dist');
+    expect(content).toContain('node_modules');
+    expect(content).toContain('foo');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+});
+
+describe('upgrade', () => {
+  const templatesRoot = path.resolve(__dirname, '../../../templates');
+
+  async function scaffoldProject(): Promise<string> {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-upgrade-'));
+    const target = path.join(tmp, 'demo');
+    await scaffold({
+      name: 'demo',
+      displayName: 'Demo',
+      description: 'demo',
+      publisher: 'acme',
+      ui: 'react',
+      targetDir: target,
+      templatesRoot,
+    });
+    return target;
+  }
+
+  test('greenfield reports all in-sync (no changes)', async () => {
+    const project = await scaffoldProject();
+    const result = upgrade({ projectRoot: project, templatesRoot, apply: false });
+    expect(result.applied).toBe(false);
+    expect(result.changes.every((c) => c.status === 'in-sync')).toBe(true);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('detects drift as would-update (dry-run)', async () => {
+    const project = await scaffoldProject();
+    const bootstrapPath = path.join(project, 'src/shared/vsxf/bootstrap.ts');
+    fs.writeFileSync(bootstrapPath, '// stale content\n');
+    const result = upgrade({ projectRoot: project, templatesRoot, apply: false });
+    const change = result.changes.find((c) => c.path === 'src/shared/vsxf/bootstrap.ts');
+    expect(change?.status).toBe('would-update');
+    // File untouched in dry-run
+    expect(fs.readFileSync(bootstrapPath, 'utf8')).toBe('// stale content\n');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('apply=true overwrites drifted file', async () => {
+    const project = await scaffoldProject();
+    const bootstrapPath = path.join(project, 'src/shared/vsxf/bootstrap.ts');
+    fs.writeFileSync(bootstrapPath, '// stale\n');
+    const result = upgrade({ projectRoot: project, templatesRoot, apply: true, runGen: false });
+    const change = result.changes.find((c) => c.path === 'src/shared/vsxf/bootstrap.ts');
+    expect(change?.status).toBe('updated');
+    const sourcePath = path.join(templatesRoot, 'react/src/shared/vsxf/bootstrap.ts');
+    expect(fs.readFileSync(bootstrapPath, 'utf8')).toBe(fs.readFileSync(sourcePath, 'utf8'));
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('apply creates missing file', async () => {
+    const project = await scaffoldProject();
+    fs.unlinkSync(path.join(project, 'src/shared/vsxf/define.ts'));
+    const result = upgrade({ projectRoot: project, templatesRoot, apply: true, runGen: false });
+    const change = result.changes.find((c) => c.path === 'src/shared/vsxf/define.ts');
+    expect(change?.status).toBe('created');
+    expect(fs.existsSync(path.join(project, 'src/shared/vsxf/define.ts'))).toBe(true);
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 });

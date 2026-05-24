@@ -8,6 +8,7 @@ import CommandAddCommand from './commands/addCommandCommand';
 import CommandAddRpcMethod from './commands/addRpcMethodCommand';
 import CommandAddStatusBar from './commands/addStatusBarCommand';
 import CommandDoctor from './commands/doctorCommand';
+import CommandUpgrade from './commands/upgradeCommand';
 
 const cli = new CLI(
   '@ideascol/vscode-extension-framework',
@@ -21,6 +22,10 @@ const cli = new CLI(
       title: 'vsxf',
       subtitle: 'VS Code Extension Framework',
     },
+    defaultCommands: {
+      rotatePassphrase: false,
+      aiGuide: true,
+    },
   },
 );
 
@@ -32,12 +37,7 @@ cli.command(CommandAddCommand);
 cli.command(CommandAddRpcMethod);
 cli.command(CommandAddStatusBar);
 cli.command(CommandDoctor);
-
-const commands = cli.getCommands();
-const rotateIdx = commands.findIndex((c) => c.name === 'rotate-passphrase');
-if (rotateIdx !== -1) {
-  commands.splice(rotateIdx, 1);
-}
+cli.command(CommandUpgrade);
 
 cli.parse(process.argv);
 

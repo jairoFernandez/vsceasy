@@ -1,5 +1,5 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
-import { runDoctor, CheckResult } from '../lib/doctor';
+import { runDoctor, applyFixes, CheckResult } from '../lib/doctor';
 import { findProjectRoot } from '../lib/findProject';
 
 const ICONS = { ok: '✓', warn: '⚠', error: '✗' } as const;
@@ -18,7 +18,7 @@ const doctorCommand: Command = {
   params: [
     {
       name: 'fix',
-      description: 'Apply safe auto-fixes (NOT YET IMPLEMENTED — reports only)',
+      description: 'Apply safe auto-fixes (missing RPC stubs, orphan menu items, .gitignore entries)',
       required: false,
       type: ParamType.Boolean,
     },
@@ -26,23 +26,41 @@ const doctorCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const report = runDoctor({ projectRoot });
+      const wantFix = args.fix === true || args.fix === 'true';
+      let report = runDoctor({ projectRoot });
 
       console.log(`\n${COLORS.bold}vsxf doctor${COLORS.reset} — ${report.displayName} ${COLORS.dim}@ ${projectRoot}${COLORS.reset}\n`);
       for (const r of report.results) {
         printResult(r);
       }
 
+      const fixable = report.results.filter((r) => r.fix).length;
       const { ok, warn, error } = report.counts;
       console.log(
-        `\n  ${COLORS.ok}${ok} ok${COLORS.reset} · ${COLORS.warn}${warn} warning${warn === 1 ? '' : 's'}${COLORS.reset} · ${COLORS.error}${error} error${error === 1 ? '' : 's'}${COLORS.reset}\n`,
+        `\n  ${COLORS.ok}${ok} ok${COLORS.reset} · ${COLORS.warn}${warn} warning${warn === 1 ? '' : 's'}${COLORS.reset} · ${COLORS.error}${error} error${error === 1 ? '' : 's'}${COLORS.reset}`,
       );
-
-      if (args.fix) {
-        console.log(`  ${COLORS.dim}--fix is not yet implemented. Apply fixes manually based on the report above.${COLORS.reset}\n`);
+      if (fixable > 0 && !wantFix) {
+        console.log(`  ${COLORS.dim}Re-run with --fix=true to apply ${fixable} safe fix(es).${COLORS.reset}\n`);
+      } else {
+        console.log('');
       }
 
-      if (error > 0) process.exitCode = 1;
+      if (wantFix && fixable > 0) {
+        const applied = applyFixes(report);
+        console.log(`${COLORS.bold}Fixes applied:${COLORS.reset}`);
+        for (const a of applied) console.log(`  ${COLORS.ok}✓${COLORS.reset} ${a.message}`);
+        console.log('');
+        // Re-run for a fresh report after fixes
+        report = runDoctor({ projectRoot });
+        console.log(`${COLORS.bold}After fix:${COLORS.reset}`);
+        const { ok: ok2, warn: warn2, error: error2 } = report.counts;
+        console.log(
+          `  ${COLORS.ok}${ok2} ok${COLORS.reset} · ${COLORS.warn}${warn2} warning(s)${COLORS.reset} · ${COLORS.error}${error2} error(s)${COLORS.reset}\n`,
+        );
+        if (error2 > 0) process.exitCode = 1;
+      } else if (error > 0) {
+        process.exitCode = 1;
+      }
     } catch (err: any) {
       console.error(`\n✗ ${err.message}\n`);
       process.exitCode = 1;
