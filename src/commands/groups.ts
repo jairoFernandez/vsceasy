@@ -1,10 +1,10 @@
 import { Command } from '@ideascol/cli-maker';
-import AddPanel from './addPanelCommand';
-import AddMenu from './addMenuCommand';
-import EditMenu from './editMenuCommand';
-import AddCommand from './addCommandCommand';
-import AddRpcMethod from './addRpcMethodCommand';
-import AddStatusBar from './addStatusBarCommand';
+import AddPanel from './panel/add';
+import AddMenu from './menu/add';
+import EditMenu from './menu/edit';
+import AddCommand from './command/add';
+import AddRpcMethod from './rpc/add';
+import AddStatusBar from './statusBar/add';
 
 function group(name: string, description: string, subcommands: Command[]): Command {
   return {

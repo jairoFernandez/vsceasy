@@ -1,8 +1,8 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
-import { addMenu } from '../lib/addMenu';
-import { findProjectRoot, findTemplatesRoot } from '../lib/findProject';
-import { CODICONS, isKnownCodicon } from '../data/codicons';
+import { addMenu } from '../../lib/menu/add';
+import { findProjectRoot, findTemplatesRoot } from '../../lib/findProject';
+import { CODICONS, isKnownCodicon } from '../../data/codicons';
 
 const addMenuCommand: Command = {
   name: 'add',

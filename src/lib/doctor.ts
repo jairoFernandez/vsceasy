@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { listMenus, listPanels, listCommands } from './editMenu';
+import { listMenus, listPanels, listCommands } from './menu/edit';
 import { parseMenu, MenuNode } from './menuTree';
 import { isKnownCodicon } from '../data/codicons';
 

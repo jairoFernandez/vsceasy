@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
-import { substitute } from './scaffold';
+import { substitute } from '../scaffold';
 
 export interface AddPanelOptions {
   /** Panel id — camelCase recommended. */

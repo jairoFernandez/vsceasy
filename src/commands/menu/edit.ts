@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Command, ParamType } from '@ideascol/cli-maker';
-import { findProjectRoot } from '../lib/findProject';
+import { findProjectRoot } from '../../lib/findProject';
 import {
   editMenu,
   listMenus,
@@ -10,8 +10,8 @@ import {
   listGroups,
   MenuItemKind,
   NewMenuItem,
-} from '../lib/editMenu';
-import { CODICONS, isKnownCodicon } from '../data/codicons';
+} from '../../lib/menu/edit';
+import { CODICONS, isKnownCodicon } from '../../data/codicons';
 
 const ROOT_SENTINEL = '(root)';
 const KIND_OPTIONS: MenuItemKind[] = ['panel', 'command', 'url', 'group'];

@@ -1,9 +1,9 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
-import { addStatusBar } from '../lib/addStatusBar';
-import { findProjectRoot, findTemplatesRoot } from '../lib/findProject';
-import { listCommands, listPanels } from '../lib/editMenu';
-import { CODICONS, isKnownCodicon } from '../data/codicons';
+import { addStatusBar } from '../../lib/statusBar/add';
+import { findProjectRoot, findTemplatesRoot } from '../../lib/findProject';
+import { listCommands, listPanels } from '../../lib/menu/edit';
+import { CODICONS, isKnownCodicon } from '../../data/codicons';
 
 const addStatusBarCommand: Command = {
   name: 'add',

@@ -1,8 +1,8 @@
 import { CLI } from '@ideascol/cli-maker';
 
-import CommandCreate from './commands/createCommand';
-import CommandDoctor from './commands/doctorCommand';
-import CommandUpgrade from './commands/upgradeCommand';
+import CommandCreate from './commands/create';
+import CommandDoctor from './commands/doctor';
+import CommandUpgrade from './commands/upgrade';
 import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup } from './commands/groups';
 
 const cli = new CLI(

@@ -1,10 +1,10 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
-import { addCommand } from '../lib/addCommand';
-import { findProjectRoot, findTemplatesRoot } from '../lib/findProject';
-import { listMenus, listGroups } from '../lib/editMenu';
+import { addCommand } from '../../lib/command/add';
+import { findProjectRoot, findTemplatesRoot } from '../../lib/findProject';
+import { listMenus, listGroups } from '../../lib/menu/edit';
 import * as fs from 'fs';
-import { CODICONS, isKnownCodicon } from '../data/codicons';
+import { CODICONS, isKnownCodicon } from '../../data/codicons';
 
 const NONE_SENTINEL = '(none)';
 const ROOT_SENTINEL = '(root)';

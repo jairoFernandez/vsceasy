@@ -1,7 +1,7 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
-import { addPanel } from '../lib/addPanel';
-import { findProjectRoot, findTemplatesRoot } from '../lib/findProject';
+import { addPanel } from '../../lib/panel/add';
+import { findProjectRoot, findTemplatesRoot } from '../../lib/findProject';
 
 const addPanelCommand: Command = {
   name: 'add',

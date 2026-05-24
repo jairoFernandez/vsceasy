@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
-import { substitute } from './scaffold';
-import { addCommand } from './addCommand';
+import { substitute } from '../scaffold';
+import { addCommand } from '../command/add';
 
 export interface AddStatusBarOptions {
   name: string;

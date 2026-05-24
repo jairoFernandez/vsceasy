@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
-import { substitute } from './scaffold';
-import { editMenu } from './editMenu';
+import { substitute } from '../scaffold';
+import { editMenu } from '../menu/edit';
 
 export interface AddCommandOptions {
   /** Command id — camelCase. Becomes file basename and command suffix. */

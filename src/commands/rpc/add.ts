@@ -1,8 +1,8 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
-import { addRpcMethod } from '../lib/addRpcMethod';
-import { findProjectRoot } from '../lib/findProject';
-import { listPanels } from '../lib/editMenu';
+import { addRpcMethod } from '../../lib/rpc/add';
+import { findProjectRoot } from '../../lib/findProject';
+import { listPanels } from '../../lib/menu/edit';
 
 const addRpcMethodCommand: Command = {
   name: 'add',
