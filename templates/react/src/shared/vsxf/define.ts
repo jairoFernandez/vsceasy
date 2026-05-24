@@ -30,6 +30,21 @@ export interface CommandDef {
   category?: string;
   /** Handler. Receives vscode + extension context. */
   run: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext, ...args: unknown[]) => unknown | Promise<unknown>;
+  /**
+   * Keyboard shortcut. String shorthand uses the same key on every platform.
+   * Object form supports `mac` override and a VS Code `when` clause.
+   * Written to package.json#contributes.keybindings by `bun run gen`.
+   */
+  keybinding?: string | KeybindingDef | (string | KeybindingDef)[];
+}
+
+export interface KeybindingDef {
+  /** Default key combo (e.g. 'ctrl+shift+h'). */
+  key: string;
+  /** Override combo on macOS (e.g. 'cmd+shift+h'). */
+  mac?: string;
+  /** VS Code context `when` clause (e.g. 'editorTextFocus'). */
+  when?: string;
 }
 
 export function definePanel<H extends Handlers = Handlers>(def: PanelDef<H>): PanelDef<H> {

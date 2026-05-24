@@ -17,6 +17,8 @@ export interface AddCommandOptions {
   group?: string;
   /** Codicon name shown next to menu entry. */
   icon?: string;
+  /** Keyboard shortcut (e.g. 'ctrl+shift+h'). Written into the command file. */
+  keybinding?: string;
   /** Project root. */
   projectRoot: string;
   /** Bundled templates root. */
@@ -51,6 +53,7 @@ export function addCommand(opts: AddCommandOptions): AddCommandResult {
     Name: Pascal,
     title,
     categoryLine: opts.category ? `\n  category: '${opts.category}',` : '',
+    keybindingLine: opts.keybinding ? `\n  keybinding: '${escapeQuotes(opts.keybinding)}',` : '',
   };
 
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -97,6 +100,10 @@ function runGen(cwd: string): boolean {
 function which(cmd: string): boolean {
   const r = spawnSync(process.platform === 'win32' ? 'where' : 'which', [cmd], { stdio: 'ignore' });
   return r.status === 0;
+}
+
+function escapeQuotes(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
 function normalizeCamel(s: string): string {

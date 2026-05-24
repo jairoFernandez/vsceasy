@@ -47,7 +47,10 @@ describe('CLI', () => {
     const textParam = cmd!.params.find((p) => p.name === 'text');
     expect(textParam?.required).toBe(true);
     const bindTo = cmd!.params.find((p) => p.name === 'bindTo');
-    expect((bindTo as any)?.options).toEqual(['command', 'panel', 'create new command']);
+    expect((bindTo as any)?.options).toEqual(['command', 'panel', 'create new command', 'menu']);
+    const menuParam = cmd!.params.find((p) => p.name === 'menu');
+    expect((menuParam as any).when({ bindTo: 'menu' })).toBe(true);
+    expect(Array.isArray((menuParam as any).itemParams)).toBe(true);
     const cmdParam = cmd!.params.find((p) => p.name === 'command');
     expect((cmdParam as any).when({ bindTo: 'command' })).toBe(true);
     expect((cmdParam as any).when({ bindTo: 'panel' })).toBe(false);

@@ -504,6 +504,41 @@ describe('addCommand', () => {
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 
+  test('writes keybinding field into command file when provided', async () => {
+    const project = await scaffoldProject();
+    addCommand({
+      name: 'kb',
+      keybinding: 'ctrl+shift+h',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const body = fs.readFileSync(path.join(project, 'src/commands/kb.ts'), 'utf8');
+    expect(body).toContain("keybinding: 'ctrl+shift+h'");
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('gen emits contributes.keybindings from command files', async () => {
+    const project = await scaffoldProject();
+    addCommand({
+      name: 'shortcutCmd',
+      keybinding: 'ctrl+shift+x',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const r = require('child_process').spawnSync('bun', ['scripts/gen.ts'], {
+      cwd: project,
+      stdio: 'pipe',
+    });
+    expect(r.status).toBe(0);
+    const pkg = JSON.parse(fs.readFileSync(path.join(project, 'package.json'), 'utf8'));
+    expect(pkg.contributes.keybindings).toBeDefined();
+    const kb = pkg.contributes.keybindings.find((k: any) => k.command.endsWith('.shortcutCmd'));
+    expect(kb?.key).toBe('ctrl+shift+x');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
   test('inserts menu entry when menuEntry provided', async () => {
     const project = await scaffoldProject();
     addMenu({ name: 'main', projectRoot: project, templatesRoot, runGen: false });
@@ -687,6 +722,30 @@ describe('addStatusBar', () => {
     expect(body).toContain('tooltipMarkdown: `### Title');
     expect(body).toContain('[Click](command:foo)');
     expect(body).not.toMatch(/\btooltip:/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('emits menu array with mixed command/panel/url items', async () => {
+    const project = await scaffoldProject();
+    const result = addStatusBar({
+      name: 'tools',
+      text: 'Tools',
+      menu: [
+        { label: '$(play) Run', command: 'hello' },
+        { label: '$(window) Dash', panel: 'dashboard', description: 'Open dashboard' },
+        { label: '$(book) Docs', url: 'https://example.com' },
+      ],
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const body = fs.readFileSync(result.created[0], 'utf8');
+    expect(body).toContain('menu: [');
+    expect(body).toContain("command: 'hello'");
+    expect(body).toContain("panel: 'dashboard'");
+    expect(body).toContain("url: 'https://example.com'");
+    expect(body).toContain("description: 'Open dashboard'");
+    expect(body).not.toMatch(/^\s*command:/m); // top-level command suppressed
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 

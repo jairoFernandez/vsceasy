@@ -79,14 +79,26 @@ function syncPackageJson(
   const pkg = JSON.parse(fs.readFileSync(PKG_PATH, 'utf8'));
   const contributes = (pkg.contributes ??= {});
   const cmds: Array<{ command: string; title: string; category?: string }> = [];
+  const keybindings: Array<{ command: string; key: string; mac?: string; when?: string }> = [];
 
   for (const c of commands) {
     const def = loadDef(path.join(COMMANDS_DIR, c.id + '.ts')) ?? loadDef(path.join(COMMANDS_DIR, c.id + '.tsx'));
+    const fullId = `${prefix}.${def?.id ?? c.id}`;
     cmds.push({
-      command: `${prefix}.${def?.id ?? c.id}`,
+      command: fullId,
       title: def?.title ?? c.id,
       category: def?.category ?? displayName,
     });
+    if (def?.keybindings) {
+      for (const kb of def.keybindings) {
+        keybindings.push({
+          command: fullId,
+          key: kb.key,
+          ...(kb.mac ? { mac: kb.mac } : {}),
+          ...(kb.when ? { when: kb.when } : {}),
+        });
+      }
+    }
   }
   for (const p of panels) {
     const def = loadDef(path.join(PANELS_DIR, p.id + '.ts')) ?? loadDef(path.join(PANELS_DIR, p.id + '.tsx'));
@@ -100,6 +112,11 @@ function syncPackageJson(
   }
 
   contributes.commands = cmds;
+  if (keybindings.length) {
+    contributes.keybindings = keybindings;
+  } else {
+    delete contributes.keybindings;
+  }
 
   // Menus → viewsContainers.activitybar + views.<containerId>
   const containers: Array<{ id: string; title: string; icon: string }> = [];
@@ -127,7 +144,13 @@ function syncPackageJson(
   fs.writeFileSync(PKG_PATH, JSON.stringify(pkg, null, 2) + '\n');
 }
 
-function loadDef(file: string): { id?: string; title?: string; category?: string; command?: any } | null {
+function loadDef(file: string): {
+  id?: string;
+  title?: string;
+  category?: string;
+  command?: any;
+  keybindings?: Array<{ key: string; mac?: string; when?: string }>;
+} | null {
   if (!fs.existsSync(file)) return null;
   const src = fs.readFileSync(file, 'utf8');
   const grab = (key: string) => {
@@ -138,7 +161,57 @@ function loadDef(file: string): { id?: string; title?: string; category?: string
     /\bcommand\s*:\s*false\b/.test(src) ? false :
     /\bcommand\s*:\s*true\b/.test(src) ? true :
     undefined;
-  return { id: grab('id'), title: grab('title'), category: grab('category'), command };
+  return {
+    id: grab('id'),
+    title: grab('title'),
+    category: grab('category'),
+    command,
+    keybindings: parseKeybindings(src),
+  };
+}
+
+/** Extract keybinding(s) declared on a defineCommand call. Supports string, object, or array shorthand. */
+function parseKeybindings(src: string): Array<{ key: string; mac?: string; when?: string }> {
+  // 1) Plain string:  keybinding: 'ctrl+shift+h'
+  const stringMatch = /\bkeybinding\s*:\s*(['"`])([^'"`]+)\1\s*,?/.exec(src);
+  if (stringMatch) return [{ key: stringMatch[2] }];
+
+  // 2) Single object:  keybinding: { key: '...', mac?: '...', when?: '...' }
+  const objMatch = /\bkeybinding\s*:\s*\{([^}]+)\}/.exec(src);
+  if (objMatch) {
+    const obj = parseKbObject(objMatch[1]);
+    return obj ? [obj] : [];
+  }
+
+  // 3) Array shorthand: keybinding: [ 'ctrl+a', { key: 'ctrl+b', mac: 'cmd+b' } ]
+  const arrMatch = /\bkeybinding\s*:\s*\[([\s\S]*?)\]/.exec(src);
+  if (arrMatch) {
+    const inner = arrMatch[1];
+    const out: Array<{ key: string; mac?: string; when?: string }> = [];
+    const strRe = /(['"`])([^'"`]+)\1/g;
+    const objRe = /\{([^}]+)\}/g;
+    let sm: RegExpExecArray | null;
+    while ((sm = strRe.exec(inner))) out.push({ key: sm[2] });
+    let om: RegExpExecArray | null;
+    while ((om = objRe.exec(inner))) {
+      const o = parseKbObject(om[1]);
+      if (o) out.push(o);
+    }
+    return out;
+  }
+  return [];
+}
+
+function parseKbObject(body: string): { key: string; mac?: string; when?: string } | null {
+  const grab = (key: string) => {
+    const m = new RegExp(`\\b${key}\\s*:\\s*(['"\`])((?:\\\\.|(?!\\1).)*)\\1`).exec(body);
+    return m?.[2];
+  };
+  const key = grab('key');
+  if (!key) return null;
+  const mac = grab('mac');
+  const when = grab('when');
+  return { key, ...(mac ? { mac } : {}), ...(when ? { when } : {}) };
 }
 
 interface MenuLoaded {

@@ -28,6 +28,12 @@ const addCommandCommand: Command = {
     },
     { name: 'category', description: 'Category prefix (defaults to extension displayName)', required: false, type: ParamType.Text },
     {
+      name: 'keybinding',
+      description: 'Keyboard shortcut (e.g. ctrl+shift+h or cmd+shift+h)',
+      required: false,
+      type: ParamType.Text,
+    },
+    {
       name: 'menuEntry',
       description: 'Insert a menu entry that runs this command',
       required: true,
@@ -84,6 +90,7 @@ const addCommandCommand: Command = {
         name,
         title: args.title,
         category: args.category,
+        keybinding: args.keybinding ? String(args.keybinding).trim() : undefined,
         menuEntry,
         group,
         icon,

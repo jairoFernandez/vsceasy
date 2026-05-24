@@ -31,7 +31,7 @@ const addStatusBarCommand: Command = {
       description: 'What to do on click',
       required: true,
       type: ParamType.List,
-      options: ['command', 'panel', 'create new command'],
+      options: ['command', 'panel', 'create new command', 'menu'],
       defaultValue: 'command',
     },
     {
@@ -61,6 +61,50 @@ const addStatusBarCommand: Command = {
       type: ParamType.Text,
       when: (a) => a.bindTo === 'create new command',
       defaultValue: (a: Record<string, any>) => a.text ?? '',
+    },
+    {
+      name: 'menu',
+      description: 'Items in the popup QuickPick (loop)',
+      required: true,
+      type: ParamType.Array,
+      when: (a) => a.bindTo === 'menu',
+      minItems: 1,
+      itemLabel: (it: any) => it?.label ?? 'item',
+      itemParams: [
+        { name: 'label', description: 'Label shown in the QuickPick', required: true, type: ParamType.Text },
+        {
+          name: 'kind',
+          description: 'Action kind',
+          required: true,
+          type: ParamType.List,
+          options: ['command', 'panel', 'url'],
+          defaultValue: 'command',
+        },
+        {
+          name: 'command',
+          description: 'Command to run',
+          required: true,
+          type: ParamType.List,
+          when: (a) => a.kind === 'command',
+          optionsLoader: () => listCommands(findProjectRoot()),
+        },
+        {
+          name: 'panel',
+          description: 'Panel to open',
+          required: true,
+          type: ParamType.List,
+          when: (a) => a.kind === 'panel',
+          optionsLoader: () => listPanels(findProjectRoot()),
+        },
+        {
+          name: 'url',
+          description: 'External URL',
+          required: true,
+          type: ParamType.Url,
+          when: (a) => a.kind === 'url',
+        },
+        { name: 'description', description: 'Inline secondary text (optional)', required: false, type: ParamType.Text },
+      ],
     },
     {
       name: 'tooltip',
@@ -94,8 +138,18 @@ const addStatusBarCommand: Command = {
 
       const isNewCmd = args.bindTo === 'create new command';
       const isPanel = args.bindTo === 'panel';
-      const commandId = !isNewCmd && !isPanel ? String(args.command) : undefined;
+      const isMenu = args.bindTo === 'menu';
+      const commandId = !isNewCmd && !isPanel && !isMenu ? String(args.command) : undefined;
       const panelId = isPanel ? String(args.panel) : undefined;
+      const menu = isMenu && Array.isArray(args.menu)
+        ? args.menu.map((it: any) => ({
+            label: String(it.label),
+            description: it.description ? String(it.description) : undefined,
+            command: it.kind === 'command' ? String(it.command) : undefined,
+            panel: it.kind === 'panel' ? String(it.panel) : undefined,
+            url: it.kind === 'url' ? String(it.url) : undefined,
+          }))
+        : undefined;
 
       const icon = args.icon ? String(args.icon).trim() : undefined;
       if (icon && !isKnownCodicon(icon)) {
@@ -112,6 +166,7 @@ const addStatusBarCommand: Command = {
         icon,
         command: commandId,
         panel: panelId,
+        menu,
         newCommandTitle: isNewCmd ? String(args.newCommandTitle) : undefined,
         projectRoot,
         templatesRoot,

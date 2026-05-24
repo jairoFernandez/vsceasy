@@ -16,6 +16,8 @@ export interface AddStatusBarOptions {
   command?: string;
   /** Panel id (basename in src/panels/). Takes precedence over command when set. */
   panel?: string;
+  /** QuickPick menu items shown on click. Overrides command/panel when set. */
+  menu?: Array<{ label: string; description?: string; detail?: string; command?: string; panel?: string; url?: string }>;
   /** When set, bootstraps a new command via addCommand lib and binds it. */
   newCommandTitle?: string;
   projectRoot: string;
@@ -72,9 +74,25 @@ export function addStatusBar(opts: AddStatusBarOptions): AddStatusBarResult {
       : opts.tooltip
         ? `\n  tooltip: '${escapeSingleQuotes(opts.tooltip)}',`
         : '',
-    commandLine: !opts.panel && commandId ? `\n  command: '${escapeSingleQuotes(commandId)}',` : '',
-    panelLine: opts.panel ? `\n  panel: '${escapeSingleQuotes(opts.panel)}',` : '',
+    commandLine: !opts.panel && !opts.menu && commandId ? `\n  command: '${escapeSingleQuotes(commandId)}',` : '',
+    panelLine: opts.panel && !opts.menu ? `\n  panel: '${escapeSingleQuotes(opts.panel)}',` : '',
   };
+
+  // menu line built via JSON5-ish object literal; injected manually
+  if (opts.menu && opts.menu.length > 0) {
+    const itemLines = opts.menu
+      .map((it) => {
+        const fields: string[] = [`label: '${escapeSingleQuotes(it.label)}'`];
+        if (it.description) fields.push(`description: '${escapeSingleQuotes(it.description)}'`);
+        if (it.detail) fields.push(`detail: '${escapeSingleQuotes(it.detail)}'`);
+        if (it.command) fields.push(`command: '${escapeSingleQuotes(it.command)}'`);
+        if (it.panel) fields.push(`panel: '${escapeSingleQuotes(it.panel)}'`);
+        if (it.url) fields.push(`url: '${escapeSingleQuotes(it.url)}'`);
+        return `    { ${fields.join(', ')} },`;
+      })
+      .join('\n');
+    vars.panelLine += `\n  menu: [\n${itemLines}\n  ],`;
+  }
 
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, substitute(fs.readFileSync(tplPath, 'utf8'), vars));
