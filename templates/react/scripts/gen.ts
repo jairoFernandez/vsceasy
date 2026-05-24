@@ -10,6 +10,7 @@ const SRC = path.join(ROOT, 'src');
 const PANELS_DIR = path.join(SRC, 'panels');
 const COMMANDS_DIR = path.join(SRC, 'commands');
 const MENUS_DIR = path.join(SRC, 'menus');
+const STATUS_BARS_DIR = path.join(SRC, 'statusBars');
 const OUT = path.join(SRC, 'extension', '_registry.ts');
 const PKG_PATH = path.join(ROOT, 'package.json');
 
@@ -36,6 +37,7 @@ function writeRegistry(
   panels: Discovered[],
   commands: Discovered[],
   menus: Discovered[],
+  statusBars: Discovered[],
   prefix: string,
 ) {
   const lines: string[] = [
@@ -44,6 +46,7 @@ function writeRegistry(
     ...panels.map((p, i) => `import panel${i} from '${p.importPath}';`),
     ...commands.map((c, i) => `import command${i} from '${c.importPath}';`),
     ...menus.map((m, i) => `import menu${i} from '${m.importPath}';`),
+    ...statusBars.map((s, i) => `import statusBar${i} from '${s.importPath}';`),
     '',
     'export const registry: Registry = {',
     `  prefix: ${JSON.stringify(prefix)},`,
@@ -55,6 +58,9 @@ function writeRegistry(
     '  },',
     '  menus: {',
     ...menus.map((m, i) => `    ${JSON.stringify(m.id)}: menu${i},`),
+    '  },',
+    '  statusBars: {',
+    ...statusBars.map((s, i) => `    ${JSON.stringify(s.id)}: statusBar${i},`),
     '  },',
     '};',
     '',
@@ -210,13 +216,14 @@ function main() {
   const panels = scan(PANELS_DIR, registryDir);
   const commands = scan(COMMANDS_DIR, registryDir);
   const menus = scan(MENUS_DIR, registryDir);
+  const statusBars = scan(STATUS_BARS_DIR, registryDir);
 
-  writeRegistry(panels, commands, menus, prefix);
+  writeRegistry(panels, commands, menus, statusBars, prefix);
   syncPackageJson(panels, commands, menus, prefix, displayName);
   ensurePanelHtml(panels);
 
   console.log(
-    `✓ vsxf gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s)`,
+    `✓ vsxf gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s)`,
   );
 }
 

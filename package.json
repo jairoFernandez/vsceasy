@@ -37,6 +37,6 @@
     "@types/vscode": "^1.43.2"
   },
   "dependencies": {
-    "@ideascol/cli-maker": "^2.0.1"
+    "@ideascol/cli-maker": "^2.1.1"
   }
 }

@@ -15,6 +15,51 @@ describe('CLI', () => {
     expect(nameParam?.required).toBe(true);
   });
 
+  test('addCommand command registered with required name + title default', () => {
+    const cmd = cli.getCommands().find((c) => c.name === 'addCommand');
+    expect(cmd).toBeDefined();
+    const nameParam = cmd!.params.find((p) => p.name === 'name');
+    expect(nameParam?.required).toBe(true);
+    const titleParam = cmd!.params.find((p) => p.name === 'title');
+    expect(typeof (titleParam as any)?.defaultValue).toBe('function');
+    const groupParam = cmd!.params.find((p) => p.name === 'group');
+    expect((groupParam as any).when({ menuEntry: '(none)' })).toBe(false);
+    expect((groupParam as any).when({ menuEntry: 'main' })).toBe(true);
+  });
+
+  test('addRpcMethod command registered with required panel + method', () => {
+    const cmd = cli.getCommands().find((c) => c.name === 'addRpcMethod');
+    expect(cmd).toBeDefined();
+    const panelParam = cmd!.params.find((p) => p.name === 'panel');
+    expect(panelParam?.required).toBe(true);
+    expect(typeof (panelParam as any)?.optionsLoader).toBe('function');
+    const methodParam = cmd!.params.find((p) => p.name === 'method');
+    expect(methodParam?.required).toBe(true);
+    const returnsParam = cmd!.params.find((p) => p.name === 'returns');
+    expect((returnsParam as any)?.defaultValue).toBe('void');
+  });
+
+  test('addStatusBar command registered with required name/text/command', () => {
+    const cmd = cli.getCommands().find((c) => c.name === 'addStatusBar');
+    expect(cmd).toBeDefined();
+    const nameParam = cmd!.params.find((p) => p.name === 'name');
+    expect(nameParam?.required).toBe(true);
+    const textParam = cmd!.params.find((p) => p.name === 'text');
+    expect(textParam?.required).toBe(true);
+    const cmdParam = cmd!.params.find((p) => p.name === 'command');
+    expect(typeof (cmdParam as any)?.optionsLoader).toBe('function');
+    const newTitleParam = cmd!.params.find((p) => p.name === 'newCommandTitle');
+    expect((newTitleParam as any).when({ command: '(create new)' })).toBe(true);
+    expect((newTitleParam as any).when({ command: 'foo' })).toBe(false);
+  });
+
+  test('doctor command registered with optional fix flag', () => {
+    const cmd = cli.getCommands().find((c) => c.name === 'doctor');
+    expect(cmd).toBeDefined();
+    const fixParam = cmd!.params.find((p) => p.name === 'fix');
+    expect(fixParam?.required).toBeFalsy();
+  });
+
   test('addPanel command registered with required name', () => {
     const cmd = cli.getCommands().find((c) => c.name === 'addPanel');
     expect(cmd).toBeDefined();

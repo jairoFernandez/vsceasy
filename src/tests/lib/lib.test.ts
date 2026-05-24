@@ -5,6 +5,10 @@ import * as os from 'os';
 import { scaffold, substitute } from '../../lib/scaffold';
 import { addPanel } from '../../lib/addPanel';
 import { addMenu } from '../../lib/addMenu';
+import { addCommand } from '../../lib/addCommand';
+import { addRpcMethod } from '../../lib/addRpcMethod';
+import { addStatusBar } from '../../lib/addStatusBar';
+import { runDoctor } from '../../lib/doctor';
 import { editMenu, insertItem, listGroups, listMenus, listPanels } from '../../lib/editMenu';
 import { findProjectRoot } from '../../lib/findProject';
 import { parseMenu, renderMenuTree } from '../../lib/menuTree';
@@ -426,5 +430,357 @@ export default defineMenu({
     }));
     expect(out).toContain('Misc');
     expect(out).toContain('← new');
+  });
+});
+
+describe('addCommand', () => {
+  const templatesRoot = path.resolve(__dirname, '../../../templates');
+
+  async function scaffoldProject(): Promise<string> {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-addcommand-'));
+    const target = path.join(tmp, 'demo');
+    await scaffold({
+      name: 'demo',
+      displayName: 'Demo',
+      description: 'demo',
+      publisher: 'acme',
+      ui: 'react',
+      targetDir: target,
+      templatesRoot,
+    });
+    return target;
+  }
+
+  test('creates command file with title default', async () => {
+    const project = await scaffoldProject();
+    const result = addCommand({ name: 'doStuff', projectRoot: project, templatesRoot, runGen: false });
+    const file = path.join(project, 'src/commands/doStuff.ts');
+    expect(result.created).toContain(file);
+    const body = fs.readFileSync(file, 'utf8');
+    expect(body).toContain("title: 'DoStuff'");
+    expect(body).not.toContain('{{');
+    expect(body).not.toContain('category:');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('respects custom title + category', async () => {
+    const project = await scaffoldProject();
+    addCommand({
+      name: 'sync',
+      title: 'Sync Now',
+      category: 'Demo',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const body = fs.readFileSync(path.join(project, 'src/commands/sync.ts'), 'utf8');
+    expect(body).toContain("title: 'Sync Now'");
+    expect(body).toContain("category: 'Demo'");
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('normalizes kebab name to camelCase filename', async () => {
+    const project = await scaffoldProject();
+    const result = addCommand({ name: 'do-cool-stuff', projectRoot: project, templatesRoot, runGen: false });
+    expect(result.created[0]).toMatch(/doCoolStuff\.ts$/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('refuses if command file exists', async () => {
+    const project = await scaffoldProject();
+    addCommand({ name: 'dup', projectRoot: project, templatesRoot, runGen: false });
+    expect(() =>
+      addCommand({ name: 'dup', projectRoot: project, templatesRoot, runGen: false }),
+    ).toThrow(/already exists/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('rejects invalid name', async () => {
+    const project = await scaffoldProject();
+    expect(() =>
+      addCommand({ name: '---', projectRoot: project, templatesRoot, runGen: false }),
+    ).toThrow(/Invalid command name/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('inserts menu entry when menuEntry provided', async () => {
+    const project = await scaffoldProject();
+    addMenu({ name: 'main', projectRoot: project, templatesRoot, runGen: false });
+    const result = addCommand({
+      name: 'ping',
+      menuEntry: 'main',
+      icon: 'play',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    expect(result.menuUpdated).toBe(true);
+    const menuBody = fs.readFileSync(path.join(project, 'src/menus/main.ts'), 'utf8');
+    expect(menuBody).toContain("command: 'ping'");
+    expect(menuBody).toContain("icon: 'play'");
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+});
+
+describe('addRpcMethod', () => {
+  const templatesRoot = path.resolve(__dirname, '../../../templates');
+
+  async function scaffoldProject(): Promise<string> {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-addrpc-'));
+    const target = path.join(tmp, 'demo');
+    await scaffold({
+      name: 'demo',
+      displayName: 'Demo',
+      description: 'demo',
+      publisher: 'acme',
+      ui: 'react',
+      targetDir: target,
+      templatesRoot,
+    });
+    return target;
+  }
+
+  test('adds method to existing api interface + rpc handler', async () => {
+    const project = await scaffoldProject();
+    const result = addRpcMethod({
+      panel: 'dashboard',
+      method: 'getCount',
+      paramSig: 'limit: number',
+      returns: 'number',
+      projectRoot: project,
+    });
+    expect(result.interfaceCreated).toBe(false);
+    expect(result.rpcBlockCreated).toBe(false);
+    expect(result.webviewSnippet).toBe('const result = await api.getCount(limit);');
+    const apiBody = fs.readFileSync(result.apiFile, 'utf8');
+    expect(apiBody).toMatch(/interface DashboardApi[\s\S]*getCount\(limit: number\): Promise<number>;[\s\S]*\}/);
+    const panelBody = fs.readFileSync(result.panelFile, 'utf8');
+    expect(panelBody).toContain('async getCount(limit)');
+    expect(panelBody).toContain("throw new Error('Not implemented')");
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('wraps already-Promise return type only once', async () => {
+    const project = await scaffoldProject();
+    const result = addRpcMethod({
+      panel: 'dashboard',
+      method: 'fetchThing',
+      returns: 'Promise<string[]>',
+      projectRoot: project,
+    });
+    const apiBody = fs.readFileSync(result.apiFile, 'utf8');
+    expect(apiBody).toContain('fetchThing(): Promise<string[]>;');
+    expect(apiBody).not.toContain('Promise<Promise<');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('refuses duplicate method', async () => {
+    const project = await scaffoldProject();
+    addRpcMethod({ panel: 'dashboard', method: 'getCount', returns: 'number', projectRoot: project });
+    expect(() =>
+      addRpcMethod({ panel: 'dashboard', method: 'getCount', returns: 'number', projectRoot: project }),
+    ).toThrow(/already declared/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('rejects non-camelCase method', async () => {
+    const project = await scaffoldProject();
+    expect(() =>
+      addRpcMethod({ panel: 'dashboard', method: 'Get-Count', projectRoot: project }),
+    ).toThrow(/Invalid method name/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('creates interface + rpc block when panel has neither', async () => {
+    const project = await scaffoldProject();
+    // Add a fresh panel without api
+    addPanel({ name: 'plain', withApi: false, projectRoot: project, templatesRoot, runGen: false });
+    const result = addRpcMethod({
+      panel: 'plain',
+      method: 'ping',
+      returns: 'string',
+      projectRoot: project,
+    });
+    expect(result.interfaceCreated).toBe(true);
+    expect(result.rpcBlockCreated).toBe(true);
+    const apiBody = fs.readFileSync(result.apiFile, 'utf8');
+    expect(apiBody).toMatch(/export interface PlainApi \{[\s\S]*ping\(\): Promise<string>;[\s\S]*\}/);
+    const panelBody = fs.readFileSync(result.panelFile, 'utf8');
+    expect(panelBody).toContain("import type { PlainApi } from '../shared/api'");
+    expect(panelBody).toContain('definePanel<PlainApi>');
+    expect(panelBody).toContain('rpc: (vscode) => ({');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+});
+
+describe('addStatusBar', () => {
+  const templatesRoot = path.resolve(__dirname, '../../../templates');
+
+  async function scaffoldProject(): Promise<string> {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-addsb-'));
+    const target = path.join(tmp, 'demo');
+    await scaffold({
+      name: 'demo',
+      displayName: 'Demo',
+      description: 'demo',
+      publisher: 'acme',
+      ui: 'react',
+      targetDir: target,
+      templatesRoot,
+    });
+    return target;
+  }
+
+  test('creates status bar file binding to existing command', async () => {
+    const project = await scaffoldProject();
+    const result = addStatusBar({
+      name: 'buildBtn',
+      text: 'Build',
+      command: 'hello',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const file = path.join(project, 'src/statusBars/buildBtn.ts');
+    expect(result.created).toContain(file);
+    const body = fs.readFileSync(file, 'utf8');
+    expect(body).toContain("text: 'Build'");
+    expect(body).toContain("command: 'hello'");
+    expect(body).toContain("alignment: 'left'");
+    expect(body).toContain('priority: 100');
+    expect(body).not.toContain('{{');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('bootstraps new command via newCommandTitle', async () => {
+    const project = await scaffoldProject();
+    const result = addStatusBar({
+      name: 'syncBtn',
+      text: 'Sync',
+      newCommandTitle: 'Run Sync',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    expect(result.commandCreated).toBe('syncBtnAction');
+    const cmdBody = fs.readFileSync(path.join(project, 'src/commands/syncBtnAction.ts'), 'utf8');
+    expect(cmdBody).toContain("title: 'Run Sync'");
+    const sbBody = fs.readFileSync(path.join(project, 'src/statusBars/syncBtn.ts'), 'utf8');
+    expect(sbBody).toContain("command: 'syncBtnAction'");
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('writes optional fields when present', async () => {
+    const project = await scaffoldProject();
+    addStatusBar({
+      name: 'warn',
+      text: 'careful',
+      alignment: 'right',
+      priority: 50,
+      tooltip: 'Heads up',
+      icon: 'warning',
+      command: 'hello',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const body = fs.readFileSync(path.join(project, 'src/statusBars/warn.ts'), 'utf8');
+    expect(body).toContain("icon: 'warning'");
+    expect(body).toContain("tooltip: 'Heads up'");
+    expect(body).toContain("alignment: 'right'");
+    expect(body).toContain('priority: 50');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('refuses duplicate', async () => {
+    const project = await scaffoldProject();
+    addStatusBar({ name: 'dup', text: 'x', command: 'hello', projectRoot: project, templatesRoot, runGen: false });
+    expect(() =>
+      addStatusBar({ name: 'dup', text: 'x', command: 'hello', projectRoot: project, templatesRoot, runGen: false }),
+    ).toThrow(/already exists/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+});
+
+describe('doctor', () => {
+  const templatesRoot = path.resolve(__dirname, '../../../templates');
+
+  async function scaffoldProject(): Promise<string> {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-doctor-'));
+    const target = path.join(tmp, 'demo');
+    await scaffold({
+      name: 'demo',
+      displayName: 'Demo',
+      description: 'demo',
+      publisher: 'acme',
+      ui: 'react',
+      targetDir: target,
+      templatesRoot,
+    });
+    return target;
+  }
+
+  test('greenfield project reports no errors', async () => {
+    const project = await scaffoldProject();
+    const report = runDoctor({ projectRoot: project });
+    expect(report.counts.error).toBe(0);
+    const engine = report.results.find((r) => r.id === 'engine');
+    expect(engine?.level).toBe('ok');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('detects RPC contract drift (missing handler)', async () => {
+    const project = await scaffoldProject();
+    // Inject extra method into DashboardApi that has no handler
+    const apiFile = path.join(project, 'src/shared/api.ts');
+    let api = fs.readFileSync(apiFile, 'utf8');
+    api = api.replace(/(interface DashboardApi[^{]*\{)/, '$1\n  missingMethod(): Promise<void>;');
+    fs.writeFileSync(apiFile, api);
+
+    const report = runDoctor({ projectRoot: project });
+    const drift = report.results.find((r) => r.id === 'rpc.dashboard');
+    expect(drift?.level).toBe('error');
+    expect(drift?.details?.some((d) => d.includes('missingMethod'))).toBe(true);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('detects orphan menu reference', async () => {
+    const project = await scaffoldProject();
+    addMenu({ name: 'main', projectRoot: project, templatesRoot, runGen: false });
+    const editMenuLib = require('../../lib/editMenu');
+    editMenuLib.editMenu({
+      projectRoot: project,
+      menuName: 'main',
+      runGen: false,
+      item: { label: 'Ghost', kind: 'command', target: 'nonexistent' },
+    });
+
+    const report = runDoctor({ projectRoot: project });
+    const menuCheck = report.results.find((r) => r.id === 'menu.main.refs');
+    expect(menuCheck?.level).toBe('error');
+    expect(menuCheck?.details?.some((d) => d.includes('nonexistent'))).toBe(true);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('flags missing engines.vscode', async () => {
+    const project = await scaffoldProject();
+    const pkgPath = path.join(project, 'package.json');
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    delete pkg.engines;
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+
+    const report = runDoctor({ projectRoot: project });
+    const engine = report.results.find((r) => r.id === 'engine');
+    expect(engine?.level).toBe('error');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('flags unknown codicon in menu', async () => {
+    const project = await scaffoldProject();
+    addMenu({ name: 'tools', icon: 'not-a-real-codicon', projectRoot: project, templatesRoot, runGen: false });
+    const report = runDoctor({ projectRoot: project });
+    const icons = report.results.find((r) => r.id === 'menu.tools.icons');
+    expect(icons?.level).toBe('warn');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 });

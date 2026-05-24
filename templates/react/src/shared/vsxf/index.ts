@@ -1,5 +1,5 @@
-export { definePanel, defineCommand, defineMenu } from './define';
-export type { PanelDef, CommandDef, MenuDef, MenuItem, MenuIcon, CodiconName } from './define';
+export { definePanel, defineCommand, defineMenu, defineStatusBar } from './define';
+export type { PanelDef, CommandDef, MenuDef, MenuItem, MenuIcon, StatusBarDef, CodiconName } from './define';
 export { bootstrap } from './bootstrap';
 export type { Registry } from './bootstrap';
 export {

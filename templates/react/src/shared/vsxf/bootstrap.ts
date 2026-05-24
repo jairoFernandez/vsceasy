@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import type { PanelDef, CommandDef, MenuDef, MenuItem } from './define';
+import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef } from './define';
 import { createRpcServer, webviewTransport } from './rpc';
 
 export interface Registry {
   panels: Record<string, PanelDef>;
   commands: Record<string, CommandDef>;
   menus?: Record<string, MenuDef>;
+  statusBars?: Record<string, StatusBarDef>;
   /** Command prefix from package.json (e.g. "myExt"). */
   prefix: string;
 }
@@ -35,7 +36,40 @@ export function bootstrap(registry: Registry) {
         registerMenu(context, registry, id, def);
       }
     }
+
+    if (registry.statusBars) {
+      for (const [id, def] of Object.entries(registry.statusBars)) {
+        registerStatusBar(context, registry, id, def);
+      }
+    }
   };
+}
+
+// --- Status bar items ---
+
+function registerStatusBar(
+  context: vscode.ExtensionContext,
+  registry: Registry,
+  id: string,
+  def: StatusBarDef,
+) {
+  const alignment = def.alignment === 'right'
+    ? vscode.StatusBarAlignment.Right
+    : vscode.StatusBarAlignment.Left;
+  const item = vscode.window.createStatusBarItem(alignment, def.priority ?? 100);
+  item.text = def.icon ? `$(${def.icon}) ${def.text}` : def.text;
+  if (def.tooltip) item.tooltip = def.tooltip;
+  if (def.command) {
+    // If the command id matches a registry command, prefix it; else assume it's a full vscode command id.
+    item.command = registry.commands[def.command]
+      ? `${registry.prefix}.${registry.commands[def.command].id ?? def.command}`
+      : def.command;
+  }
+  if (def.backgroundColor) {
+    item.backgroundColor = new vscode.ThemeColor(def.backgroundColor);
+  }
+  item.show();
+  context.subscriptions.push(item);
 }
 
 // --- Menus ---

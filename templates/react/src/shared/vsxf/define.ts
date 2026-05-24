@@ -85,3 +85,28 @@ export interface MenuDef {
 export function defineMenu(def: MenuDef): MenuDef {
   return def;
 }
+
+// --- Status Bar items ---
+
+export interface StatusBarDef {
+  /** Stable id. Default: file basename. */
+  id?: string;
+  /** Display text. May include `$(codicon)` syntax. */
+  text: string;
+  /** Tooltip on hover. */
+  tooltip?: string;
+  /** Optional codicon, prepended as `$(icon) text` when both present. */
+  icon?: CodiconName | (string & {});
+  /** Bar side. Default: 'left'. */
+  alignment?: 'left' | 'right';
+  /** Higher = leftmost on its side. Default: 100. */
+  priority?: number;
+  /** Command id to run on click (basename in src/commands/, or full vscode command id). */
+  command?: string;
+  /** Background color theme key (e.g. 'statusBarItem.warningBackground'). */
+  backgroundColor?: string;
+}
+
+export function defineStatusBar(def: StatusBarDef): StatusBarDef {
+  return def;
+}
