@@ -1,14 +1,9 @@
 import { CLI } from '@ideascol/cli-maker';
 
 import CommandCreate from './commands/createCommand';
-import CommandAddPanel from './commands/addPanelCommand';
-import CommandAddMenu from './commands/addMenuCommand';
-import CommandEditMenu from './commands/editMenuCommand';
-import CommandAddCommand from './commands/addCommandCommand';
-import CommandAddRpcMethod from './commands/addRpcMethodCommand';
-import CommandAddStatusBar from './commands/addStatusBarCommand';
 import CommandDoctor from './commands/doctorCommand';
 import CommandUpgrade from './commands/upgradeCommand';
+import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup } from './commands/groups';
 
 const cli = new CLI(
   '@ideascol/vscode-extension-framework',
@@ -30,12 +25,11 @@ const cli = new CLI(
 );
 
 cli.command(CommandCreate);
-cli.command(CommandAddPanel);
-cli.command(CommandAddMenu);
-cli.command(CommandEditMenu);
-cli.command(CommandAddCommand);
-cli.command(CommandAddRpcMethod);
-cli.command(CommandAddStatusBar);
+cli.command(PanelGroup);
+cli.command(MenuGroup);
+cli.command(CommandGroup);
+cli.command(RpcGroup);
+cli.command(StatusBarGroup);
 cli.command(CommandDoctor);
 cli.command(CommandUpgrade);
 

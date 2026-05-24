@@ -22,7 +22,7 @@ function readMenuSource(projectRoot: string, name: string): string | null {
 }
 
 const editMenuCommand: Command = {
-  name: 'editMenu',
+  name: 'edit',
   description: 'Add an item (panel, command, URL, or group) to an existing menu',
   params: [
     {

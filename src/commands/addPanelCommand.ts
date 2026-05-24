@@ -4,7 +4,7 @@ import { addPanel } from '../lib/addPanel';
 import { findProjectRoot, findTemplatesRoot } from '../lib/findProject';
 
 const addPanelCommand: Command = {
-  name: 'addPanel',
+  name: 'add',
   description: 'Add a new panel to an existing vsxf extension project',
   params: [
     { name: 'name', description: 'Panel id (e.g. settings)', required: true, type: ParamType.Text },

@@ -6,8 +6,8 @@ import { listCommands, listPanels } from '../lib/editMenu';
 import { CODICONS, isKnownCodicon } from '../data/codicons';
 
 const addStatusBarCommand: Command = {
-  name: 'addStatusBar',
-  description: 'Add a status bar item bound to a command',
+  name: 'add',
+  description: 'Add a status bar item bound to a command, panel, or popup menu',
   params: [
     { name: 'name', description: 'Status bar id (camelCase, e.g. buildBtn)', required: true, type: ParamType.Text },
     { name: 'text', description: 'Display text shown in the status bar', required: true, type: ParamType.Text },

@@ -5,7 +5,7 @@ import { findProjectRoot, findTemplatesRoot } from '../lib/findProject';
 import { CODICONS, isKnownCodicon } from '../data/codicons';
 
 const addMenuCommand: Command = {
-  name: 'addMenu',
+  name: 'add',
   description: 'Add a sidebar menu (activity bar icon + tree view) to an existing vsxf project',
   params: [
     { name: 'name', description: 'Menu id (e.g. main)', required: true, type: ParamType.Text },

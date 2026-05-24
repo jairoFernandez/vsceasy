@@ -5,7 +5,7 @@ import { findProjectRoot } from '../lib/findProject';
 import { listPanels } from '../lib/editMenu';
 
 const addRpcMethodCommand: Command = {
-  name: 'addRpcMethod',
+  name: 'add',
   description: 'Add a typed RPC method to a panel — extends shared/api.ts + handler stub in the panel',
   params: [
     {

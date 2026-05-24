@@ -1,0 +1,26 @@
+import { Command } from '@ideascol/cli-maker';
+import AddPanel from './addPanelCommand';
+import AddMenu from './addMenuCommand';
+import EditMenu from './editMenuCommand';
+import AddCommand from './addCommandCommand';
+import AddRpcMethod from './addRpcMethodCommand';
+import AddStatusBar from './addStatusBarCommand';
+
+function group(name: string, description: string, subcommands: Command[]): Command {
+  return {
+    name,
+    description,
+    params: [],
+    subcommands,
+    action: () => {
+      console.log(`\nUse one of: ${subcommands.map((s) => s.name).join(', ')}\n`);
+      console.log(`Run \`vsxf ${name} <subcommand> --help\` for details.\n`);
+    },
+  };
+}
+
+export const PanelGroup = group('panel', 'Manage panels (webview + RPC bridge)', [AddPanel]);
+export const MenuGroup = group('menu', 'Manage sidebar menus (activity bar tree views)', [AddMenu, EditMenu]);
+export const CommandGroup = group('command', 'Manage palette commands', [AddCommand]);
+export const RpcGroup = group('rpc', 'Manage typed RPC methods on panels', [AddRpcMethod]);
+export const StatusBarGroup = group('statusBar', 'Manage status bar items', [AddStatusBar]);
