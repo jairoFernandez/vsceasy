@@ -290,7 +290,7 @@ function checkContributesSync(root: string, pkg: any): CheckResult {
   const commands = new Set(listCommands(root));
   const panels = new Set(listPanels(root));
   const stale: string[] = [];
-  const prefix: string = pkg?.vsxf?.commandPrefix
+  const prefix: string = pkg?.vsceasy?.commandPrefix
     ?? pkg.name?.replace(/^@[^/]+\//, '').replace(/[^a-zA-Z0-9]+/g, '')
     ?? '';
   for (const c of contributes.commands ?? []) {

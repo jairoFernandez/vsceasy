@@ -13,7 +13,7 @@ function findSub(group: string, sub: string): Command | undefined {
 
 describe('CLI', () => {
   test('basic metadata', () => {
-    expect(cli.getName()).toBe('@ideascol/vscode-extension-framework');
+    expect(cli.getName()).toBe('vsceasy');
     expect(cli.getOptions()?.version).toBe('0.1.0');
   });
 

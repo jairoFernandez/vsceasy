@@ -1,4 +1,4 @@
-import { defineSubpanel } from '../shared/vsxf';
+import { defineSubpanel } from '../shared/vsceasy';
 {{apiImport}}
 export default defineSubpanel{{apiGeneric}}({
   title: '{{title}}',

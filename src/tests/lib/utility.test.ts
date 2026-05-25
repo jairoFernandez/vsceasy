@@ -16,7 +16,7 @@ import { parseMenu, renderMenuTree } from '../../lib/menuTree';
 
 describe('scaffold', () => {
   test('creates a project with substituted placeholders', async () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-test-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-test-'));
     const target = path.join(tmp, 'demo');
     const templatesRoot = path.resolve(__dirname, '../../../templates');
 
@@ -43,10 +43,10 @@ describe('scaffold', () => {
     expect(ext).toContain('bootstrap(registry)');
     expect(ext).not.toContain('{{');
 
-    const codiconTypes = fs.readFileSync(path.join(target, 'src/shared/vsxf/codiconNames.ts'), 'utf8');
+    const codiconTypes = fs.readFileSync(path.join(target, 'src/shared/vsceasy/codiconNames.ts'), 'utf8');
     expect(codiconTypes).toContain('export type CodiconName');
     expect(codiconTypes).toContain("'rocket'");
-    const defineSrc = fs.readFileSync(path.join(target, 'src/shared/vsxf/define.ts'), 'utf8');
+    const defineSrc = fs.readFileSync(path.join(target, 'src/shared/vsceasy/define.ts'), 'utf8');
     expect(defineSrc).toContain("from './codiconNames'");
     expect(defineSrc).toContain('CodiconName');
 
@@ -54,7 +54,7 @@ describe('scaffold', () => {
   });
 
   test('refuses non-empty target dir', async () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-test-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-test-'));
     fs.writeFileSync(path.join(tmp, 'existing.txt'), 'hi');
     const templatesRoot = path.resolve(__dirname, '../../../templates');
     await expect(
@@ -72,8 +72,8 @@ describe('scaffold', () => {
   });
 });
 describe('findProjectRoot', () => {
-  test('walks up to find vsxf project', async () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-find-'));
+  test('walks up to find vsceasy project', async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-find-'));
     const project = path.join(tmp, 'proj');
     fs.mkdirSync(project);
     fs.writeFileSync(
@@ -87,7 +87,7 @@ describe('findProjectRoot', () => {
   });
 
   test('throws when no project found', () => {
-    expect(() => findProjectRoot(os.tmpdir())).toThrow(/Not inside a vsxf project/);
+    expect(() => findProjectRoot(os.tmpdir())).toThrow(/Not inside a vsceasy project/);
   });
 });
 

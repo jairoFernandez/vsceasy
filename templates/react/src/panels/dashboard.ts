@@ -1,4 +1,4 @@
-import { definePanel } from '../shared/vsxf';
+import { definePanel } from '../shared/vsceasy';
 import type { DashboardApi } from '../shared/api';
 
 export default definePanel<DashboardApi>({

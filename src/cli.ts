@@ -6,7 +6,7 @@ import CommandUpgrade from './commands/upgrade';
 import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup, SubpanelGroup } from './commands/groups';
 
 const cli = new CLI(
-  '@ideascol/vscode-extension-framework',
+  'vsceasy',
   'Build VS Code extensions fast — React UI + typed RPC bridge + zero-config build.',
   {
     interactive: true,
@@ -14,7 +14,7 @@ const cli = new CLI(
     introAnimation: {
       enabled: true,
       preset: 'retro-space',
-      title: 'vsxf',
+      title: 'vsceasy',
       subtitle: 'VS Code Extension Framework',
     },
     defaultCommands: {

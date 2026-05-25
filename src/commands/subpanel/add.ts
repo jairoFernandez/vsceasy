@@ -16,7 +16,7 @@ const addSubpanelCommand: Command = {
       type: ParamType.List,
       optionsLoader: () => {
         const menus = listMenus(findProjectRoot());
-        if (menus.length === 0) throw new Error('No menus found. Run `vsxf menu add` first.');
+        if (menus.length === 0) throw new Error('No menus found. Run `vsceasy menu add` first.');
         return menus;
       },
     },

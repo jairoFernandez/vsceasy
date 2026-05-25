@@ -3,7 +3,7 @@ import * as path from 'path';
 
 /**
  * Walks up from `start` looking for a package.json whose `scripts.gen` matches
- * the vsxf-generated value. Returns the directory containing it.
+ * the vsceasy-generated value. Returns the directory containing it.
  */
 export function findProjectRoot(start: string = process.cwd()): string {
   let dir = path.resolve(start);
@@ -23,7 +23,7 @@ export function findProjectRoot(start: string = process.cwd()): string {
     }
     if (dir === root) {
       throw new Error(
-        `Not inside a vsxf project (no package.json with scripts.gen="bun scripts/gen.ts" found above ${start}).`,
+        `Not inside a vsceasy project (no package.json with scripts.gen="bun scripts/gen.ts" found above ${start}).`,
       );
     }
     dir = path.dirname(dir);

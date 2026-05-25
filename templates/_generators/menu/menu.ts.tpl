@@ -1,4 +1,4 @@
-import { defineMenu } from '../shared/vsxf';
+import { defineMenu } from '../shared/vsceasy';
 
 export default defineMenu({
   title: '{{title}}',

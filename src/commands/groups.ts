@@ -15,7 +15,7 @@ function group(name: string, description: string, subcommands: Command[]): Comma
     subcommands,
     action: () => {
       console.log(`\nUse one of: ${subcommands.map((s) => s.name).join(', ')}\n`);
-      console.log(`Run \`vsxf ${name} <subcommand> --help\` for details.\n`);
+      console.log(`Run \`vsceasy ${name} <subcommand> --help\` for details.\n`);
     },
   };
 }

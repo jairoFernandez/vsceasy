@@ -1,5 +1,5 @@
 {
-  "name": "@ideascol/vscode-extension-framework",
+  "name": "vsceasy",
   "version": "0.0.1",
   "description": "Framework para crear VSCode extensions rapido con UI React/Svelte/Vue/Vanilla, RPC tipado webview-extension, y file-based routing de panels/commands",
   "main": "dist/index.js",
@@ -16,8 +16,7 @@
   "license": "MIT",
   "type": "commonjs",
   "bin": {
-    "vsxf": "dist/bin/cli.js",
-    "vscode-extension-framework": "dist/bin/cli.js"
+    "vsceasy": "dist/bin/cli.js"
   },
   "types": "dist/index.d.ts",
   "files": [

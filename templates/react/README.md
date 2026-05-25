@@ -1,6 +1,6 @@
 # {{displayName}}
 
-Generated with [`@ideascol/vscode-extension-framework`](https://www.npmjs.com/package/@ideascol/vscode-extension-framework).
+Generated with [`vsceasy`](https://www.npmjs.com/package/vsceasy).
 
 ## Develop
 

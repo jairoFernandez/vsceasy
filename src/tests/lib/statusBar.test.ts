@@ -18,7 +18,7 @@ describe('addStatusBar', () => {
   const templatesRoot = path.resolve(__dirname, '../../../templates');
 
   async function scaffoldProject(): Promise<string> {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-addsb-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-addsb-'));
     const target = path.join(tmp, 'demo');
     await scaffold({
       name: 'demo',

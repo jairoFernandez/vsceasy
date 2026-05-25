@@ -18,7 +18,7 @@ describe('addMenu', () => {
   const templatesRoot = path.resolve(__dirname, '../../../templates');
 
   async function scaffoldProject(): Promise<string> {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-addmenu-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-addmenu-'));
     const target = path.join(tmp, 'demo');
     await scaffold({
       name: 'demo',
@@ -94,7 +94,7 @@ describe('editMenu', () => {
   const templatesRoot = path.resolve(__dirname, '../../../templates');
 
   async function scaffoldProject(): Promise<string> {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-editmenu-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-editmenu-'));
     const target = path.join(tmp, 'demo');
     await scaffold({
       name: 'demo',
@@ -214,7 +214,7 @@ function stripAnsi(s: string): string {
 }
 
 describe('menuTree', () => {
-  const sampleMenu = `import { defineMenu } from '../shared/vsxf';
+  const sampleMenu = `import { defineMenu } from '../shared/vsceasy';
 
 export default defineMenu({
   title: 'Example 1',

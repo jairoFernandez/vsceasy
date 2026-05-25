@@ -14,7 +14,7 @@ const COLORS = {
 
 const doctorCommand: Command = {
   name: 'doctor',
-  description: 'Diagnose a vsxf project: scripts, RPC contracts, menu refs, codicons, contributes sync',
+  description: 'Diagnose a vsceasy project: scripts, RPC contracts, menu refs, codicons, contributes sync',
   params: [
     {
       name: 'fix',
@@ -29,7 +29,7 @@ const doctorCommand: Command = {
       const wantFix = args.fix === true || args.fix === 'true';
       let report = runDoctor({ projectRoot });
 
-      console.log(`\n${COLORS.bold}vsxf doctor${COLORS.reset} — ${report.displayName} ${COLORS.dim}@ ${projectRoot}${COLORS.reset}\n`);
+      console.log(`\n${COLORS.bold}vsceasy doctor${COLORS.reset} — ${report.displayName} ${COLORS.dim}@ ${projectRoot}${COLORS.reset}\n`);
       for (const r of report.results) {
         printResult(r);
       }

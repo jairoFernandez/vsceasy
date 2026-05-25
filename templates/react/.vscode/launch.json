@@ -7,7 +7,7 @@
       "request": "launch",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-      "preLaunchTask": "vsxf: build"
+      "preLaunchTask": "vsceasy: build"
     },
     {
       "name": "Run Extension (auto-build)",
@@ -15,7 +15,7 @@
       "request": "launch",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-      "preLaunchTask": "vsxf: dev"
+      "preLaunchTask": "vsceasy: dev"
     }
   ]
 }

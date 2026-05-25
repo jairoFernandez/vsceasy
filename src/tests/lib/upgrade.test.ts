@@ -18,7 +18,7 @@ describe('upgrade', () => {
   const templatesRoot = path.resolve(__dirname, '../../../templates');
 
   async function scaffoldProject(): Promise<string> {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-upgrade-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-upgrade-'));
     const target = path.join(tmp, 'demo');
     await scaffold({
       name: 'demo',
@@ -42,10 +42,10 @@ describe('upgrade', () => {
 
   test('detects drift as would-update (dry-run)', async () => {
     const project = await scaffoldProject();
-    const bootstrapPath = path.join(project, 'src/shared/vsxf/bootstrap.ts');
+    const bootstrapPath = path.join(project, 'src/shared/vsceasy/bootstrap.ts');
     fs.writeFileSync(bootstrapPath, '// stale content\n');
     const result = upgrade({ projectRoot: project, templatesRoot, apply: false });
-    const change = result.changes.find((c) => c.path === 'src/shared/vsxf/bootstrap.ts');
+    const change = result.changes.find((c) => c.path === 'src/shared/vsceasy/bootstrap.ts');
     expect(change?.status).toBe('would-update');
     // File untouched in dry-run
     expect(fs.readFileSync(bootstrapPath, 'utf8')).toBe('// stale content\n');
@@ -54,23 +54,23 @@ describe('upgrade', () => {
 
   test('apply=true overwrites drifted file', async () => {
     const project = await scaffoldProject();
-    const bootstrapPath = path.join(project, 'src/shared/vsxf/bootstrap.ts');
+    const bootstrapPath = path.join(project, 'src/shared/vsceasy/bootstrap.ts');
     fs.writeFileSync(bootstrapPath, '// stale\n');
     const result = upgrade({ projectRoot: project, templatesRoot, apply: true, runGen: false });
-    const change = result.changes.find((c) => c.path === 'src/shared/vsxf/bootstrap.ts');
+    const change = result.changes.find((c) => c.path === 'src/shared/vsceasy/bootstrap.ts');
     expect(change?.status).toBe('updated');
-    const sourcePath = path.join(templatesRoot, 'react/src/shared/vsxf/bootstrap.ts');
+    const sourcePath = path.join(templatesRoot, 'react/src/shared/vsceasy/bootstrap.ts');
     expect(fs.readFileSync(bootstrapPath, 'utf8')).toBe(fs.readFileSync(sourcePath, 'utf8'));
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 
   test('apply creates missing file', async () => {
     const project = await scaffoldProject();
-    fs.unlinkSync(path.join(project, 'src/shared/vsxf/define.ts'));
+    fs.unlinkSync(path.join(project, 'src/shared/vsceasy/define.ts'));
     const result = upgrade({ projectRoot: project, templatesRoot, apply: true, runGen: false });
-    const change = result.changes.find((c) => c.path === 'src/shared/vsxf/define.ts');
+    const change = result.changes.find((c) => c.path === 'src/shared/vsceasy/define.ts');
     expect(change?.status).toBe('created');
-    expect(fs.existsSync(path.join(project, 'src/shared/vsxf/define.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(project, 'src/shared/vsceasy/define.ts'))).toBe(true);
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 });

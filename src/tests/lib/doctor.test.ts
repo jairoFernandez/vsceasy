@@ -18,7 +18,7 @@ describe('doctor', () => {
   const templatesRoot = path.resolve(__dirname, '../../../templates');
 
   async function scaffoldProject(): Promise<string> {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-doctor-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-doctor-'));
     const target = path.join(tmp, 'demo');
     await scaffold({
       name: 'demo',

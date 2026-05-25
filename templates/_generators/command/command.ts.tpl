@@ -1,4 +1,4 @@
-import { defineCommand } from '../shared/vsxf';
+import { defineCommand } from '../shared/vsceasy';
 
 export default defineCommand({
   title: '{{title}}',{{categoryLine}}{{keybindingLine}}

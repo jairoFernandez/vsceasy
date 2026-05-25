@@ -16,7 +16,7 @@ function readMenuSource(projectRoot: string, name: string): string | null {
 
 const addCommandCommand: Command = {
   name: 'add',
-  description: 'Add a command (registered in command palette) to an existing vsxf project',
+  description: 'Add a command (registered in command palette) to an existing vsceasy project',
   params: [
     { name: 'name', description: 'Command id (camelCase, e.g. doStuff)', required: true, type: ParamType.Text },
     {

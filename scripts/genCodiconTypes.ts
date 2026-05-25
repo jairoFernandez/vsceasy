@@ -2,7 +2,7 @@
 /**
  * Generates the CodiconName type union from src/data/codicons.ts.
  * Writes to:
- *   - templates/react/src/shared/vsxf/codiconNames.ts   (scaffolded into new projects)
+ *   - templates/react/src/shared/vsceasy/codiconNames.ts   (scaffolded into new projects)
  *
  * Run via `bun run gen:types` whenever src/data/codicons.ts changes.
  */
@@ -12,7 +12,7 @@ import { CODICONS } from '../src/data/codicons';
 
 const repoRoot = path.resolve(__dirname, '..');
 const targets = [
-  path.join(repoRoot, 'templates/react/src/shared/vsxf/codiconNames.ts'),
+  path.join(repoRoot, 'templates/react/src/shared/vsceasy/codiconNames.ts'),
 ];
 
 const names = Array.from(new Set(CODICONS.map((c) => c.name))).sort();

@@ -21,7 +21,7 @@ const COLORS = {
 
 const upgradeCommand: Command = {
   name: 'upgrade',
-  description: 'Sync framework-owned files (src/shared/vsxf/*, scripts/gen.ts) from the bundled templates',
+  description: 'Sync framework-owned files (src/shared/vsceasy/*, scripts/gen.ts) from the bundled templates',
   params: [
     {
       name: 'apply',
@@ -58,7 +58,7 @@ const upgradeCommand: Command = {
         runGen: !(args.skipGen === true || args.skipGen === 'true'),
       });
 
-      console.log(`\n${COLORS.bold}vsxf upgrade${COLORS.reset} ${COLORS.dim}— ${projectRoot}${COLORS.reset}\n`);
+      console.log(`\n${COLORS.bold}vsceasy upgrade${COLORS.reset} ${COLORS.dim}— ${projectRoot}${COLORS.reset}\n`);
 
       let updates = 0, creates = 0, inSync = 0, missing = 0;
       for (const c of result.changes) {

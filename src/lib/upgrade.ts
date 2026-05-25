@@ -7,12 +7,12 @@ import { spawnSync } from 'child_process';
  * because users are not expected to edit them.
  */
 const SYNC_PATHS: string[] = [
-  'src/shared/vsxf/define.ts',
-  'src/shared/vsxf/bootstrap.ts',
-  'src/shared/vsxf/rpc.ts',
-  'src/shared/vsxf/client.ts',
-  'src/shared/vsxf/index.ts',
-  'src/shared/vsxf/codiconNames.ts',
+  'src/shared/vsceasy/define.ts',
+  'src/shared/vsceasy/bootstrap.ts',
+  'src/shared/vsceasy/rpc.ts',
+  'src/shared/vsceasy/client.ts',
+  'src/shared/vsceasy/index.ts',
+  'src/shared/vsceasy/codiconNames.ts',
   'scripts/gen.ts',
   'vite.config.ts',
 ];

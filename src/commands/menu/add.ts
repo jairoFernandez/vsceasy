@@ -6,7 +6,7 @@ import { CODICONS, isKnownCodicon } from '../../data/codicons';
 
 const addMenuCommand: Command = {
   name: 'add',
-  description: 'Add a sidebar menu (activity bar icon + tree view) to an existing vsxf project',
+  description: 'Add a sidebar menu (activity bar icon + tree view) to an existing vsceasy project',
   params: [
     { name: 'name', description: 'Menu id (e.g. main)', required: true, type: ParamType.Text },
     { name: 'title', description: 'Title shown at the top of the sidebar panel', required: false, type: ParamType.Text },

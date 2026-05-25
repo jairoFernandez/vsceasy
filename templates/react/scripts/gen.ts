@@ -44,7 +44,7 @@ function writeRegistry(
 ) {
   const lines: string[] = [
     '// AUTO-GENERATED — do not edit. Run `bun run gen`.',
-    `import type { Registry } from '../shared/vsxf';`,
+    `import type { Registry } from '../shared/vsceasy';`,
     ...panels.map((p, i) => `import panel${i} from '${p.importPath}';`),
     ...commands.map((c, i) => `import command${i} from '${c.importPath}';`),
     ...menus.map((m, i) => `import menu${i} from '${m.importPath}';`),
@@ -331,7 +331,7 @@ function ensureBundleHtml(baseDir: string, entries: Discovered[]) {
 function main() {
   const pkg = JSON.parse(fs.readFileSync(PKG_PATH, 'utf8'));
   const prefix: string =
-    pkg.vsxf?.commandPrefix ?? pkg.name.replace(/^@[^/]+\//, '').replace(/[^a-zA-Z0-9]+/g, '');
+    pkg.vsceasy?.commandPrefix ?? pkg.name.replace(/^@[^/]+\//, '').replace(/[^a-zA-Z0-9]+/g, '');
   const displayName: string = pkg.displayName ?? pkg.name;
 
   const registryDir = path.dirname(OUT);
@@ -347,7 +347,7 @@ function main() {
   ensureSubpanelHtml(subpanels);
 
   console.log(
-    `✓ vsxf gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s), ${subpanels.length} subpanel(s)`,
+    `✓ vsceasy gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s), ${subpanels.length} subpanel(s)`,
   );
 }
 

@@ -5,7 +5,7 @@ import { findProjectRoot, findTemplatesRoot } from '../../lib/findProject';
 
 const addPanelCommand: Command = {
   name: 'add',
-  description: 'Add a new panel to an existing vsxf extension project',
+  description: 'Add a new panel to an existing vsceasy extension project',
   params: [
     { name: 'name', description: 'Panel id (e.g. settings)', required: true, type: ParamType.Text },
     { name: 'title', description: 'Tab title shown in VS Code', required: false, type: ParamType.Text },

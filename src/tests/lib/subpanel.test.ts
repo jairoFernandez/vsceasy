@@ -10,7 +10,7 @@ describe('addSubpanel', () => {
   const templatesRoot = path.resolve(__dirname, '../../../templates');
 
   async function scaffoldProject(): Promise<string> {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsxf-addwv-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-addwv-'));
     const target = path.join(tmp, 'demo');
     await scaffold({
       name: 'demo',

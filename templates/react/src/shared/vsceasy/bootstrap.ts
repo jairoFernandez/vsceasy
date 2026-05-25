@@ -121,7 +121,7 @@ function registerStatusBar(
       const suffix = capitalize(panelDef.id ?? def.panel);
       item.command = `${registry.prefix}.open${suffix}`;
     } else {
-      console.warn(`[vsxf] statusBar "${id}" references unknown panel "${def.panel}"`);
+      console.warn(`[vsceasy] statusBar "${id}" references unknown panel "${def.panel}"`);
     }
   } else if (def.command) {
     item.command = registry.commands[def.command]

@@ -35,7 +35,7 @@ export function addSubpanel(opts: AddSubpanelOptions): AddSubpanelResult {
 
   const menuFile = path.join(opts.projectRoot, 'src', 'menus', `${opts.menu}.ts`);
   if (!fs.existsSync(menuFile)) {
-    throw new Error(`Menu not found: src/menus/${opts.menu}.ts — run \`vsxf menu add\` first`);
+    throw new Error(`Menu not found: src/menus/${opts.menu}.ts — run \`vsceasy menu add\` first`);
   }
 
   const viewTs = path.join(opts.projectRoot, 'src', 'subpanels', `${name}.ts`);
@@ -59,7 +59,7 @@ export function addSubpanel(opts: AddSubpanelOptions): AddSubpanelResult {
     apiGeneric: withApi ? `<${apiName}>` : '',
     rpcBlock: withApi ? `\n  rpc: (vscode) => ({\n    // add RPC handlers here\n  }),` : '',
     apiBlock: withApi
-      ? `import { connectWebview } from '../../../shared/vsxf/client';\nimport type { ${apiName} } from '../../../shared/api';\n\nconst api = connectWebview<${apiName}>();\nvoid api;\n`
+      ? `import { connectWebview } from '../../../shared/vsceasy/client';\nimport type { ${apiName} } from '../../../shared/api';\n\nconst api = connectWebview<${apiName}>();\nvoid api;\n`
       : '',
   };
 

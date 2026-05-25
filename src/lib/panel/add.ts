@@ -54,7 +54,7 @@ export function addPanel(opts: AddPanelOptions): AddPanelResult {
     apiGeneric: withApi ? `<${apiName}>` : '',
     rpcBlock: withApi ? `\n  rpc: (vscode) => ({\n    // add RPC handlers here\n  }),` : '',
     apiBlock: withApi
-      ? `import { connectWebview } from '../../../shared/vsxf/client';\nimport type { ${apiName} } from '../../../shared/api';\n\nconst api = connectWebview<${apiName}>();\nvoid api;\n`
+      ? `import { connectWebview } from '../../../shared/vsceasy/client';\nimport type { ${apiName} } from '../../../shared/api';\n\nconst api = connectWebview<${apiName}>();\nvoid api;\n`
       : '',
   };
 

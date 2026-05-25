@@ -1,18 +1,18 @@
-# @ideascol/vscode-extension-framework — Architecture
+# vsceasy — Architecture
 
 Goal: build VS Code extensions fast. Zero boilerplate for panels, commands, webview UI, and extension↔webview messaging.
 
 ## Pieces
 
 ```
-@ideascol/vscode-extension-framework
+vsceasy
 ├── CLI                    → scaffold + dev + build commands
-├── @vsxf/runtime          → file-based loader, panel/command registry
-├── @vsxf/bridge           → typed RPC bridge (ext ↔ webview)
+├── @vsceasy/runtime          → file-based loader, panel/command registry
+├── @vsceasy/bridge           → typed RPC bridge (ext ↔ webview)
 └── templates/             → react | svelte | vue | vanilla
 ```
 
-Packages publish under `@ideascol/vsxf-*` (single repo, eventually a monorepo). Start as one package; split when stable.
+Packages publish under `@ideascol/vsceasy-*` (single repo, eventually a monorepo). Start as one package; split when stable.
 
 ## Generated project layout
 
@@ -29,7 +29,7 @@ my-extension/
 │   │   │           └── App.tsx
 │   │   └── api.ts            # shared RPC type contract
 │   └── shared/
-├── vsxf.config.ts            # publisher, displayName, activation
+├── vsceasy.config.ts            # publisher, displayName, activation
 └── package.json
 ```
 
@@ -39,7 +39,7 @@ my-extension/
 
 ```ts
 // src/extension/commands/hello.ts
-import { defineCommand } from '@ideascol/vsxf-runtime';
+import { defineCommand } from '@ideascol/vsceasy-runtime';
 export default defineCommand({
   id: 'myExt.hello',          // optional; inferred from path
   title: 'Hello World',
@@ -53,7 +53,7 @@ Loader scans `commands/`, auto-registers each export with `vscode.commands.regis
 
 ```ts
 // src/extension/panels/dashboard/panel.ts
-import { definePanel } from '@ideascol/vsxf-runtime';
+import { definePanel } from '@ideascol/vsceasy-runtime';
 import type { DashboardApi } from './api';
 
 export default definePanel<DashboardApi>({
@@ -72,7 +72,7 @@ UI side:
 
 ```tsx
 // src/extension/panels/dashboard/ui/App.tsx
-import { useRpc } from '@ideascol/vsxf-bridge/react';
+import { useRpc } from '@ideascol/vsceasy-bridge/react';
 import type { DashboardApi } from '../api';
 
 export default function App() {
@@ -104,8 +104,8 @@ Client API:
 
 - Extension code → `esbuild` → `dist/extension.js` (CJS, node target)
 - Each panel UI → `vite build` → `dist/webview/<panel>/`
-- `vsxf dev` runs both in watch; webview HMR via Vite dev server; extension hot-restart via `vscode --extensionDevelopmentPath`.
-- `vsxf build` → produces `.vsix` via `@vscode/vsce`.
+- `vsceasy dev` runs both in watch; webview HMR via Vite dev server; extension hot-restart via `vscode --extensionDevelopmentPath`.
+- `vsceasy build` → produces `.vsix` via `@vscode/vsce`.
 
 ## Theming
 
