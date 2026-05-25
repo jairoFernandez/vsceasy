@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { connectWebview } from '../../../shared/vsxf/client';
+import { connectWebview } from '../../../shared/vsceasy/client';
 import type { DashboardApi } from '../../../shared/api';
 
 const api = connectWebview<DashboardApi>();
