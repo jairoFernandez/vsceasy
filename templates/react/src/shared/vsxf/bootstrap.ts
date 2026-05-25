@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem } from './define';
+import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem, SubpanelDef } from './define';
 import { createRpcServer, webviewTransport } from './rpc';
 
 export interface Registry {
@@ -7,6 +7,7 @@ export interface Registry {
   commands: Record<string, CommandDef>;
   menus?: Record<string, MenuDef>;
   statusBars?: Record<string, StatusBarDef>;
+  subpanels?: Record<string, SubpanelDef>;
   /** Command prefix from package.json (e.g. "myExt"). */
   prefix: string;
 }
@@ -42,7 +43,45 @@ export function bootstrap(registry: Registry) {
         registerStatusBar(context, registry, id, def);
       }
     }
+
+    if (registry.subpanels) {
+      for (const [id, def] of Object.entries(registry.subpanels)) {
+        registerSubpanel(context, registry, id, def);
+      }
+    }
   };
+}
+
+// --- Webview Views (sidebar inline) ---
+
+function registerSubpanel(
+  context: vscode.ExtensionContext,
+  registry: Registry,
+  id: string,
+  def: SubpanelDef,
+) {
+  // Must match the view id gen.ts writes into package.json#views.<container>.
+  const viewId = `${registry.prefix}-${def.menu}-${def.id ?? id}`;
+  const provider: vscode.WebviewViewProvider = {
+    resolveWebviewView(view) {
+      view.webview.options = {
+        enableScripts: true,
+        localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview')],
+      };
+      const ui = def.ui ?? `subpanels/${def.id ?? id}`;
+      view.webview.html = renderHtml(view.webview, context, ui, def.title);
+      if (def.rpc) {
+        const handlers = def.rpc(vscode, context);
+        const server = createRpcServer(webviewTransport(view.webview), handlers);
+        view.onDidDispose(() => server.dispose());
+      }
+    },
+  };
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(viewId, provider, {
+      webviewOptions: { retainContextWhenHidden: def.retainContext ?? true },
+    }),
+  );
 }
 
 // --- Status bar items ---
@@ -266,8 +305,8 @@ function openPanel(context: vscode.ExtensionContext, prefix: string, id: string,
     },
   );
 
-  const ui = def.ui ?? def.id ?? id;
-  panel.webview.html = renderHtml(panel, context, ui, def.title);
+  const ui = def.ui ?? `panels/${def.id ?? id}`;
+  panel.webview.html = renderHtml(panel.webview, context, ui, def.title);
 
   if (def.rpc) {
     const handlers = def.rpc(vscode, context);
@@ -332,8 +371,7 @@ function resolveAssets(extensionUri: vscode.Uri, ui: string): { js: string[]; cs
   return { js, css };
 }
 
-function renderHtml(panel: vscode.WebviewPanel, context: vscode.ExtensionContext, ui: string, title: string): string {
-  const webview = panel.webview;
+function renderHtml(webview: vscode.Webview, context: vscode.ExtensionContext, ui: string, title: string): string {
   const root = vscode.Uri.joinPath(context.extensionUri, 'dist', 'webview');
   const { js, css } = resolveAssets(context.extensionUri, ui);
   const toUri = (rel: string) =>

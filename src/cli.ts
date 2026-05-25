@@ -3,7 +3,7 @@ import { CLI } from '@ideascol/cli-maker';
 import CommandCreate from './commands/create';
 import CommandDoctor from './commands/doctor';
 import CommandUpgrade from './commands/upgrade';
-import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup } from './commands/groups';
+import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup, SubpanelGroup } from './commands/groups';
 
 const cli = new CLI(
   '@ideascol/vscode-extension-framework',
@@ -30,6 +30,7 @@ cli.command(MenuGroup);
 cli.command(CommandGroup);
 cli.command(RpcGroup);
 cli.command(StatusBarGroup);
+cli.command(SubpanelGroup);
 cli.command(CommandDoctor);
 cli.command(CommandUpgrade);
 

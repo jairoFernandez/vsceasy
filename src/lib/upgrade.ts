@@ -14,6 +14,7 @@ const SYNC_PATHS: string[] = [
   'src/shared/vsxf/index.ts',
   'src/shared/vsxf/codiconNames.ts',
   'scripts/gen.ts',
+  'vite.config.ts',
 ];
 
 export type UpgradeStatus = 'in-sync' | 'would-create' | 'would-update' | 'created' | 'updated' | 'missing-source';

@@ -11,6 +11,7 @@ const PANELS_DIR = path.join(SRC, 'panels');
 const COMMANDS_DIR = path.join(SRC, 'commands');
 const MENUS_DIR = path.join(SRC, 'menus');
 const STATUS_BARS_DIR = path.join(SRC, 'statusBars');
+const SUBPANELS_DIR = path.join(SRC, 'subpanels');
 const OUT = path.join(SRC, 'extension', '_registry.ts');
 const PKG_PATH = path.join(ROOT, 'package.json');
 
@@ -38,6 +39,7 @@ function writeRegistry(
   commands: Discovered[],
   menus: Discovered[],
   statusBars: Discovered[],
+  subpanels: Discovered[],
   prefix: string,
 ) {
   const lines: string[] = [
@@ -47,6 +49,7 @@ function writeRegistry(
     ...commands.map((c, i) => `import command${i} from '${c.importPath}';`),
     ...menus.map((m, i) => `import menu${i} from '${m.importPath}';`),
     ...statusBars.map((s, i) => `import statusBar${i} from '${s.importPath}';`),
+    ...subpanels.map((w, i) => `import subpanel${i} from '${w.importPath}';`),
     '',
     'export const registry: Registry = {',
     `  prefix: ${JSON.stringify(prefix)},`,
@@ -62,6 +65,9 @@ function writeRegistry(
     '  statusBars: {',
     ...statusBars.map((s, i) => `    ${JSON.stringify(s.id)}: statusBar${i},`),
     '  },',
+    '  subpanels: {',
+    ...subpanels.map((w, i) => `    ${JSON.stringify(w.id)}: subpanel${i},`),
+    '  },',
     '};',
     '',
   ];
@@ -73,6 +79,7 @@ function syncPackageJson(
   panels: Discovered[],
   commands: Discovered[],
   menus: Discovered[],
+  subpanels: Discovered[],
   prefix: string,
   displayName: string,
 ) {
@@ -120,15 +127,34 @@ function syncPackageJson(
 
   // Menus → viewsContainers.activitybar + views.<containerId>
   const containers: Array<{ id: string; title: string; icon: string }> = [];
-  const views: Record<string, Array<{ id: string; name: string }>> = {};
+  const views: Record<string, Array<{ id: string; name: string; type?: 'webview' }>> = {};
+
+  // Index subpanels by menu they belong to
+  const wvByMenu: Record<string, Array<{ id: string; name: string }>> = {};
+  for (const w of subpanels) {
+    const def = loadSubpanelDef(path.join(SUBPANELS_DIR, w.id + '.ts'))
+      ?? loadSubpanelDef(path.join(SUBPANELS_DIR, w.id + '.tsx'));
+    if (!def?.menu) continue;
+    const viewId = `${prefix}-${def.menu}-${def.id ?? w.id}`;
+    const name = def.title ?? w.id;
+    (wvByMenu[def.menu] ??= []).push({ id: viewId, name });
+  }
+
   for (const m of menus) {
     const def = loadMenuDef(path.join(MENUS_DIR, m.id + '.ts')) ?? loadMenuDef(path.join(MENUS_DIR, m.id + '.tsx'));
     // VS Code requires viewsContainer / view ids to match /^[A-Za-z0-9_-]+$/ — no dots.
-    const containerId = `${prefix}-${def?.id ?? m.id}`;
+    const menuId = def?.id ?? m.id;
+    const containerId = `${prefix}-${menuId}`;
     const title = def?.title ?? m.id;
     const icon = resolveIconForPkg(def?.icon);
     containers.push({ id: containerId, title, icon });
-    views[containerId] = [{ id: containerId, name: title }];
+    const containerViews: Array<{ id: string; name: string; type?: 'webview' }> = [
+      { id: containerId, name: title }, // primary tree view
+    ];
+    for (const v of wvByMenu[menuId] ?? []) {
+      containerViews.push({ id: v.id, name: v.name, type: 'webview' });
+    }
+    views[containerId] = containerViews;
   }
   if (containers.length) {
     (contributes.viewsContainers ??= {}).activitybar = containers;
@@ -246,6 +272,22 @@ function loadMenuDef(file: string): MenuLoaded | null {
   return { id: grab('id'), title: grab('title'), icon };
 }
 
+interface SubpanelLoaded {
+  id?: string;
+  title?: string;
+  menu?: string;
+}
+
+function loadSubpanelDef(file: string): SubpanelLoaded | null {
+  if (!fs.existsSync(file)) return null;
+  const src = fs.readFileSync(file, 'utf8');
+  const grab = (key: string) => {
+    const m = new RegExp(`\\b${key}\\s*:\\s*(['"\`])((?:\\\\.|(?!\\1).)*)\\1`).exec(src);
+    return m?.[2];
+  };
+  return { id: grab('id'), title: grab('title'), menu: grab('menu') };
+}
+
 function resolveIconForPkg(icon: MenuLoaded['icon']): string {
   // VS Code's viewsContainers.activitybar.icon must be a string (path to SVG or codicon ref via "$(name)").
   if (!icon) return '$(symbol-misc)';
@@ -260,9 +302,16 @@ function capitalize(s: string): string {
 }
 
 function ensurePanelHtml(panels: Discovered[]) {
-  const webviewDir = path.join(SRC, 'webview', 'panels');
-  for (const p of panels) {
-    const dir = path.join(webviewDir, p.id);
+  ensureBundleHtml(path.join(SRC, 'webview', 'panels'), panels);
+}
+
+function ensureSubpanelHtml(views: Discovered[]) {
+  ensureBundleHtml(path.join(SRC, 'webview', 'subpanels'), views);
+}
+
+function ensureBundleHtml(baseDir: string, entries: Discovered[]) {
+  for (const e of entries) {
+    const dir = path.join(baseDir, e.id);
     if (!fs.existsSync(dir)) continue;
     const htmlPath = path.join(dir, 'index.html');
     if (fs.existsSync(htmlPath)) continue;
@@ -290,13 +339,15 @@ function main() {
   const commands = scan(COMMANDS_DIR, registryDir);
   const menus = scan(MENUS_DIR, registryDir);
   const statusBars = scan(STATUS_BARS_DIR, registryDir);
+  const subpanels = scan(SUBPANELS_DIR, registryDir);
 
-  writeRegistry(panels, commands, menus, statusBars, prefix);
-  syncPackageJson(panels, commands, menus, prefix, displayName);
+  writeRegistry(panels, commands, menus, statusBars, subpanels, prefix);
+  syncPackageJson(panels, commands, menus, subpanels, prefix, displayName);
   ensurePanelHtml(panels);
+  ensureSubpanelHtml(subpanels);
 
   console.log(
-    `✓ vsxf gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s)`,
+    `✓ vsxf gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s), ${subpanels.length} subpanel(s)`,
   );
 }
 

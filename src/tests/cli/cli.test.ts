@@ -19,7 +19,7 @@ describe('CLI', () => {
 
   test('top-level commands registered', () => {
     const top = cli.getCommands().map((c) => c.name).sort();
-    for (const expected of ['create', 'panel', 'menu', 'command', 'rpc', 'statusBar', 'doctor', 'upgrade']) {
+    for (const expected of ['create', 'panel', 'menu', 'command', 'rpc', 'statusBar', 'subpanel', 'doctor', 'upgrade']) {
       expect(top).toContain(expected);
     }
   });
@@ -79,6 +79,16 @@ describe('CLI', () => {
     const menuParam = add!.params.find((p) => p.name === 'menu');
     expect((menuParam as any).when({ bindTo: 'menu' })).toBe(true);
     expect(Array.isArray((menuParam as any).itemParams)).toBe(true);
+  });
+
+  test('subpanel group has add subcommand with required menu', () => {
+    const add = findSub('subpanel', 'add');
+    expect(add).toBeDefined();
+    const menuParam = add!.params.find((p) => p.name === 'menu');
+    expect(menuParam?.required).toBe(true);
+    expect(typeof (menuParam as any)?.optionsLoader).toBe('function');
+    const withApi = add!.params.find((p) => p.name === 'withApi');
+    expect((withApi as any)?.defaultValue).toBe('yes');
   });
 
   test('doctor has optional fix flag', () => {

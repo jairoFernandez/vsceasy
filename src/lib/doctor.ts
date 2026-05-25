@@ -43,6 +43,7 @@ export function runDoctor(opts: DoctorOptions): DoctorReport {
   results.push(...checkRpcContracts(root));
   results.push(...checkMenus(root));
   results.push(...checkStatusBars(root));
+  results.push(...checkSubpanels(root));
   results.push(checkContributesSync(root, pkg));
   results.push(checkGitignore(root));
 
@@ -249,6 +250,34 @@ function checkStatusBars(root: string): CheckResult[] {
       }
     }
     out.push({ id: `statusBar.${id}`, level: 'ok', message: `statusBar ${id}  OK` });
+  }
+  return out;
+}
+
+function checkSubpanels(root: string): CheckResult[] {
+  const dir = path.join(root, 'src', 'subpanels');
+  if (!fs.existsSync(dir)) return [];
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.ts'));
+  if (files.length === 0) return [];
+  const menus = new Set(listMenus(root));
+  const out: CheckResult[] = [];
+  for (const f of files) {
+    const id = f.replace(/\.ts$/, '');
+    const src = fs.readFileSync(path.join(dir, f), 'utf8');
+    const m = /\bmenu\s*:\s*(['"`])([^'"`]+)\1/.exec(src);
+    if (!m) {
+      out.push({ id: `subpanel.${id}`, level: 'error', message: `subpanel ${id}: missing \`menu\` field` });
+      continue;
+    }
+    if (!menus.has(m[2])) {
+      out.push({
+        id: `subpanel.${id}`,
+        level: 'error',
+        message: `subpanel ${id}: references unknown menu "${m[2]}"`,
+      });
+      continue;
+    }
+    out.push({ id: `subpanel.${id}`, level: 'ok', message: `subpanel ${id}  → ${m[2]}` });
   }
   return out;
 }

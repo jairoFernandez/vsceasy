@@ -14,12 +14,17 @@ export interface Transport {
 
 // --- Server (extension side) ---
 
-export type Handlers = Record<string, (...args: any[]) => any | Promise<any>>;
+/**
+ * Loose constraint: an interface with method members. Using `object` (instead
+ * of a Record with index signature) lets user-declared interfaces satisfy the
+ * constraint without forcing them to declare `[k: string]: any`.
+ */
+export type Handlers = object;
 
 export function createRpcServer<H extends Handlers>(transport: Transport, handlers: H) {
   const off = transport.onMessage(async (msg) => {
     if (msg.kind !== 'call') return;
-    const fn = handlers[msg.method];
+    const fn = (handlers as Record<string, (...args: any[]) => any>)[msg.method];
     if (!fn) {
       transport.send({
         id: msg.id,
@@ -53,7 +58,9 @@ export function createRpcServer<H extends Handlers>(transport: Transport, handle
 // --- Client (webview side) ---
 
 export type RpcClient<H extends Handlers> = {
-  [K in keyof H]: (...args: Parameters<H[K]>) => Promise<Awaited<ReturnType<H[K]>>>;
+  [K in keyof H]: H[K] extends (...args: infer A) => infer R
+    ? (...args: A) => Promise<Awaited<R>>
+    : never;
 } & {
   on(topic: string, handler: (payload: any) => void): () => void;
 };

@@ -84,7 +84,7 @@ Structure: `vsxf <resource> <verb> [flags]`. Every command runs interactively wh
 vsxf
 ├── create              scaffold a new extension project
 ├── panel
-│   └── add             new webview panel + optional typed RPC
+│   └── add             new webview panel + optional typed RPC (opens in editor area)
 ├── menu
 │   ├── add             new sidebar tree view (activity bar)
 │   └── edit            add an item (panel / command / url / group)
@@ -94,6 +94,8 @@ vsxf
 │   └── add             add a typed RPC method to a panel
 ├── statusBar
 │   └── add             status bar item → command / panel / menu popup
+├── subpanel
+│   └── add             inline sidebar section (lives under a menu container)
 ├── doctor              diagnose project + safe --fix
 └── upgrade             sync framework-owned files from the bundled templates
 ```
@@ -164,6 +166,20 @@ vsxf statusBar add \
   --tooltipMarkdown "### Copilot Pro\n\n**18% used**\n\n[Upgrade](command:myext.openDashboard)"
 ```
 
+### `subpanel add`
+Inline sidebar section (the GitLens / Copilot pattern — collapsible webview that lives inside a menu container). Each subpanel becomes a new section under the chosen activity-bar menu, stacked alongside the tree view and any other sibling subpanels.
+
+```bash
+vsxf subpanel add --name welcome --menu main --title "Welcome" --withApi yes
+```
+
+Files:
+- `src/subpanels/<name>.ts` (defineSubpanel with `menu: '<container>'`)
+- `src/webview/subpanels/<name>/{App.tsx,main.tsx}` (React bundle)
+- `<Name>ViewApi` appended to `src/shared/api.ts` when `withApi=yes`
+
+Multiple subpanels can reference the same `menu` — they render as stacked collapsible sections in that container.
+
 ### `doctor`
 Diagnose engine, scripts, panels, RPC contract sync, menu refs, codicons, status bar refs, package.json `contributes` drift, `.gitignore`.
 ```bash
@@ -180,7 +196,7 @@ vsxf upgrade --apply=true # write + auto-run `bun run gen`
 
 ## Convention
 
-Files in `src/{panels,commands,menus,statusBars}/*.ts` are auto-discovered by `bun run gen`, which produces `src/extension/_registry.ts` and keeps `package.json#contributes` in sync. The framework's runtime (`bootstrap(registry)`) wires everything into VS Code on activation.
+Files in `src/{panels,commands,menus,statusBars,subpanels}/*.ts` are auto-discovered by `bun run gen`, which produces `src/extension/_registry.ts` and keeps `package.json#contributes` in sync. The framework's runtime (`bootstrap(registry)`) wires everything into VS Code on activation.
 
 ## Architecture
 

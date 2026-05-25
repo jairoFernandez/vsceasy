@@ -101,6 +101,27 @@ export function defineMenu(def: MenuDef): MenuDef {
   return def;
 }
 
+// --- Webview Views (inline sidebar sections) ---
+
+export interface SubpanelDef<H extends Handlers = Handlers> {
+  /** Stable id. Default: file basename. */
+  id?: string;
+  /** Section header shown in the sidebar. */
+  title: string;
+  /** Menu (activity bar container) this view lives in — basename in src/menus/. */
+  menu: string;
+  /** Webview bundle name under dist/webview/<ui>/. Default: same as id. */
+  ui?: string;
+  /** Keep DOM alive when hidden. Default: true. */
+  retainContext?: boolean;
+  /** RPC handlers — receives vscode namespace + extension context. */
+  rpc?: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext) => H;
+}
+
+export function defineSubpanel<H extends Handlers = Handlers>(def: SubpanelDef<H>): SubpanelDef<H> {
+  return def;
+}
+
 // --- Status Bar items ---
 
 export interface StatusBarDef {

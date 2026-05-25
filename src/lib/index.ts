@@ -10,6 +10,8 @@ export { addRpcMethod } from './rpc/add';
 export type { AddRpcMethodOptions, AddRpcMethodResult } from './rpc/add';
 export { addStatusBar } from './statusBar/add';
 export type { AddStatusBarOptions, AddStatusBarResult } from './statusBar/add';
+export { addSubpanel } from './subpanel/add';
+export type { AddSubpanelOptions, AddSubpanelResult } from './subpanel/add';
 export { editMenu, listMenus, listPanels, listCommands, listGroups } from './menu/edit';
 export type { EditMenuOptions, EditMenuResult, NewMenuItem, MenuItemKind } from './menu/edit';
 export { runDoctor, applyFixes } from './doctor';
