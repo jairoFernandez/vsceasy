@@ -30,3 +30,5 @@ export { publishInit } from './publish/init';
 export type { PublishInitOptions, PublishInitResult } from './publish/init';
 export { addHelper, HELPER_KINDS } from './helper/add';
 export type { AddHelperOptions, AddHelperResult, HelperKind } from './helper/add';
+export { addJob } from './job/add';
+export type { AddJobOptions, AddJobResult, JobTrigger } from './job/add';

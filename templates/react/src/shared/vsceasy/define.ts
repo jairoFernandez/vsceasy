@@ -233,3 +233,37 @@ export interface TreeViewDef {
 export function defineTreeView(def: TreeViewDef): TreeViewDef {
   return def;
 }
+
+// --- Jobs (recurring / event-triggered tasks) ---
+
+export type JobSchedule =
+  /** Run every <interval>. Accepts ms number or duration string: "30s", "5m", "2h", "1d". */
+  | { every: string | number; runOnStart?: boolean }
+  /** Run at HH:MM local time, every day. */
+  | { dailyAt: string }
+  /** Run on a VS Code lifecycle event. */
+  | { on: 'startup' | 'saveDocument' | 'openDocument' | 'changeActiveEditor' | 'changeConfig' }
+  /** Run on filesystem changes matching a glob (relative to workspace). */
+  | { onFile: string };
+
+export interface JobDef {
+  /** Stable id. Default: file basename. */
+  id?: string;
+  /** Display label (used in logs + opt. status bar). */
+  title: string;
+  /** When to run. */
+  schedule: JobSchedule;
+  /**
+   * Skip if last successful run was less than this many ms ago. Stored in
+   * `context.globalState` under `vsceasy.job.<id>.lastRun`. Useful for jobs
+   * that should at most run every N hours regardless of how often the
+   * trigger fires.
+   */
+  minIntervalMs?: number;
+  /** The actual work. Errors are caught and logged — they never crash the host. */
+  run: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext) => unknown | Promise<unknown>;
+}
+
+export function defineJob(def: JobDef): JobDef {
+  return def;
+}

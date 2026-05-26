@@ -13,6 +13,7 @@ const MENUS_DIR = path.join(SRC, 'menus');
 const STATUS_BARS_DIR = path.join(SRC, 'statusBars');
 const SUBPANELS_DIR = path.join(SRC, 'subpanels');
 const TREE_VIEWS_DIR = path.join(SRC, 'treeViews');
+const JOBS_DIR = path.join(SRC, 'jobs');
 const OUT = path.join(SRC, 'extension', '_registry.ts');
 const PKG_PATH = path.join(ROOT, 'package.json');
 
@@ -42,6 +43,7 @@ function writeRegistry(
   statusBars: Discovered[],
   subpanels: Discovered[],
   treeViews: Discovered[],
+  jobs: Discovered[],
   prefix: string,
 ) {
   const lines: string[] = [
@@ -53,6 +55,7 @@ function writeRegistry(
     ...statusBars.map((s, i) => `import statusBar${i} from '${s.importPath}';`),
     ...subpanels.map((w, i) => `import subpanel${i} from '${w.importPath}';`),
     ...treeViews.map((t, i) => `import treeView${i} from '${t.importPath}';`),
+    ...jobs.map((j, i) => `import job${i} from '${j.importPath}';`),
     '',
     'export const registry: Registry = {',
     `  prefix: ${JSON.stringify(prefix)},`,
@@ -73,6 +76,9 @@ function writeRegistry(
     '  },',
     '  treeViews: {',
     ...treeViews.map((t, i) => `    ${JSON.stringify(t.id)}: treeView${i},`),
+    '  },',
+    '  jobs: {',
+    ...jobs.map((j, i) => `    ${JSON.stringify(j.id)}: job${i},`),
     '  },',
     '};',
     '',
@@ -374,14 +380,15 @@ function main() {
   const statusBars = scan(STATUS_BARS_DIR, registryDir);
   const subpanels = scan(SUBPANELS_DIR, registryDir);
   const treeViews = scan(TREE_VIEWS_DIR, registryDir);
+  const jobs = scan(JOBS_DIR, registryDir);
 
-  writeRegistry(panels, commands, menus, statusBars, subpanels, treeViews, prefix);
+  writeRegistry(panels, commands, menus, statusBars, subpanels, treeViews, jobs, prefix);
   syncPackageJson(panels, commands, menus, subpanels, treeViews, prefix, displayName);
   ensurePanelHtml(panels);
   ensureSubpanelHtml(subpanels);
 
   console.log(
-    `✓ vsceasy gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s), ${subpanels.length} subpanel(s), ${treeViews.length} treeView(s)`,
+    `✓ vsceasy gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s), ${subpanels.length} subpanel(s), ${treeViews.length} treeView(s), ${jobs.length} job(s)`,
   );
 }
 

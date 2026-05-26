@@ -422,6 +422,7 @@ function checkGenScript(root: string): CheckResult {
   const src = fs.readFileSync(genPath, 'utf8');
   const required = [
     { name: 'treeViews scan', needle: 'TREE_VIEWS_DIR' },
+    { name: 'jobs scan', needle: 'JOBS_DIR' },
     { name: 'commandPalette when', needle: 'commandPalette' },
   ];
   const missing = required.filter((r) => !src.includes(r.needle));

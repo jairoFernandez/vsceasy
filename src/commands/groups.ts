@@ -10,6 +10,7 @@ import AddTreeView from './treeView/add';
 import TestSetup from './test/setup';
 import PublishInit from './publish/init';
 import AddHelper from './helper/add';
+import AddJob from './job/add';
 
 function group(name: string, description: string, subcommands: Command[]): Command {
   return {
@@ -34,3 +35,4 @@ export const TreeViewGroup = group('treeview', 'Manage data-driven tree views (g
 export const TestGroup = group('test', 'Test scaffolding (Vitest)', [TestSetup]);
 export const PublishGroup = group('publish', 'Marketplace publish helpers', [PublishInit]);
 export const HelperGroup = group('helper', 'Generate runtime helpers (secrets, config, state, notifications)', [AddHelper]);
+export const JobGroup = group('job', 'Manage recurring / event-triggered jobs (interval, dailyAt, on, onFile)', [AddJob]);

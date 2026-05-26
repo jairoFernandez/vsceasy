@@ -104,6 +104,8 @@ vsceasy
 │   └── init            marketplace preflight (README, CHANGELOG, icon, vsce ls)
 ├── helper
 │   └── add             generate runtime helper (secrets | config | state | notifications)
+├── job
+│   └── add             recurring / event-triggered job (interval | dailyAt | on event | onFile)
 ├── doctor              diagnose project + safe --fix
 └── upgrade             sync framework-owned files from the bundled templates
 ```
@@ -227,6 +229,25 @@ const handlers: DashboardApi = { async listFiles() { return ['a.ts']; } };
 const api = mockRpcPair<DashboardApi>(handlers);
 expect(await api.listFiles('**/*.ts')).toEqual(['a.ts']);
 ```
+
+### `job add`
+Recurring or event-triggered background work. Runtime handles registration, cleanup on deactivate, and error isolation. Optional `--minIntervalMs` throttles re-runs across triggers (persisted in `context.globalState`).
+```bash
+# every 60s, runs on startup
+vsceasy job add --name sync --every 60s
+
+# at 02:30 local time daily
+vsceasy job add --name nightlyIndex --dailyAt 02:30
+
+# on document save (with at-most-once-per-hour throttle)
+vsceasy job add --name lint --on saveDocument --minIntervalMs 3600000
+
+# on filesystem changes (create | change | delete)
+vsceasy job add --name reindexMd --onFile "**/*.md"
+
+# event triggers: startup | saveDocument | openDocument | changeActiveEditor | changeConfig
+```
+`--every` accepts `30s`, `5m`, `2h`, `1d`, or a raw ms number. Jobs run only while the extension host is active — for cross-session schedules use OS cron or GitHub Actions.
 
 ### `helper add`
 Generates typed wrappers into `src/helpers/`. Cuts boilerplate for the four most-touched VS Code APIs.

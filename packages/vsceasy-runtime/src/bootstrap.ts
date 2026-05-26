@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem, SubpanelDef, TreeViewDef, TreeNode } from './define';
+import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem, SubpanelDef, TreeViewDef, TreeNode, JobDef, JobSchedule } from './define';
 import { createRpcServer, webviewTransport } from './rpc';
 
 export interface Registry {
@@ -9,6 +9,7 @@ export interface Registry {
   statusBars?: Record<string, StatusBarDef>;
   subpanels?: Record<string, SubpanelDef>;
   treeViews?: Record<string, TreeViewDef>;
+  jobs?: Record<string, JobDef>;
   /** Command prefix from package.json (e.g. "myExt"). */
   prefix: string;
 }
@@ -56,7 +57,118 @@ export function bootstrap(registry: Registry) {
         registerTreeView(context, registry, id, def);
       }
     }
+
+    if (registry.jobs) {
+      for (const [id, def] of Object.entries(registry.jobs)) {
+        registerJob(context, registry, id, def);
+      }
+    }
   };
+}
+
+// --- Jobs (recurring / event-triggered) ---
+
+function registerJob(
+  context: vscode.ExtensionContext,
+  registry: Registry,
+  id: string,
+  def: JobDef,
+) {
+  const jobId = def.id ?? id;
+  const lastRunKey = `vsceasy.job.${jobId}.lastRun`;
+
+  const exec = async (reason: string) => {
+    if (def.minIntervalMs) {
+      const last = (context.globalState.get<number>(lastRunKey) ?? 0);
+      if (Date.now() - last < def.minIntervalMs) return;
+    }
+    try {
+      await def.run(vscode, context);
+      await context.globalState.update(lastRunKey, Date.now());
+    } catch (err) {
+      console.error(`[vsceasy job:${jobId}] (${reason}) failed:`, err);
+    }
+  };
+
+  const sched = def.schedule;
+  if ('every' in sched) {
+    const ms = parseDuration(sched.every);
+    if (ms <= 0) throw new Error(`Job "${jobId}": invalid every=${sched.every}`);
+    if (sched.runOnStart !== false) void exec('startup');
+    const handle = setInterval(() => void exec('interval'), ms);
+    context.subscriptions.push({ dispose: () => clearInterval(handle) });
+    return;
+  }
+  if ('dailyAt' in sched) {
+    const [hStr, mStr] = sched.dailyAt.split(':');
+    const h = Number(hStr);
+    const m = Number(mStr ?? '0');
+    if (!Number.isFinite(h) || !Number.isFinite(m)) {
+      throw new Error(`Job "${jobId}": invalid dailyAt=${sched.dailyAt} (expected "HH:MM")`);
+    }
+    let timer: NodeJS.Timeout | undefined;
+    const scheduleNext = () => {
+      const next = new Date();
+      next.setHours(h, m, 0, 0);
+      if (next.getTime() <= Date.now()) next.setDate(next.getDate() + 1);
+      timer = setTimeout(async () => {
+        await exec('dailyAt');
+        scheduleNext();
+      }, next.getTime() - Date.now());
+    };
+    scheduleNext();
+    context.subscriptions.push({ dispose: () => { if (timer) clearTimeout(timer); } });
+    return;
+  }
+  if ('on' in sched) {
+    let sub: vscode.Disposable;
+    switch (sched.on) {
+      case 'startup':
+        void exec('startup');
+        return;
+      case 'saveDocument':
+        sub = vscode.workspace.onDidSaveTextDocument(() => void exec('saveDocument'));
+        break;
+      case 'openDocument':
+        sub = vscode.workspace.onDidOpenTextDocument(() => void exec('openDocument'));
+        break;
+      case 'changeActiveEditor':
+        sub = vscode.window.onDidChangeActiveTextEditor(() => void exec('changeActiveEditor'));
+        break;
+      case 'changeConfig':
+        sub = vscode.workspace.onDidChangeConfiguration(() => void exec('changeConfig'));
+        break;
+      default:
+        throw new Error(`Job "${jobId}": unknown on=${(sched as { on: string }).on}`);
+    }
+    context.subscriptions.push(sub);
+    return;
+  }
+  if ('onFile' in sched) {
+    const watcher = vscode.workspace.createFileSystemWatcher(sched.onFile);
+    watcher.onDidChange(() => void exec('onFile:change'));
+    watcher.onDidCreate(() => void exec('onFile:create'));
+    watcher.onDidDelete(() => void exec('onFile:delete'));
+    context.subscriptions.push(watcher);
+    return;
+  }
+}
+
+const DURATION_RE = /^(\d+)\s*(ms|s|m|h|d)?$/;
+
+function parseDuration(input: string | number): number {
+  if (typeof input === 'number') return input;
+  const m = DURATION_RE.exec(input.trim());
+  if (!m) return -1;
+  const n = Number(m[1]);
+  switch (m[2] ?? 'ms') {
+    case 'ms': return n;
+    case 's': return n * 1000;
+    case 'm': return n * 60_000;
+    case 'h': return n * 3_600_000;
+    case 'd': return n * 86_400_000;
+    default: return -1;
+  }
 }
 
 // --- Tree Views (data-driven) ---

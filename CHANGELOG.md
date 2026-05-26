@@ -5,6 +5,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 ## [Unreleased]
 
 ### Added
+- **`vsceasy job add`** — scaffold recurring / event-triggered jobs into `src/jobs/`. Schedules: `--every "60s"`, `--dailyAt "09:00"`, `--on startup|saveDocument|openDocument|changeActiveEditor|changeConfig`, `--onFile "**/*.md"`. Optional `--minIntervalMs` throttles re-runs via globalState. Runtime (`bootstrap`) auto-registers timers/listeners + cleanup on deactivate, catches errors so they don't crash the host.
 - **`command add --when <expr>`** — declare VS Code `when` clauses on commands. Auto-written to `contributes.commands[].enablement` and `contributes.menus.commandPalette` by `bun run gen`. Enables context-aware visibility (e.g. `editorTextFocus`, `resourceLangId == typescript`).
 - **`vsceasy helper add <kind>`** — generate typed runtime wrappers in `src/helpers/`:
   - `secrets` — `context.secrets.{get,set,delete}` typed and lazily initialized.
