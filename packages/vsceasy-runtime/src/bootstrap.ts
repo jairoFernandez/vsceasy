@@ -16,8 +16,27 @@ export interface Registry {
 
 const openPanels = new Map<string, vscode.WebviewPanel>();
 
-export function bootstrap(registry: Registry) {
-  return function activate(context: vscode.ExtensionContext) {
+export type ActivateHook = (
+  context: vscode.ExtensionContext,
+  vscodeNs: typeof import('vscode'),
+) => void | Promise<void>;
+
+export interface BootstrapOptions {
+  /**
+   * Hooks that receive the `ExtensionContext` on activate, before any panel /
+   * command / job is registered. Use to wire `initDb(context)`, `initSecrets(context)`,
+   * `initState(context)`, telemetry, etc.
+   */
+  onActivate?: ActivateHook[];
+  /** Symmetric: runs in reverse on deactivate. */
+  onDeactivate?: ActivateHook[];
+}
+
+export function bootstrap(registry: Registry, options: BootstrapOptions = {}) {
+  return async function activate(context: vscode.ExtensionContext) {
+    for (const hook of options.onActivate ?? []) {
+      await hook(context, vscode);
+    }
     for (const [id, def] of Object.entries(registry.commands)) {
       const cmd = `${registry.prefix}.${def.id ?? id}`;
       context.subscriptions.push(
@@ -62,6 +81,15 @@ export function bootstrap(registry: Registry) {
       for (const [id, def] of Object.entries(registry.jobs)) {
         registerJob(context, registry, id, def);
       }
+    }
+
+    // Register deactivate hooks as disposables — fire in reverse order on shutdown.
+    for (const hook of [...(options.onDeactivate ?? [])].reverse()) {
+      context.subscriptions.push({
+        dispose: () => {
+          void hook(context, vscode);
+        },
+      });
     }
   };
 }

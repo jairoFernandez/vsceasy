@@ -1,0 +1,94 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { substitute } from '../scaffold';
+import { assertId, assertNoOverwrite } from '../validate';
+import { dbExists } from '../db/init';
+
+export interface ModelField {
+  name: string;
+  /** Raw TS type. e.g. `string`, `number`, `string | null`, `Date`, `'a' | 'b'`. */
+  type: string;
+  /** Add `?` to the field name (becomes optional). */
+  optional?: boolean;
+  /** Mark as primary key. Exactly one field must be PK. Default: first field named `id`. */
+  primaryKey?: boolean;
+  /** Add to entity `indexes` (speeds up findOne by this field). */
+  indexed?: boolean;
+}
+
+export interface AddModelOptions {
+  name: string;
+  fields: ModelField[];
+  /** Plural identifier used as repository handle. Default: `${Name}s`. */
+  plural?: string;
+  /** Collection name persisted on disk. Default: `${plural.toLowerCase()}`. */
+  collection?: string;
+  projectRoot: string;
+  templatesRoot: string;
+}
+
+export interface AddModelResult {
+  created: string[];
+  primaryKey: string;
+  indexes: string[];
+}
+
+export function addModel(opts: AddModelOptions): AddModelResult {
+  const name = assertId('model name', normalizeCamel(opts.name));
+  const Name = name.charAt(0).toUpperCase() + name.slice(1);
+
+  if (!dbExists(opts.projectRoot)) {
+    throw new Error(
+      'No database initialized. Run `vsceasy db init` first, then re-run `vsceasy model add`.',
+    );
+  }
+  if (opts.fields.length === 0) {
+    throw new Error('Model needs at least one field. Re-run and add fields in the interactive loop.');
+  }
+
+  const Plural = opts.plural?.trim() || `${Name}s`;
+  const collection = opts.collection?.trim() || Plural.toLowerCase();
+
+  // PK resolution
+  const explicitPk = opts.fields.filter((f) => f.primaryKey);
+  if (explicitPk.length > 1) {
+    throw new Error(
+      `Model "${Name}": more than one field marked primaryKey: ${explicitPk.map((f) => f.name).join(', ')}.`,
+    );
+  }
+  const pkField =
+    explicitPk[0] ?? opts.fields.find((f) => f.name === 'id') ?? opts.fields[0];
+  const primaryKey = pkField.name;
+  const indexes = opts.fields.filter((f) => f.indexed && f.name !== primaryKey).map((f) => f.name);
+
+  const target = path.join(opts.projectRoot, 'src', 'models', `${Name}.ts`);
+  assertNoOverwrite(opts.projectRoot, target, 'Model');
+
+  const tpl = path.join(opts.templatesRoot, '_generators', 'model', 'model.ts.tpl');
+  const fieldLines = opts.fields
+    .map((f) => `  ${f.name}${f.optional ? '?' : ''}: ${f.type};`)
+    .join('\n');
+
+  const vars: Record<string, string> = {
+    name,
+    Name,
+    Plural,
+    collection,
+    primaryKey,
+    fieldLines,
+    indexesLine: indexes.length
+      ? `\n  indexes: [${indexes.map((i) => `'${i}'`).join(', ')}],`
+      : '',
+  };
+
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, substitute(fs.readFileSync(tpl, 'utf8'), vars));
+
+  return { created: [target], primaryKey, indexes };
+}
+
+function normalizeCamel(s: string): string {
+  const cleaned = s.trim().replace(/[^a-zA-Z0-9]+(.)/g, (_m, c) => c.toUpperCase()).replace(/[^a-zA-Z0-9]/g, '');
+  if (!cleaned) return '';
+  return cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
+}

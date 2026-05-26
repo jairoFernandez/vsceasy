@@ -39,6 +39,10 @@ const addHelperCommand: Command = {
         console.log(
           `\n  Wire it on activate:\n    import { init${capitalize(String(args.kind))} } from '../helpers/${args.kind}';\n    init${capitalize(String(args.kind))}(context);\n`,
         );
+      } else if (args.kind === 'cache') {
+        console.log(
+          `\n  Usage:\n    import { createCache } from '../helpers/cache';\n    const cache = createCache<User>({ ttlMs: 60_000, max: 200 });\n    const u = await cache.wrap('user:' + id, () => orm(User).findById(id));\n`,
+        );
       } else {
         console.log('');
       }

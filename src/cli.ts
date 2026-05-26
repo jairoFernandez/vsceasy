@@ -3,7 +3,7 @@ import { CLI } from '@ideascol/cli-maker';
 import CommandCreate from './commands/create';
 import CommandDoctor from './commands/doctor';
 import CommandUpgrade from './commands/upgrade';
-import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup, SubpanelGroup, TreeViewGroup, TestGroup, PublishGroup, HelperGroup, JobGroup } from './commands/groups';
+import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup, SubpanelGroup, TreeViewGroup, TestGroup, PublishGroup, HelperGroup, JobGroup, DbGroup, ModelGroup } from './commands/groups';
 
 const cli = new CLI(
   'vsceasy',
@@ -36,6 +36,8 @@ cli.command(TestGroup);
 cli.command(PublishGroup);
 cli.command(HelperGroup);
 cli.command(JobGroup);
+cli.command(DbGroup);
+cli.command(ModelGroup);
 cli.command(CommandDoctor);
 cli.command(CommandUpgrade);
 

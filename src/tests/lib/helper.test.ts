@@ -23,7 +23,7 @@ async function scaffoldProject(): Promise<string> {
 }
 
 describe('addHelper', () => {
-  test.each(['secrets', 'config', 'state', 'notifications'] as const)(
+  test.each(['secrets', 'config', 'state', 'notifications', 'cache'] as const)(
     'creates helper %s',
     async (kind) => {
       const project = await scaffoldProject();
@@ -34,6 +34,16 @@ describe('addHelper', () => {
       fs.rmSync(path.dirname(project), { recursive: true, force: true });
     },
   );
+
+  test('cache template exposes createCache with TTL + LRU', async () => {
+    const project = await scaffoldProject();
+    addHelper({ kind: 'cache', projectRoot: project, templatesRoot });
+    const body = fs.readFileSync(path.join(project, 'src/helpers/cache.ts'), 'utf8');
+    expect(body).toMatch(/export function createCache/);
+    expect(body).toMatch(/wrap\(key/);
+    expect(body).toMatch(/ttlMs/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
 
   test('config helper substitutes commandPrefix from config', async () => {
     const project = await scaffoldProject();

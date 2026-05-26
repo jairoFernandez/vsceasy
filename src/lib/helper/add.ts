@@ -4,9 +4,9 @@ import { substitute } from '../scaffold';
 import { assertNoOverwrite } from '../validate';
 import { readConfig } from '../config';
 
-export type HelperKind = 'secrets' | 'config' | 'state' | 'notifications';
+export type HelperKind = 'secrets' | 'config' | 'state' | 'notifications' | 'cache';
 
-export const HELPER_KINDS: HelperKind[] = ['secrets', 'config', 'state', 'notifications'];
+export const HELPER_KINDS: HelperKind[] = ['secrets', 'config', 'state', 'notifications', 'cache'];
 
 export interface AddHelperOptions {
   kind: HelperKind;

@@ -12,6 +12,12 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
   - `config` — `getConfiguration('<prefix>')` with `get<T>` / `set` / `onChange`.
   - `state` — workspace + global memento with typed `get`/`set`/`delete`.
   - `notifications` — `notify.{info,warn,error,confirm}` + `withProgress`.
+  - `cache` — in-memory TTL + LRU cache (`createCache({ ttlMs, max })`) with `wrap(key, fn)` memoization, in-flight de-dupe, and `refresh(key, fn)`. Pairs with the ORM for cheap reads.
+- **`vsceasy db init`** — scaffold the project database at `src/helpers/db.ts` (idempotent). Exposes `initDb(ctx)` + `db()` singleton + `defineEntity<T>()`. Filesystem JSON provider out of the box (`--provider storage|global`). Provider interface designed to host SQLite/etc. next.
+- **`vsceasy model add --name X`** — typed entity + repo under `src/models/X.ts`. Interactive field loop (`name:type` per line, empty to finish) or compact flag spec `--fields "id:string!,email?:string@,score:number"`. Flags: `!` = primaryKey, `@` = indexed, `?` after name = optional. Generates `interface X`, `export const Xs = defineEntity<X>(...)`, and `export const XsRepo = () => db()(Xs)`. Requires `db init` first.
+
+### Removed
+- `vsceasy helper add --kind orm` — replaced by `vsceasy db init` for clearer UX.
 - **Webview RPC call timeout** (`createRpcClient(transport, { callTimeoutMs })`, default 15s) — rejects pending calls when the extension host reloads mid-flight, preventing infinite hangs during `bun run dev`.
 - **`webviewState<T>(defaults)`** helper exported from `vsceasy-runtime` — typed wrapper over `vscode.getState/setState`. Persists scroll position, form data, selection across panel hide/show and host reloads.
 - **Doctor checks (3 new):**

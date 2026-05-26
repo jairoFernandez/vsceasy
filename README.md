@@ -106,6 +106,10 @@ vsceasy
 │   └── add             generate runtime helper (secrets | config | state | notifications)
 ├── job
 │   └── add             recurring / event-triggered job (interval | dailyAt | on event | onFile)
+├── db
+│   └── init            scaffold project database (mini-ORM)  at src/helpers/db.ts
+├── model
+│   └── add             typed entity + repo under src/models/
 ├── doctor              diagnose project + safe --fix
 └── upgrade             sync framework-owned files from the bundled templates
 ```
@@ -250,18 +254,85 @@ vsceasy job add --name reindexMd --onFile "**/*.md"
 `--every` accepts `30s`, `5m`, `2h`, `1d`, or a raw ms number. Jobs run only while the extension host is active — for cross-session schedules use OS cron or GitHub Actions.
 
 ### `helper add`
-Generates typed wrappers into `src/helpers/`. Cuts boilerplate for the four most-touched VS Code APIs.
+Generates typed wrappers into `src/helpers/`. Cuts boilerplate for the most-touched VS Code APIs + storage.
 ```bash
 vsceasy helper add --kind secrets         # context.secrets — OS keychain
 vsceasy helper add --kind config          # workspace.getConfiguration — typed
 vsceasy helper add --kind state           # workspace + global mementos
 vsceasy helper add --kind notifications   # toast + confirm + withProgress
+vsceasy helper add --kind cache           # in-memory TTL + LRU + wrap()
+# For ORM use the dedicated commands: `vsceasy db init` + `vsceasy model add`
 ```
 For `secrets` and `state`, wire on activate:
 ```ts
 import { initSecrets } from './helpers/secrets';
 initSecrets(context);
 ```
+
+### `db init` + `model add` (mini-ORM)
+Typed entities, CRUD, transactions. Workflow:
+
+```bash
+# 1. one-time per project — creates src/helpers/db.ts
+vsceasy db init                         # filesystem JSON under context.storageUri/db/
+vsceasy db init --provider global       # or globalStorageUri (user-wide)
+
+# 2. add models interactively — type `name:type` per line, empty to finish
+vsceasy model add --name User
+#   field 1: id:string!         (! = primary key)
+#   field 2: name:string
+#   field 3: email?:string@     (? = optional, @ = indexed)
+#   field 4: createdAt:number
+#   field 5:                    (enter to finish)
+
+# 3. or in one shot
+vsceasy model add --name Post --fields "id:string!,userId:string@,title:string,body:string"
+```
+
+Wire on activate (`src/extension/extension.ts`):
+```ts
+import { initDb } from '../helpers/db';
+initDb(context);
+```
+
+Use:
+```ts
+import { UsersRepo } from '../models/User';
+
+await UsersRepo().insert({ id: 'u1', name: 'Jairo', email: 'j@x.io', createdAt: Date.now() });
+await UsersRepo().update('u1', { name: 'Jairo F' });
+const u = await UsersRepo().findById('u1');
+const recent = await UsersRepo().findMany({ orderBy: 'createdAt:desc', limit: 10 });
+const matches = await UsersRepo().findMany({ where: { email: { in: ['a@x.io', 'b@x.io'] } } });
+await UsersRepo().deleteMany({ email: 'spam@x.io' });
+
+// Atomic — rolls back on throw
+import { db } from '../helpers/db';
+import { Users } from '../models/User';
+await db().transaction(async (tx) => {
+  await tx(Users).insert({ id: 'u2', name: 'A', email: 'a@x.io', createdAt: Date.now() });
+  await tx(Users).update('u1', { name: 'B' });
+});
+```
+
+Operators: `value` (eq), `{ in: [...] }`, `{ neq: value }`. `orderBy`: `'field:asc'` | `'field:desc'` | `'field'`.
+
+Field-spec grammar (interactive loop + `--fields`):
+- `name:type` — required field
+- `name?:type` — optional
+- `name:type!` — primary key (defaults to `id` or first field)
+- `name:type@` — indexed
+- combine: `score:number!@`
+
+#### Cache
+```ts
+import { createCache } from './helpers/cache';
+
+const cache = createCache<User>({ ttlMs: 60_000, max: 200 });
+const u = await cache.wrap(`user:${id}`, () => orm(User).findById(id));
+await cache.refresh(`user:${id}`, () => orm(User).findById(id)); // force reload
+```
+Concurrent `wrap()` calls for the same key share one in-flight loader.
 
 ### `publish init`
 Marketplace preflight: writes `README.md`, `CHANGELOG.md`, an `assets/icon.png` placeholder, fills `repository` / `categories` / `icon` in package.json, and runs `npx @vscode/vsce ls` as a dry-pack.

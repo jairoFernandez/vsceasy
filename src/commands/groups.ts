@@ -11,6 +11,8 @@ import TestSetup from './test/setup';
 import PublishInit from './publish/init';
 import AddHelper from './helper/add';
 import AddJob from './job/add';
+import DbInit from './db/init';
+import AddModel from './model/add';
 
 function group(name: string, description: string, subcommands: Command[]): Command {
   return {
@@ -36,3 +38,5 @@ export const TestGroup = group('test', 'Test scaffolding (Vitest)', [TestSetup])
 export const PublishGroup = group('publish', 'Marketplace publish helpers', [PublishInit]);
 export const HelperGroup = group('helper', 'Generate runtime helpers (secrets, config, state, notifications)', [AddHelper]);
 export const JobGroup = group('job', 'Manage recurring / event-triggered jobs (interval, dailyAt, on, onFile)', [AddJob]);
+export const DbGroup = group('db', 'Initialize the project database (mini-ORM)', [DbInit]);
+export const ModelGroup = group('model', 'Manage typed models (entities + repos) under src/models/', [AddModel]);
