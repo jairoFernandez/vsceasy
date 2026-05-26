@@ -3,5 +3,6 @@ export {
   createRpcClient,
   vscodeApiTransport,
   connectWebview,
+  webviewState,
 } from './rpc';
-export type { RpcClient, Handlers, Transport } from './rpc';
+export type { RpcClient, Handlers, Transport, RpcClientOptions, WebviewApi } from './rpc';

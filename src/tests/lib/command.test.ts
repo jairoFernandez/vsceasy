@@ -98,6 +98,20 @@ describe('addCommand', () => {
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 
+  test('writes when field into command file', async () => {
+    const project = await scaffoldProject();
+    addCommand({
+      name: 'edWhen',
+      when: 'editorTextFocus',
+      projectRoot: project,
+      templatesRoot,
+      runGen: false,
+    });
+    const body = fs.readFileSync(path.join(project, 'src/commands/edWhen.ts'), 'utf8');
+    expect(body).toContain("when: 'editorTextFocus'");
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
   test('gen emits contributes.keybindings from command files', async () => {
     const project = await scaffoldProject();
     addCommand({

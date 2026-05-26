@@ -9,6 +9,7 @@ import AddSubpanel from './subpanel/add';
 import AddTreeView from './treeView/add';
 import TestSetup from './test/setup';
 import PublishInit from './publish/init';
+import AddHelper from './helper/add';
 
 function group(name: string, description: string, subcommands: Command[]): Command {
   return {
@@ -32,3 +33,4 @@ export const SubpanelGroup = group('subpanel', 'Manage inline sidebar webview se
 export const TreeViewGroup = group('treeview', 'Manage data-driven tree views (getChildren/getTreeItem)', [AddTreeView]);
 export const TestGroup = group('test', 'Test scaffolding (Vitest)', [TestSetup]);
 export const PublishGroup = group('publish', 'Marketplace publish helpers', [PublishInit]);
+export const HelperGroup = group('helper', 'Generate runtime helpers (secrets, config, state, notifications)', [AddHelper]);

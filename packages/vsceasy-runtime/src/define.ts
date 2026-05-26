@@ -36,6 +36,17 @@ export interface CommandDef {
    * Written to package.json#contributes.keybindings by `bun run gen`.
    */
   keybinding?: string | KeybindingDef | (string | KeybindingDef)[];
+  /**
+   * VS Code `when` clause that controls visibility/enablement of this command
+   * in the command palette and auto-generated menu entries. Written to
+   * `contributes.commands[].enablement` and used as the default `when` on
+   * the palette menu entry by `bun run gen`.
+   *
+   * Examples: `'editorTextFocus'`, `'resourceLangId == typescript'`,
+   * `'explorerResourceIsFolder && !virtualWorkspace'`.
+   * Reference: https://code.visualstudio.com/api/references/when-clause-contexts
+   */
+  when?: string;
 }
 
 export interface KeybindingDef {

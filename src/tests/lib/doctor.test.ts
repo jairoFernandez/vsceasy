@@ -41,6 +41,41 @@ describe('doctor', () => {
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 
+  test('flags missing icon in package.json', async () => {
+    const project = await scaffoldProject();
+    const report = runDoctor({ projectRoot: project });
+    const icon = report.results.find((r) => r.id === 'icon');
+    expect(icon?.level).toBe('warn');
+    expect(icon?.message).toMatch(/no `icon`/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('flags non-empty activationEvents with redundant onCommand entry', async () => {
+    const project = await scaffoldProject();
+    const pkgPath = path.join(project, 'package.json');
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    pkg.activationEvents = ['onCommand:foo.bar'];
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+    const report = runDoctor({ projectRoot: project });
+    const ae = report.results.find((r) => r.id === 'activationEvents');
+    expect(ae?.level).toBe('warn');
+    expect(ae?.message).toMatch(/redundant onCommand/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('flags outdated gen.ts (missing treeView scan)', async () => {
+    const project = await scaffoldProject();
+    const genPath = path.join(project, 'scripts/gen.ts');
+    const src = fs.readFileSync(genPath, 'utf8');
+    // Remove the treeViews scan line — simulate old template
+    fs.writeFileSync(genPath, src.replace(/TREE_VIEWS_DIR/g, 'STRIPPED_DIR'));
+    const report = runDoctor({ projectRoot: project });
+    const gen = report.results.find((r) => r.id === 'gen-script');
+    expect(gen?.level).toBe('warn');
+    expect(gen?.message).toMatch(/outdated/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
   test('detects RPC contract drift (missing handler)', async () => {
     const project = await scaffoldProject();
     // Inject extra method into DashboardApi that has no handler

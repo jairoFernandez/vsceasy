@@ -4,7 +4,7 @@
   "description": "Build VS Code extensions fast — React UI + typed RPC bridge between extension and webview + file-based routing for panels, commands, menus, tree views, and subpanels.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "bun test",
+    "test": "bun test ./src/tests",
     "gen:types": "bun scripts/genCodiconTypes.ts",
     "sync:runtime": "bun scripts/syncRuntime.ts",
     "build:runtime": "cd packages/vsceasy-runtime && bun install && bunx tsc",

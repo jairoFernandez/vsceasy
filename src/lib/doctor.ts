@@ -45,6 +45,9 @@ export function runDoctor(opts: DoctorOptions): DoctorReport {
   results.push(...checkStatusBars(root));
   results.push(...checkSubpanels(root));
   results.push(checkContributesSync(root, pkg));
+  results.push(checkActivationEvents(pkg));
+  results.push(checkMarketplaceIcon(root, pkg));
+  results.push(checkGenScript(root));
   results.push(checkGitignore(root));
 
   const counts = { ok: 0, warn: 0, error: 0 };
@@ -342,6 +345,93 @@ function checkGitignore(root: string): CheckResult {
       fs.writeFileSync(file, raw + suffix + missing.join('\n') + '\n');
       return `appended to .gitignore: ${missing.join(', ')}`;
     },
+  };
+}
+
+function checkActivationEvents(pkg: any): CheckResult {
+  // VS Code ≥1.74 auto-derives activation from contributes.commands when
+  // activationEvents is an empty array. Anything non-empty is suspect now
+  // unless it uses onLanguage/onCustomEditor/workspaceContains/etc.
+  const ae: unknown = pkg?.activationEvents;
+  if (!Array.isArray(ae)) {
+    return {
+      id: 'activationEvents',
+      level: 'warn',
+      message: 'package.json missing activationEvents — should be `[]` (auto-derived from commands)',
+      fix: () => {
+        pkg.activationEvents = [];
+        return 'Run `bun run gen` after fixing manually — auto-fix not safe to write package.json here';
+      },
+    };
+  }
+  if (ae.length === 0) {
+    return { id: 'activationEvents', level: 'ok', message: 'activationEvents auto-derived from commands' };
+  }
+  const suspect = ae.filter((e: any) => typeof e === 'string' && /^onCommand:/.test(e));
+  if (suspect.length) {
+    return {
+      id: 'activationEvents',
+      level: 'warn',
+      message: `activationEvents has ${suspect.length} redundant onCommand: entry(ies) — VS Code now auto-activates contributed commands`,
+      details: suspect.map(String),
+    };
+  }
+  return { id: 'activationEvents', level: 'ok', message: `activationEvents ${ae.length} explicit entry(ies)` };
+}
+
+function checkMarketplaceIcon(root: string, pkg: any): CheckResult {
+  const iconRel: string | undefined = pkg?.icon;
+  if (!iconRel) {
+    return {
+      id: 'icon',
+      level: 'warn',
+      message: 'package.json has no `icon` — marketplace listings without an icon look broken',
+    };
+  }
+  const abs = path.join(root, iconRel);
+  if (!fs.existsSync(abs)) {
+    return { id: 'icon', level: 'error', message: `icon path \`${iconRel}\` not found on disk` };
+  }
+  // PNG dimensions check — minimal big-endian parser, no deps.
+  const buf = fs.readFileSync(abs);
+  const isPng = buf.length > 24 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+  if (!isPng) {
+    return { id: 'icon', level: 'warn', message: `icon \`${iconRel}\` is not a PNG — marketplace requires PNG ≥128×128` };
+  }
+  const w = buf.readUInt32BE(16);
+  const h = buf.readUInt32BE(20);
+  if (w < 128 || h < 128) {
+    return {
+      id: 'icon',
+      level: 'warn',
+      message: `icon is ${w}×${h} — marketplace requires ≥128×128 (use 128×128 square PNG)`,
+    };
+  }
+  if (w !== h) {
+    return { id: 'icon', level: 'warn', message: `icon is ${w}×${h} (non-square) — use a square PNG` };
+  }
+  return { id: 'icon', level: 'ok', message: `icon             ${iconRel} (${w}×${h})` };
+}
+
+function checkGenScript(root: string): CheckResult {
+  // Detect outdated gen.ts copies that don't scan the latest convention dirs.
+  const genPath = path.join(root, 'scripts', 'gen.ts');
+  if (!fs.existsSync(genPath)) {
+    return { id: 'gen-script', level: 'error', message: 'scripts/gen.ts missing — run `vsceasy upgrade --apply=true`' };
+  }
+  const src = fs.readFileSync(genPath, 'utf8');
+  const required = [
+    { name: 'treeViews scan', needle: 'TREE_VIEWS_DIR' },
+    { name: 'commandPalette when', needle: 'commandPalette' },
+  ];
+  const missing = required.filter((r) => !src.includes(r.needle));
+  if (missing.length === 0) {
+    return { id: 'gen-script', level: 'ok', message: 'scripts/gen.ts   up to date' };
+  }
+  return {
+    id: 'gen-script',
+    level: 'warn',
+    message: `scripts/gen.ts is outdated (missing: ${missing.map((m) => m.name).join(', ')}) — run \`vsceasy upgrade --apply=true\``,
   };
 }
 

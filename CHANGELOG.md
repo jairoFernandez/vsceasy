@@ -5,6 +5,19 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 ## [Unreleased]
 
 ### Added
+- **`command add --when <expr>`** — declare VS Code `when` clauses on commands. Auto-written to `contributes.commands[].enablement` and `contributes.menus.commandPalette` by `bun run gen`. Enables context-aware visibility (e.g. `editorTextFocus`, `resourceLangId == typescript`).
+- **`vsceasy helper add <kind>`** — generate typed runtime wrappers in `src/helpers/`:
+  - `secrets` — `context.secrets.{get,set,delete}` typed and lazily initialized.
+  - `config` — `getConfiguration('<prefix>')` with `get<T>` / `set` / `onChange`.
+  - `state` — workspace + global memento with typed `get`/`set`/`delete`.
+  - `notifications` — `notify.{info,warn,error,confirm}` + `withProgress`.
+- **Webview RPC call timeout** (`createRpcClient(transport, { callTimeoutMs })`, default 15s) — rejects pending calls when the extension host reloads mid-flight, preventing infinite hangs during `bun run dev`.
+- **`webviewState<T>(defaults)`** helper exported from `vsceasy-runtime` — typed wrapper over `vscode.getState/setState`. Persists scroll position, form data, selection across panel hide/show and host reloads.
+- **Doctor checks (3 new):**
+  - `activationEvents` — flags redundant `onCommand:` entries (VS Code ≥1.74 auto-activates).
+  - `icon` — validates `package.json#icon` exists on disk, is PNG, ≥128×128, square.
+  - `gen-script` — detects outdated `scripts/gen.ts` (missing `TREE_VIEWS_DIR`, `commandPalette`) and suggests `vsceasy upgrade --apply=true`.
+- **Test helpers** — `vsceasy test setup` now drops `src/__tests__/_helpers.ts` exporting `mockVscode()`, `mockContext()`, `mockRpcPair<H>()` for unit-testing handlers end-to-end.
 - `vsceasy.config.ts` — persistent project defaults (publisher, commandPrefix, defaultCategory, defaultIcon). Auto-written by `create`; consumed by `command add` (category) and `menu add` (icon).
 - **New package: `vsceasy-runtime`** — the framework runtime (`bootstrap`, `define*`, RPC bridge) extracted as a standalone npm package. Single source of truth at `packages/vsceasy-runtime/src/`; the bundled template is now kept in sync via `bun run sync:runtime`. Allows external consumers to import the runtime without scaffolding a full project.
 - `treeview add` — scaffold native VS Code tree views with `getChildren`/`getTreeItem` handlers and auto-registered `views` contribution.

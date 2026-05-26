@@ -34,6 +34,25 @@ export function setupTests(opts: TestSetupOptions): TestSetupResult {
     );
     created.push(sample);
   }
+  const helpers = path.join(sampleDir, '_helpers.ts');
+  if (!fs.existsSync(helpers) || opts.force) {
+    fs.writeFileSync(
+      helpers,
+      fs.readFileSync(path.join(opts.templatesRoot, '_generators', 'test', '_helpers.ts.tpl'), 'utf8'),
+    );
+    created.push(helpers);
+  }
+
+  const mocksDir = path.join(sampleDir, '__mocks__');
+  fs.mkdirSync(mocksDir, { recursive: true });
+  const vscodeStub = path.join(mocksDir, 'vscode.ts');
+  if (!fs.existsSync(vscodeStub) || opts.force) {
+    fs.writeFileSync(
+      vscodeStub,
+      fs.readFileSync(path.join(opts.templatesRoot, '_generators', 'test', 'vscode.stub.ts.tpl'), 'utf8'),
+    );
+    created.push(vscodeStub);
+  }
 
   const pkgPath = path.join(opts.projectRoot, 'package.json');
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));

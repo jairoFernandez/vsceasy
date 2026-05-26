@@ -21,6 +21,8 @@ export interface AddCommandOptions {
   icon?: string;
   /** Keyboard shortcut (e.g. 'ctrl+shift+h'). Written into the command file. */
   keybinding?: string;
+  /** VS Code `when` clause controlling palette enablement (e.g. 'editorTextFocus'). */
+  when?: string;
   /** Project root. */
   projectRoot: string;
   /** Bundled templates root. */
@@ -58,6 +60,7 @@ export function addCommand(opts: AddCommandOptions): AddCommandResult {
     title,
     categoryLine: category ? `\n  category: '${escapeQuotes(category)}',` : '',
     keybindingLine: opts.keybinding ? `\n  keybinding: '${escapeQuotes(opts.keybinding)}',` : '',
+    whenLine: opts.when ? `\n  when: '${escapeQuotes(opts.when)}',` : '',
   };
 
   fs.mkdirSync(path.dirname(file), { recursive: true });

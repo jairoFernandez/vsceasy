@@ -1,20 +1,38 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { mockVscode, mockContext, mockRpcPair } from './_helpers';
 
-// VS Code extension code cannot run inside vitest unless `vscode` is mocked.
-// Pattern: extract pure logic into helpers, test those directly.
+describe('vscode mock', () => {
+  it('captures notification calls', () => {
+    const vscode = mockVscode();
+    vscode.window.showInformationMessage('hello');
+    expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('hello');
+  });
 
-describe('sanity', () => {
-  it('runs', () => {
-    expect(1 + 1).toBe(2);
+  it('persists state via mock context', async () => {
+    const ctx = mockContext();
+    await ctx.workspaceState.update('key', 42);
+    expect(ctx.workspaceState.get('key')).toBe(42);
   });
 });
 
-describe('handler', () => {
-  it('mocks vscode for unit tests', () => {
-    const vscode = {
-      window: { showInformationMessage: vi.fn() },
+describe('RPC pair', () => {
+  it('round-trips a typed handler call', async () => {
+    const handlers = {
+      async greet(name: string) {
+        return `hi ${name}`;
+      },
     };
-    vscode.window.showInformationMessage('hi');
-    expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('hi');
+    const api = mockRpcPair<typeof handlers>(handlers);
+    expect(await api.greet('Jairo')).toBe('hi Jairo');
+  });
+
+  it('propagates handler errors', async () => {
+    const handlers = {
+      async boom() {
+        throw new Error('nope');
+      },
+    };
+    const api = mockRpcPair<typeof handlers>(handlers);
+    await expect(api.boom()).rejects.toThrow('nope');
   });
 });

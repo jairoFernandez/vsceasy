@@ -34,6 +34,12 @@ const addCommandCommand: Command = {
       type: ParamType.Text,
     },
     {
+      name: 'when',
+      description: 'VS Code `when` clause controlling palette enablement (e.g. editorTextFocus)',
+      required: false,
+      type: ParamType.Text,
+    },
+    {
       name: 'menuEntry',
       description: 'Insert a menu entry that runs this command',
       required: true,
@@ -91,6 +97,7 @@ const addCommandCommand: Command = {
         title: args.title,
         category: args.category,
         keybinding: args.keybinding ? String(args.keybinding).trim() : undefined,
+        when: args.when ? String(args.when).trim() : undefined,
         menuEntry,
         group,
         icon,

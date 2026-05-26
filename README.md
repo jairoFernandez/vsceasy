@@ -99,9 +99,11 @@ vsceasy
 ├── treeview
 │   └── add             data-driven tree view (getChildren/getTreeItem) under a menu
 ├── test
-│   └── setup           Vitest config + sample test
+│   └── setup           Vitest config + sample test + vscode/RPC mock helpers
 ├── publish
 │   └── init            marketplace preflight (README, CHANGELOG, icon, vsce ls)
+├── helper
+│   └── add             generate runtime helper (secrets | config | state | notifications)
 ├── doctor              diagnose project + safe --fix
 └── upgrade             sync framework-owned files from the bundled templates
 ```
@@ -122,8 +124,10 @@ vsceasy command add \
   --menuEntry main \
   --group "Actions" \
   --icon play \
-  --keybinding "ctrl+shift+h"
+  --keybinding "ctrl+shift+h" \
+  --when "editorTextFocus && resourceLangId == typescript"
 ```
+`--when` writes a VS Code `when` clause that controls palette enablement + auto-injects `contributes.menus.commandPalette` so the command is hidden when the context doesn't match. See [when-clause contexts](https://code.visualstudio.com/api/references/when-clause-contexts).
 For richer keybindings (mac override / `when` clause) edit the generated file:
 ```ts
 keybinding: { key: 'ctrl+shift+h', mac: 'cmd+shift+h', when: 'editorTextFocus' }
@@ -208,10 +212,34 @@ vsceasy treeview add --name explorer --menu main --title "Explorer"
 Generates `src/treeViews/<name>.ts`. Refresh from anywhere: `vscode.commands.executeCommand('<prefix>._tree.<name>.refresh')`.
 
 ### `test setup`
-Drops a `vitest.config.ts`, a sample `src/__tests__/sample.test.ts`, and adds `test` / `test:watch` scripts + `vitest` devDep to package.json.
+Drops a `vitest.config.ts`, a sample `src/__tests__/sample.test.ts`, and `src/__tests__/_helpers.ts` with `mockVscode()`, `mockContext()`, and `mockRpcPair<H>()` for end-to-end handler tests. Also adds `test` / `test:watch` scripts + `vitest` devDep.
 ```bash
 vsceasy test setup
 bun install && bun run test
+```
+
+Example:
+```ts
+import { mockRpcPair } from './_helpers';
+import type { DashboardApi } from '../shared/api';
+
+const handlers: DashboardApi = { async listFiles() { return ['a.ts']; } };
+const api = mockRpcPair<DashboardApi>(handlers);
+expect(await api.listFiles('**/*.ts')).toEqual(['a.ts']);
+```
+
+### `helper add`
+Generates typed wrappers into `src/helpers/`. Cuts boilerplate for the four most-touched VS Code APIs.
+```bash
+vsceasy helper add --kind secrets         # context.secrets — OS keychain
+vsceasy helper add --kind config          # workspace.getConfiguration — typed
+vsceasy helper add --kind state           # workspace + global mementos
+vsceasy helper add --kind notifications   # toast + confirm + withProgress
+```
+For `secrets` and `state`, wire on activate:
+```ts
+import { initSecrets } from './helpers/secrets';
+initSecrets(context);
 ```
 
 ### `publish init`

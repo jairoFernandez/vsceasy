@@ -92,8 +92,9 @@ function syncPackageJson(
 ) {
   const pkg = JSON.parse(fs.readFileSync(PKG_PATH, 'utf8'));
   const contributes = (pkg.contributes ??= {});
-  const cmds: Array<{ command: string; title: string; category?: string }> = [];
+  const cmds: Array<{ command: string; title: string; category?: string; enablement?: string }> = [];
   const keybindings: Array<{ command: string; key: string; mac?: string; when?: string }> = [];
+  const palette: Array<{ command: string; when?: string }> = [];
 
   for (const c of commands) {
     const def = loadDef(path.join(COMMANDS_DIR, c.id + '.ts')) ?? loadDef(path.join(COMMANDS_DIR, c.id + '.tsx'));
@@ -102,7 +103,9 @@ function syncPackageJson(
       command: fullId,
       title: def?.title ?? c.id,
       category: def?.category ?? displayName,
+      ...(def?.when ? { enablement: def.when } : {}),
     });
+    if (def?.when) palette.push({ command: fullId, when: def.when });
     if (def?.keybindings) {
       for (const kb of def.keybindings) {
         keybindings.push({
@@ -130,6 +133,13 @@ function syncPackageJson(
     contributes.keybindings = keybindings;
   } else {
     delete contributes.keybindings;
+  }
+  if (palette.length) {
+    contributes.menus ??= {};
+    contributes.menus.commandPalette = palette;
+  } else if (contributes.menus) {
+    delete contributes.menus.commandPalette;
+    if (Object.keys(contributes.menus).length === 0) delete contributes.menus;
   }
 
   // Menus → viewsContainers.activitybar + views.<containerId>
@@ -196,6 +206,7 @@ function loadDef(file: string): {
   title?: string;
   category?: string;
   command?: any;
+  when?: string;
   keybindings?: Array<{ key: string; mac?: string; when?: string }>;
 } | null {
   if (!fs.existsSync(file)) return null;
@@ -212,6 +223,7 @@ function loadDef(file: string): {
     id: grab('id'),
     title: grab('title'),
     category: grab('category'),
+    when: grab('when'),
     command,
     keybindings: parseKeybindings(src),
   };
