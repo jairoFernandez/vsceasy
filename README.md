@@ -2,7 +2,7 @@
 
 Build VS Code extensions fast. React UI + typed RPC bridge between extension and webview + zero-config build.
 
-> Status: v0.1 — MVP. React template only. Svelte/Vue/Vanilla coming.
+> Status: v0.1 — React UI. Typed RPC bridge + file-based registry + scaffolding for panels, commands, menus, tree views, subpanels, status bars.
 
 ## Quick start
 
@@ -96,6 +96,12 @@ vsceasy
 │   └── add             status bar item → command / panel / menu popup
 ├── subpanel
 │   └── add             inline sidebar section (lives under a menu container)
+├── treeview
+│   └── add             data-driven tree view (getChildren/getTreeItem) under a menu
+├── test
+│   └── setup           Vitest config + sample test
+├── publish
+│   └── init            marketplace preflight (README, CHANGELOG, icon, vsce ls)
 ├── doctor              diagnose project + safe --fix
 └── upgrade             sync framework-owned files from the bundled templates
 ```
@@ -192,6 +198,43 @@ Sync framework-owned files (`src/shared/vsceasy/*`, `scripts/gen.ts`) from the b
 ```bash
 vsceasy upgrade              # dry-run
 vsceasy upgrade --apply=true # write + auto-run `bun run gen`
+```
+
+### `treeview add`
+Data-driven tree view inside an existing menu container. Lazy children via `getChildren`. Built-in dispatch for `run` / `panel` / `command` on click.
+```bash
+vsceasy treeview add --name explorer --menu main --title "Explorer"
+```
+Generates `src/treeViews/<name>.ts`. Refresh from anywhere: `vscode.commands.executeCommand('<prefix>._tree.<name>.refresh')`.
+
+### `test setup`
+Drops a `vitest.config.ts`, a sample `src/__tests__/sample.test.ts`, and adds `test` / `test:watch` scripts + `vitest` devDep to package.json.
+```bash
+vsceasy test setup
+bun install && bun run test
+```
+
+### `publish init`
+Marketplace preflight: writes `README.md`, `CHANGELOG.md`, an `assets/icon.png` placeholder, fills `repository` / `categories` / `icon` in package.json, and runs `npx @vscode/vsce ls` as a dry-pack.
+```bash
+vsceasy publish init
+# fix any warnings, then:
+npx @vscode/vsce package
+npx @vscode/vsce publish
+```
+
+### Project config (`vsceasy.config.ts`)
+Optional. Persists defaults so you don't repeat them per generator command.
+```ts
+import type { VsceasyConfig } from 'vsceasy';
+
+const config: VsceasyConfig = {
+  publisher: 'my-publisher',
+  commandPrefix: 'myExt',
+  ui: 'react',
+};
+
+export default config;
 ```
 
 ## Convention

@@ -1,7 +1,7 @@
 {
   "name": "vsceasy",
-  "version": "0.0.1",
-  "description": "Framework para crear VSCode extensions rapido con UI React/Svelte/Vue/Vanilla, RPC tipado webview-extension, y file-based routing de panels/commands",
+  "version": "0.1.0",
+  "description": "Build VS Code extensions fast — React UI + typed RPC bridge between extension and webview + file-based routing for panels, commands, menus, tree views, and subpanels.",
   "main": "dist/index.js",
   "scripts": {
     "test": "bun test",
@@ -9,9 +9,25 @@
     "build": "bun run gen:types && tsc --emitDeclarationOnly && bun build ./src/index.ts ./src/bin/cli.ts --target=node --outdir ./dist --format cjs",
     "build:test": "bun build ./src/tests/*.ts --target=node --outdir dist/tests --format cjs",
     "prepublishOnly": "bun run build",
-    "start": "bun run src/cli.ts"
+    "start": "bun run src/cli.ts",
+    "lint": "eslint 'src/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' --fix",
+    "format": "prettier --write 'src/**/*.{ts,tsx,json,md}' '*.md'",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx,json,md}' '*.md'",
+    "release:patch": "npm version patch -m 'chore(release): %s'",
+    "release:minor": "npm version minor -m 'chore(release): %s'",
+    "release:major": "npm version major -m 'chore(release): %s'"
   },
-  "keywords": [],
+  "keywords": [
+    "vscode",
+    "vscode-extension",
+    "framework",
+    "scaffold",
+    "cli",
+    "react",
+    "webview",
+    "rpc"
+  ],
   "author": "Jairo <jairofg12@gmail.com>",
   "license": "MIT",
   "type": "commonjs",
@@ -22,6 +38,9 @@
   "files": [
     "dist/**/*",
     "templates/**/*",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md",
     "!src/tests/**/*"
   ],
   "engines": {
@@ -32,8 +51,13 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "typescript": "^6.0.3",
-    "@types/vscode": "^1.43.2"
+    "@types/vscode": "^1.43.2",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.0",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "@ideascol/cli-maker": "^2.2.2"

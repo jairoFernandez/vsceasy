@@ -6,6 +6,9 @@ import AddCommand from './command/add';
 import AddRpcMethod from './rpc/add';
 import AddStatusBar from './statusBar/add';
 import AddSubpanel from './subpanel/add';
+import AddTreeView from './treeView/add';
+import TestSetup from './test/setup';
+import PublishInit from './publish/init';
 
 function group(name: string, description: string, subcommands: Command[]): Command {
   return {
@@ -26,3 +29,6 @@ export const CommandGroup = group('command', 'Manage palette commands', [AddComm
 export const RpcGroup = group('rpc', 'Manage typed RPC methods on panels', [AddRpcMethod]);
 export const StatusBarGroup = group('statusBar', 'Manage status bar items', [AddStatusBar]);
 export const SubpanelGroup = group('subpanel', 'Manage inline sidebar webview sections (subpanels)', [AddSubpanel]);
+export const TreeViewGroup = group('treeview', 'Manage data-driven tree views (getChildren/getTreeItem)', [AddTreeView]);
+export const TestGroup = group('test', 'Test scaffolding (Vitest)', [TestSetup]);
+export const PublishGroup = group('publish', 'Marketplace publish helpers', [PublishInit]);

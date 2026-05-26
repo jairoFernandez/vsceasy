@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+export type ScaffoldPreset = 'minimal' | 'full';
+
 export interface ScaffoldOptions {
   name: string;
   displayName: string;
@@ -9,6 +11,7 @@ export interface ScaffoldOptions {
   ui: 'react';
   targetDir: string;
   templatesRoot: string;
+  preset?: ScaffoldPreset;
 }
 
 const PLACEHOLDER_EXTS = new Set([
@@ -30,6 +33,28 @@ export async function scaffold(opts: ScaffoldOptions): Promise<void> {
 
   const vars = buildVars(opts);
   await copyTree(src, opts.targetDir, vars);
+  applyPreset(opts.targetDir, opts.preset ?? 'full');
+}
+
+function applyPreset(targetDir: string, preset: ScaffoldPreset) {
+  if (preset === 'full') return;
+  // minimal: strip the sample panel + its webview bundle + RPC contract.
+  const removals = [
+    'src/panels/dashboard.ts',
+    'src/webview/panels/dashboard',
+  ];
+  for (const rel of removals) {
+    const abs = path.join(targetDir, rel);
+    if (fs.existsSync(abs)) fs.rmSync(abs, { recursive: true, force: true });
+  }
+  // Reset src/shared/api.ts to an empty contract.
+  const apiPath = path.join(targetDir, 'src', 'shared', 'api.ts');
+  if (fs.existsSync(apiPath)) {
+    fs.writeFileSync(
+      apiPath,
+      `// RPC contracts go here. One interface per panel/subpanel.\n// Example:\n// export interface DashboardApi {\n//   ping(): Promise<string>;\n// }\n`,
+    );
+  }
 }
 
 function buildVars(opts: ScaffoldOptions): Record<string, string> {

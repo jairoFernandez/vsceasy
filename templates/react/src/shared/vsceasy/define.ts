@@ -174,3 +174,51 @@ export interface StatusBarMenuItem {
 export function defineStatusBar(def: StatusBarDef): StatusBarDef {
   return def;
 }
+
+// --- Tree Views (data-driven) ---
+
+export interface TreeNode {
+  /** Display label. */
+  label: string;
+  /** Stable id, defaults to label. Used for reveal/select. */
+  id?: string;
+  /** Optional icon. */
+  icon?: MenuIcon;
+  /** Tooltip on hover. */
+  tooltip?: string;
+  /** Right-aligned description text. */
+  description?: string;
+  /** Context value used by `view/item/context` menu entries. */
+  contextValue?: string;
+  /** Initial state when this node has children. Default: 'collapsed'. */
+  collapsed?: 'expanded' | 'collapsed';
+  /** Eagerly provided children. If omitted, getChildren(this) is called lazily. */
+  children?: TreeNode[];
+  /** Click handler — run an arbitrary callback when the node is selected. */
+  run?: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext) => unknown | Promise<unknown>;
+  /** Click → open a panel by id. */
+  panel?: string;
+  /** Click → run a command by id. */
+  command?: string;
+}
+
+export interface TreeViewDef {
+  /** Stable id. Default: file basename. */
+  id?: string;
+  /** Sidebar section header. */
+  title: string;
+  /** Activity bar container id (menu basename in src/menus/). */
+  menu: string;
+  /** Show "Collapse All" button. Default: true. */
+  showCollapseAll?: boolean;
+  /** Initial / refreshed nodes. Called on mount and whenever the view is refreshed. */
+  getChildren: (
+    parent: TreeNode | undefined,
+    vscode: typeof import('vscode'),
+    ctx: vscode.ExtensionContext,
+  ) => TreeNode[] | Promise<TreeNode[]>;
+}
+
+export function defineTreeView(def: TreeViewDef): TreeViewDef {
+  return def;
+}

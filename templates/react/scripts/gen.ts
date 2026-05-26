@@ -12,6 +12,7 @@ const COMMANDS_DIR = path.join(SRC, 'commands');
 const MENUS_DIR = path.join(SRC, 'menus');
 const STATUS_BARS_DIR = path.join(SRC, 'statusBars');
 const SUBPANELS_DIR = path.join(SRC, 'subpanels');
+const TREE_VIEWS_DIR = path.join(SRC, 'treeViews');
 const OUT = path.join(SRC, 'extension', '_registry.ts');
 const PKG_PATH = path.join(ROOT, 'package.json');
 
@@ -40,6 +41,7 @@ function writeRegistry(
   menus: Discovered[],
   statusBars: Discovered[],
   subpanels: Discovered[],
+  treeViews: Discovered[],
   prefix: string,
 ) {
   const lines: string[] = [
@@ -50,6 +52,7 @@ function writeRegistry(
     ...menus.map((m, i) => `import menu${i} from '${m.importPath}';`),
     ...statusBars.map((s, i) => `import statusBar${i} from '${s.importPath}';`),
     ...subpanels.map((w, i) => `import subpanel${i} from '${w.importPath}';`),
+    ...treeViews.map((t, i) => `import treeView${i} from '${t.importPath}';`),
     '',
     'export const registry: Registry = {',
     `  prefix: ${JSON.stringify(prefix)},`,
@@ -68,6 +71,9 @@ function writeRegistry(
     '  subpanels: {',
     ...subpanels.map((w, i) => `    ${JSON.stringify(w.id)}: subpanel${i},`),
     '  },',
+    '  treeViews: {',
+    ...treeViews.map((t, i) => `    ${JSON.stringify(t.id)}: treeView${i},`),
+    '  },',
     '};',
     '',
   ];
@@ -80,6 +86,7 @@ function syncPackageJson(
   commands: Discovered[],
   menus: Discovered[],
   subpanels: Discovered[],
+  treeViews: Discovered[],
   prefix: string,
   displayName: string,
 ) {
@@ -140,6 +147,17 @@ function syncPackageJson(
     (wvByMenu[def.menu] ??= []).push({ id: viewId, name });
   }
 
+  // Index tree views by their menu container
+  const tvByMenu: Record<string, Array<{ id: string; name: string }>> = {};
+  for (const t of treeViews) {
+    const def = loadSubpanelDef(path.join(TREE_VIEWS_DIR, t.id + '.ts'))
+      ?? loadSubpanelDef(path.join(TREE_VIEWS_DIR, t.id + '.tsx'));
+    if (!def?.menu) continue;
+    const viewId = `${prefix}-${def.menu}-${def.id ?? t.id}`;
+    const name = def.title ?? t.id;
+    (tvByMenu[def.menu] ??= []).push({ id: viewId, name });
+  }
+
   for (const m of menus) {
     const def = loadMenuDef(path.join(MENUS_DIR, m.id + '.ts')) ?? loadMenuDef(path.join(MENUS_DIR, m.id + '.tsx'));
     // VS Code requires viewsContainer / view ids to match /^[A-Za-z0-9_-]+$/ — no dots.
@@ -153,6 +171,9 @@ function syncPackageJson(
     ];
     for (const v of wvByMenu[menuId] ?? []) {
       containerViews.push({ id: v.id, name: v.name, type: 'webview' });
+    }
+    for (const t of tvByMenu[menuId] ?? []) {
+      containerViews.push({ id: t.id, name: t.name });
     }
     views[containerId] = containerViews;
   }
@@ -340,14 +361,15 @@ function main() {
   const menus = scan(MENUS_DIR, registryDir);
   const statusBars = scan(STATUS_BARS_DIR, registryDir);
   const subpanels = scan(SUBPANELS_DIR, registryDir);
+  const treeViews = scan(TREE_VIEWS_DIR, registryDir);
 
-  writeRegistry(panels, commands, menus, statusBars, subpanels, prefix);
-  syncPackageJson(panels, commands, menus, subpanels, prefix, displayName);
+  writeRegistry(panels, commands, menus, statusBars, subpanels, treeViews, prefix);
+  syncPackageJson(panels, commands, menus, subpanels, treeViews, prefix, displayName);
   ensurePanelHtml(panels);
   ensureSubpanelHtml(subpanels);
 
   console.log(
-    `✓ vsceasy gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s), ${subpanels.length} subpanel(s)`,
+    `✓ vsceasy gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s), ${subpanels.length} subpanel(s), ${treeViews.length} treeView(s)`,
   );
 }
 

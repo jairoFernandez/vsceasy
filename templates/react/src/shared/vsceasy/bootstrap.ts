@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem, SubpanelDef } from './define';
+import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem, SubpanelDef, TreeViewDef, TreeNode } from './define';
 import { createRpcServer, webviewTransport } from './rpc';
 
 export interface Registry {
@@ -8,6 +8,7 @@ export interface Registry {
   menus?: Record<string, MenuDef>;
   statusBars?: Record<string, StatusBarDef>;
   subpanels?: Record<string, SubpanelDef>;
+  treeViews?: Record<string, TreeViewDef>;
   /** Command prefix from package.json (e.g. "myExt"). */
   prefix: string;
 }
@@ -49,7 +50,91 @@ export function bootstrap(registry: Registry) {
         registerSubpanel(context, registry, id, def);
       }
     }
+
+    if (registry.treeViews) {
+      for (const [id, def] of Object.entries(registry.treeViews)) {
+        registerTreeView(context, registry, id, def);
+      }
+    }
   };
+}
+
+// --- Tree Views (data-driven) ---
+
+function registerTreeView(
+  context: vscode.ExtensionContext,
+  registry: Registry,
+  id: string,
+  def: TreeViewDef,
+) {
+  const viewId = `${registry.prefix}-${def.menu}-${def.id ?? id}`;
+  const provider = new DataTreeProvider(def, context);
+  const view = vscode.window.createTreeView(viewId, {
+    treeDataProvider: provider,
+    showCollapseAll: def.showCollapseAll !== false,
+  });
+  context.subscriptions.push(view);
+
+  const refreshCmd = `${registry.prefix}._tree.${def.id ?? id}.refresh`;
+  context.subscriptions.push(
+    vscode.commands.registerCommand(refreshCmd, () => provider.refresh()),
+  );
+
+  const dispatchCmd = `${registry.prefix}._tree.${def.id ?? id}.run`;
+  context.subscriptions.push(
+    vscode.commands.registerCommand(dispatchCmd, async (node: TreeNode) => {
+      if (node.run) return node.run(vscode, context);
+      if (node.panel) {
+        const p = registry.panels[node.panel];
+        if (p) return openPanel(context, registry.prefix, node.panel, p);
+      }
+      if (node.command) {
+        const c = registry.commands[node.command];
+        if (c) return c.run(vscode, context);
+      }
+    }),
+  );
+  provider.setDispatchCommand(dispatchCmd);
+}
+
+class DataTreeProvider implements vscode.TreeDataProvider<TreeNode> {
+  private _onDidChange = new vscode.EventEmitter<TreeNode | undefined>();
+  readonly onDidChangeTreeData = this._onDidChange.event;
+  private dispatchCmd = '';
+
+  constructor(private readonly def: TreeViewDef, private readonly context: vscode.ExtensionContext) {}
+
+  setDispatchCommand(cmd: string) {
+    this.dispatchCmd = cmd;
+  }
+
+  refresh() {
+    this._onDidChange.fire(undefined);
+  }
+
+  getTreeItem(node: TreeNode): vscode.TreeItem {
+    const hasChildren = !!node.children?.length;
+    const state = hasChildren || node.children === undefined
+      ? node.collapsed === 'expanded'
+        ? vscode.TreeItemCollapsibleState.Expanded
+        : vscode.TreeItemCollapsibleState.Collapsed
+      : vscode.TreeItemCollapsibleState.None;
+    const item = new vscode.TreeItem(node.label, state);
+    item.id = node.id;
+    item.tooltip = node.tooltip;
+    item.description = node.description;
+    item.contextValue = node.contextValue;
+    item.iconPath = resolveIcon(this.context, node.icon);
+    if (this.dispatchCmd && (node.run || node.panel || node.command)) {
+      item.command = { command: this.dispatchCmd, title: node.label, arguments: [node] };
+    }
+    return item;
+  }
+
+  async getChildren(node?: TreeNode): Promise<TreeNode[]> {
+    if (node?.children) return node.children;
+    return Promise.resolve(this.def.getChildren(node, vscode, this.context));
+  }
 }
 
 // --- Webview Views (sidebar inline) ---

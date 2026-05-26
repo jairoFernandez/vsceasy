@@ -12,12 +12,14 @@ const createCommand: Command = {
     { name: 'description', description: 'Short description', required: false, type: ParamType.Text },
     { name: 'publisher', description: 'VS Code publisher id', required: false, type: ParamType.Text },
     { name: 'ui', description: 'UI framework', required: false, type: ParamType.List, options: ['react'] },
+    { name: 'preset', description: 'Project preset (minimal = empty extension, full = panel + RPC sample)', required: false, type: ParamType.List, options: ['minimal', 'full'] },
     { name: 'dir', description: 'Target directory (defaults to ./<name>)', required: false, type: ParamType.Text },
   ],
   action: async (args) => {
     const name: string = args.name;
     const simpleName = name.replace(/^@[^/]+\//, '');
     const ui = (args.ui ?? 'react') as 'react';
+    const preset = (args.preset ?? 'full') as 'minimal' | 'full';
     const targetDir = path.resolve(process.cwd(), args.dir ?? simpleName);
 
     try {
@@ -27,6 +29,7 @@ const createCommand: Command = {
         description: args.description ?? `${simpleName} VS Code extension`,
         publisher: args.publisher ?? 'your-publisher',
         ui,
+        preset,
         targetDir,
         templatesRoot: findTemplatesRoot(__dirname),
       });

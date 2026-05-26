@@ -1,0 +1,6 @@
+dist
+node_modules
+templates/_generators/**/*.tpl
+example-1
+src/data/codicons.ts
+bun.lock
