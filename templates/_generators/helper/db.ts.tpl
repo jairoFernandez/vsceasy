@@ -164,18 +164,23 @@ export function createDb(ctx: vscode.ExtensionContext, opts: CreateDbOptions): D
 let _db: Db | undefined;
 
 /**
- * Initialize the shared db. Call once on activate. Idempotent — repeat calls
- * return the same instance.
- *
- *   import { initDb } from './db';
- *   initDb(context);
+ * Default options used by `initDb` when called as a bootstrap hook (one-arg).
+ * Override via the 2-arg form: `initDb(context, { provider: 'global' })`.
  */
-export function initDb(
-  ctx: vscode.ExtensionContext,
-  opts: CreateDbOptions = { provider: '{{provider}}' },
-): Db {
+export const dbOptions: CreateDbOptions = { provider: '{{provider}}' };
+
+/**
+ * Initialize the shared db. Call once on activate. Idempotent.
+ *
+ * As a bootstrap hook (recommended — `bootstrap(registry, { onActivate: [initDb] })`):
+ *   initDb(context)
+ *
+ * Direct call with custom options:
+ *   initDb(context, { provider: 'global' })
+ */
+export function initDb(ctx: vscode.ExtensionContext, opts?: CreateDbOptions): Db {
   if (_db) return _db;
-  _db = createDb(ctx, opts);
+  _db = createDb(ctx, opts ?? dbOptions);
   return _db;
 }
 

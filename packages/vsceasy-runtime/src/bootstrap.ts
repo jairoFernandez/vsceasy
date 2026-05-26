@@ -16,10 +16,20 @@ export interface Registry {
 
 const openPanels = new Map<string, vscode.WebviewPanel>();
 
+/**
+ * Hook fired with the `ExtensionContext`. Use to wire `initDb(context)`,
+ * `initSecrets(context)`, `initState(context)`, etc. Return value ignored;
+ * may be sync or async (awaited in order).
+ *
+ * Signature uses `...rest: any[]` so any 1- or 2-arg helper (including ones
+ * that declare a typed second parameter like `initDb(ctx, opts?)`) assigns
+ * cleanly. The bootstrap runtime always passes the `vscode` namespace as the
+ * second arg — helpers free to ignore it or declare their own type.
+ */
 export type ActivateHook = (
   context: vscode.ExtensionContext,
-  vscodeNs: typeof import('vscode'),
-) => void | Promise<void>;
+  ...rest: any[]
+) => unknown | Promise<unknown>;
 
 export interface BootstrapOptions {
   /**
