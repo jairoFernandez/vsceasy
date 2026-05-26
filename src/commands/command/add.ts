@@ -14,9 +14,28 @@ function readMenuSource(projectRoot: string, name: string): string | null {
   return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
 }
 
+const WHEN_HELP = [
+  '',
+  '`when` clause cheatsheet (controls visibility/enablement):',
+  '  editorTextFocus                              — active text editor',
+  '  editorHasSelection                           — text is selected',
+  '  resourceLangId == typescript                 — current file language',
+  '  resourceExtname == .json                     — current file extension',
+  '  explorerResourceIsFolder                     — folder selected in Explorer',
+  '  workspaceFolderCount != 0                    — workspace is open',
+  '  view == myExt-settings                       — inside a specific tree view',
+  '  viewItem == myCtx                            — tree item with contextValue',
+  '  !virtualWorkspace                            — exclude github.dev / codespaces',
+  '  myExt.authenticated                          — your own setContext key',
+  'Operators: && (and) || (or) ! (not) == != =~ in',
+  'Full list: https://code.visualstudio.com/api/references/when-clause-contexts',
+  'Inspect live keys: Cmd+Shift+P → "Developer: Inspect Context Keys"',
+].join('\n');
+
 const addCommandCommand: Command = {
   name: 'add',
-  description: 'Add a command (registered in command palette) to an existing vsceasy project',
+  description:
+    'Add a command (registered in command palette) to an existing vsceasy project.' + WHEN_HELP,
   params: [
     { name: 'name', description: 'Command id (camelCase, e.g. doStuff)', required: true, type: ParamType.Text },
     {
@@ -35,7 +54,7 @@ const addCommandCommand: Command = {
     },
     {
       name: 'when',
-      description: 'VS Code `when` clause controlling palette enablement (e.g. editorTextFocus)',
+      description: 'VS Code `when` clause (see cheatsheet above; e.g. editorTextFocus)',
       required: false,
       type: ParamType.Text,
     },
