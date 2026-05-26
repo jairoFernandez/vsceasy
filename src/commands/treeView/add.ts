@@ -1,6 +1,7 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
 import { addTreeView } from '../../lib/treeView/add';
+import { listMenus } from '../../lib/menu/edit';
 import { findProjectRoot, findTemplatesRoot } from '../../lib/findProject';
 
 const addTreeViewCommand: Command = {
@@ -8,7 +9,19 @@ const addTreeViewCommand: Command = {
   description: 'Add a data-driven tree view to an existing menu',
   params: [
     { name: 'name', description: 'Tree view id (e.g. explorer)', required: true, type: ParamType.Text },
-    { name: 'menu', description: 'Menu container id (basename in src/menus)', required: true, type: ParamType.Text },
+    {
+      name: 'menu',
+      description: 'Menu container id (basename in src/menus)',
+      required: true,
+      type: ParamType.List,
+      optionsLoader: () => {
+        const menus = listMenus(findProjectRoot());
+        if (menus.length === 0) {
+          throw new Error('No menus found in src/menus/. Run `vsceasy menu add` first.');
+        }
+        return menus;
+      },
+    },
     { name: 'title', description: 'Section title (default: derived from name)', required: false, type: ParamType.Text },
   ],
   action: async (args) => {

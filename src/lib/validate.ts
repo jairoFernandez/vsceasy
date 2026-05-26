@@ -31,6 +31,7 @@ export function assertNoOverwrite(projectRoot: string, target: string, kind: str
 
 /**
  * Throw if a referenced sibling resource (panel, menu, command) is missing on disk.
+ * Error message lists the existing siblings so the user can pick one without re-running.
  */
 export function assertSiblingExists(
   projectRoot: string,
@@ -38,12 +39,25 @@ export function assertSiblingExists(
   id: string,
 ): string {
   const dir = `${kind}s`;
+  const dirPath = path.join(projectRoot, 'src', dir);
   const candidates = [
-    path.join(projectRoot, 'src', dir, `${id}.ts`),
-    path.join(projectRoot, 'src', dir, `${id}.tsx`),
+    path.join(dirPath, `${id}.ts`),
+    path.join(dirPath, `${id}.tsx`),
   ];
   for (const p of candidates) if (fs.existsSync(p)) return p;
-  throw new Error(
-    `${kind} "${id}" not found at \`src/${dir}/${id}.ts\`. Run \`vsceasy ${kind} add --name ${id}\` first.`,
-  );
+
+  const existing = listSiblings(dirPath);
+  const hint = existing.length
+    ? ` Available ${kind}s: ${existing.map((n) => `"${n}"`).join(', ')}.`
+    : ` No ${kind}s exist yet — run \`vsceasy ${kind} add --name <id>\` first.`;
+  throw new Error(`${kind} "${id}" not found at \`src/${dir}/${id}.ts\`.${hint}`);
+}
+
+function listSiblings(dirPath: string): string[] {
+  if (!fs.existsSync(dirPath)) return [];
+  return fs
+    .readdirSync(dirPath, { withFileTypes: true })
+    .filter((e) => e.isFile() && /\.(ts|tsx)$/.test(e.name) && !e.name.startsWith('_'))
+    .map((e) => e.name.replace(/\.(ts|tsx)$/, ''))
+    .sort();
 }

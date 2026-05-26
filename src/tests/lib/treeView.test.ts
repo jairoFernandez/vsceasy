@@ -61,6 +61,22 @@ describe('addTreeView', () => {
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 
+  test('unknown-menu error lists existing menus', async () => {
+    const project = await scaffoldProject();
+    addMenu({ name: 'settings', projectRoot: project, templatesRoot, runGen: false });
+    addMenu({ name: 'tools', projectRoot: project, templatesRoot, runGen: false });
+    expect(() =>
+      addTreeView({
+        name: 'x',
+        menu: 'ghost',
+        projectRoot: project,
+        templatesRoot,
+        runGen: false,
+      }),
+    ).toThrow(/Available menus: "settings", "tools"/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
   test('rejects duplicate tree view', async () => {
     const project = await scaffoldProject();
     addMenu({ name: 'main', projectRoot: project, templatesRoot, runGen: false });
