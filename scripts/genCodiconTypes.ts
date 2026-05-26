@@ -12,6 +12,7 @@ import { CODICONS } from '../src/data/codicons';
 
 const repoRoot = path.resolve(__dirname, '..');
 const targets = [
+  path.join(repoRoot, 'packages/vsceasy-runtime/src/codiconNames.ts'),
   path.join(repoRoot, 'templates/react/src/shared/vsceasy/codiconNames.ts'),
 ];
 

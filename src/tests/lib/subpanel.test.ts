@@ -60,7 +60,7 @@ describe('addSubpanel', () => {
         templatesRoot,
         runGen: false,
       }),
-    ).toThrow(/Menu not found/);
+    ).toThrow(/menu "doesNotExist" not found|Menu not found/);
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 

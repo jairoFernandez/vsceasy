@@ -85,7 +85,7 @@ describe('addMenu', () => {
     const project = await scaffoldProject();
     expect(() =>
       addMenu({ name: '---', projectRoot: project, templatesRoot, runGen: false }),
-    ).toThrow(/Invalid menu name/);
+    ).toThrow(/menu name is required|Invalid menu name/);
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 });

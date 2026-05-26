@@ -3,6 +3,7 @@ import * as path from 'path';
 import { spawnSync } from 'child_process';
 import { substitute } from '../scaffold';
 import { addCommand } from '../command/add';
+import { assertId, assertNoOverwrite } from '../validate';
 
 export interface AddStatusBarOptions {
   name: string;
@@ -32,13 +33,10 @@ export interface AddStatusBarResult {
 }
 
 export function addStatusBar(opts: AddStatusBarOptions): AddStatusBarResult {
-  const name = normalizeCamel(opts.name);
-  if (!name) throw new Error(`Invalid status bar name: ${opts.name}`);
+  const name = assertId('status bar name', normalizeCamel(opts.name));
 
   const file = path.join(opts.projectRoot, 'src', 'statusBars', `${name}.ts`);
-  if (fs.existsSync(file)) {
-    throw new Error(`Status bar already exists: ${path.relative(opts.projectRoot, file)}`);
-  }
+  assertNoOverwrite(opts.projectRoot, file, 'Status bar');
 
   const tplPath = path.join(opts.templatesRoot, '_generators', 'statusBar', 'statusBar.ts.tpl');
   if (!fs.existsSync(tplPath)) throw new Error(`Template missing: ${tplPath}`);

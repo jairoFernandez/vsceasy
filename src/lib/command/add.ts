@@ -3,6 +3,8 @@ import * as path from 'path';
 import { spawnSync } from 'child_process';
 import { substitute } from '../scaffold';
 import { editMenu } from '../menu/edit';
+import { assertId, assertNoOverwrite, assertSiblingExists } from '../validate';
+import { readConfig } from '../config';
 
 export interface AddCommandOptions {
   /** Command id — camelCase. Becomes file basename and command suffix. */
@@ -35,24 +37,26 @@ export interface AddCommandResult {
 }
 
 export function addCommand(opts: AddCommandOptions): AddCommandResult {
-  const name = normalizeCamel(opts.name);
-  if (!name) throw new Error(`Invalid command name: ${opts.name}`);
+  const name = assertId('command name', normalizeCamel(opts.name));
   const Pascal = name.charAt(0).toUpperCase() + name.slice(1);
   const title = (opts.title ?? Pascal).trim() || Pascal;
 
   const file = path.join(opts.projectRoot, 'src', 'commands', `${name}.ts`);
-  if (fs.existsSync(file)) {
-    throw new Error(`Command already exists: ${path.relative(opts.projectRoot, file)}`);
-  }
+  assertNoOverwrite(opts.projectRoot, file, 'Command');
+
+  if (opts.menuEntry) assertSiblingExists(opts.projectRoot, 'menu', opts.menuEntry);
 
   const tplPath = path.join(opts.templatesRoot, '_generators', 'command', 'command.ts.tpl');
   if (!fs.existsSync(tplPath)) throw new Error(`Template missing: ${tplPath}`);
+
+  const cfg = readConfig(opts.projectRoot);
+  const category = opts.category ?? cfg.defaultCategory;
 
   const vars: Record<string, string> = {
     name,
     Name: Pascal,
     title,
-    categoryLine: opts.category ? `\n  category: '${opts.category}',` : '',
+    categoryLine: category ? `\n  category: '${escapeQuotes(category)}',` : '',
     keybindingLine: opts.keybinding ? `\n  keybinding: '${escapeQuotes(opts.keybinding)}',` : '',
   };
 

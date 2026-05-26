@@ -6,7 +6,9 @@
   "scripts": {
     "test": "bun test",
     "gen:types": "bun scripts/genCodiconTypes.ts",
-    "build": "bun run gen:types && tsc --emitDeclarationOnly && bun build ./src/index.ts ./src/bin/cli.ts --target=node --outdir ./dist --format cjs",
+    "sync:runtime": "bun scripts/syncRuntime.ts",
+    "build:runtime": "cd packages/vsceasy-runtime && bun install && bunx tsc",
+    "build": "bun run gen:types && bun run sync:runtime && bun run build:runtime && tsc --emitDeclarationOnly && bun build ./src/index.ts ./src/bin/cli.ts --target=node --outdir ./dist --format cjs",
     "build:test": "bun build ./src/tests/*.ts --target=node --outdir dist/tests --format cjs",
     "prepublishOnly": "bun run build",
     "start": "bun run src/cli.ts",

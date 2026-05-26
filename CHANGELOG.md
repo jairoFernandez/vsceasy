@@ -5,7 +5,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 ## [Unreleased]
 
 ### Added
-- `vsceasy.config.ts` — persistent project defaults (publisher, commandPrefix) read by generators.
+- `vsceasy.config.ts` — persistent project defaults (publisher, commandPrefix, defaultCategory, defaultIcon). Auto-written by `create`; consumed by `command add` (category) and `menu add` (icon).
+- **New package: `vsceasy-runtime`** — the framework runtime (`bootstrap`, `define*`, RPC bridge) extracted as a standalone npm package. Single source of truth at `packages/vsceasy-runtime/src/`; the bundled template is now kept in sync via `bun run sync:runtime`. Allows external consumers to import the runtime without scaffolding a full project.
 - `treeview add` — scaffold native VS Code tree views with `getChildren`/`getTreeItem` handlers and auto-registered `views` contribution.
 - `create --preset minimal|full` — `minimal` ships only extension entry + one command; `full` includes panel + tree view + subpanel + RPC sample.
 - `test:setup` — adds Vitest config and a sample panel test inside a generated project.

@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
 import { substitute } from '../scaffold';
+import { assertId, assertNoOverwrite } from '../validate';
+import { readConfig } from '../config';
 
 export interface AddMenuOptions {
   name: string;
@@ -18,16 +20,14 @@ export interface AddMenuResult {
 }
 
 export function addMenu(opts: AddMenuOptions): AddMenuResult {
-  const name = normalizeCamel(opts.name);
-  if (!name) throw new Error(`Invalid menu name: ${opts.name}`);
+  const name = assertId('menu name', normalizeCamel(opts.name));
   const Pascal = name.charAt(0).toUpperCase() + name.slice(1);
   const title = opts.title ?? Pascal;
-  const icon = opts.icon ?? 'symbol-misc';
+  const cfg = readConfig(opts.projectRoot);
+  const icon = opts.icon ?? cfg.defaultIcon ?? 'symbol-misc';
 
   const menuTs = path.join(opts.projectRoot, 'src', 'menus', `${name}.ts`);
-  if (fs.existsSync(menuTs)) {
-    throw new Error(`Menu already exists: ${path.relative(opts.projectRoot, menuTs)}`);
-  }
+  assertNoOverwrite(opts.projectRoot, menuTs, 'Menu');
 
   const tplPath = path.join(opts.templatesRoot, '_generators', 'menu', 'menu.ts.tpl');
   const body = substitute(fs.readFileSync(tplPath, 'utf8'), { name, Name: Pascal, title, icon });

@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { writeConfig } from './config';
 
 export type ScaffoldPreset = 'minimal' | 'full';
 
@@ -34,6 +35,11 @@ export async function scaffold(opts: ScaffoldOptions): Promise<void> {
   const vars = buildVars(opts);
   await copyTree(src, opts.targetDir, vars);
   applyPreset(opts.targetDir, opts.preset ?? 'full');
+  writeConfig(opts.targetDir, {
+    publisher: opts.publisher,
+    commandPrefix: vars.commandPrefix,
+    ui: opts.ui,
+  });
 }
 
 function applyPreset(targetDir: string, preset: ScaffoldPreset) {

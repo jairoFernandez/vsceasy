@@ -36,10 +36,16 @@ src/
 ├── lib/<feature>/      # generators (pure functions; no CLI deps)
 ├── data/codicons.ts    # codicon list (regenerated via `bun run gen:types`)
 └── tests/              # bun test suites mirroring lib/ and commands/
+packages/
+└── vsceasy-runtime/    # standalone runtime package (source of truth)
+    └── src/            # bootstrap, define*, rpc, client — copied into template
 templates/
 ├── react/              # the project template copied by `create`
+│   └── src/shared/vsceasy/  # MIRROR of packages/vsceasy-runtime/src — regenerated
 └── _generators/        # snippet templates used by `<group> add` commands
 ```
+
+> `templates/react/src/shared/vsceasy/` is **regenerated** by `bun run sync:runtime`. Edit the canonical copy under `packages/vsceasy-runtime/src/`; never edit the template mirror directly.
 
 ## Adding a generator
 

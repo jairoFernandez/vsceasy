@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
+import { assertId, assertSiblingExists } from '../validate';
 
 export interface AddRpcMethodOptions {
   /** Panel id (basename in src/panels/). */
@@ -26,17 +27,17 @@ export interface AddRpcMethodResult {
 }
 
 export function addRpcMethod(opts: AddRpcMethodOptions): AddRpcMethodResult {
-  const panelId = opts.panel.trim();
-  const method = opts.method.trim();
-  if (!/^[a-z][a-zA-Z0-9]*$/.test(method)) {
-    throw new Error(`Invalid method name: "${method}" (camelCase required)`);
-  }
-
+  const panelId = assertId('panel id', opts.panel.trim());
+  const method = assertId('method name', opts.method.trim());
+  assertSiblingExists(opts.projectRoot, 'panel', panelId);
   const panelFile = path.join(opts.projectRoot, 'src', 'panels', `${panelId}.ts`);
-  if (!fs.existsSync(panelFile)) throw new Error(`Panel not found: src/panels/${panelId}.ts`);
 
   const apiFile = path.join(opts.projectRoot, 'src', 'shared', 'api.ts');
-  if (!fs.existsSync(apiFile)) throw new Error(`api file missing: src/shared/api.ts`);
+  if (!fs.existsSync(apiFile)) {
+    throw new Error(
+      `RPC contract file missing at \`src/shared/api.ts\`. Create it (an empty file is fine) and retry.`,
+    );
+  }
 
   const Pascal = panelId.charAt(0).toUpperCase() + panelId.slice(1);
   const apiName = `${Pascal}Api`;

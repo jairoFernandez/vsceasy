@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
 import { substitute } from '../scaffold';
+import { assertId, assertNoOverwrite } from '../validate';
 
 export interface AddPanelOptions {
   /** Panel id — camelCase recommended. */
@@ -26,8 +27,7 @@ export interface AddPanelResult {
 }
 
 export function addPanel(opts: AddPanelOptions): AddPanelResult {
-  const name = normalizeCamel(opts.name);
-  if (!name) throw new Error(`Invalid panel name: ${opts.name}`);
+  const name = assertId('panel name', normalizeCamel(opts.name));
   const Pascal = name.charAt(0).toUpperCase() + name.slice(1);
   const title = opts.title ?? Pascal;
   const withApi = opts.withApi !== false;
@@ -39,8 +39,8 @@ export function addPanel(opts: AddPanelOptions): AddPanelResult {
   const mainTsx = path.join(uiDir, 'main.tsx');
   const apiPath = path.join(opts.projectRoot, 'src', 'shared', 'api.ts');
 
-  if (fs.existsSync(panelTs)) throw new Error(`Panel already exists: ${path.relative(opts.projectRoot, panelTs)}`);
-  if (fs.existsSync(uiDir)) throw new Error(`Webview dir already exists: ${path.relative(opts.projectRoot, uiDir)}`);
+  assertNoOverwrite(opts.projectRoot, panelTs, 'Panel');
+  assertNoOverwrite(opts.projectRoot, uiDir, 'Webview dir');
 
   const genDir = path.join(opts.templatesRoot, '_generators', 'panel');
   const readTpl = (n: string) => fs.readFileSync(path.join(genDir, n), 'utf8');

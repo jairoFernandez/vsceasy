@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
 import { substitute } from '../scaffold';
+import { assertId, assertNoOverwrite, assertSiblingExists } from '../validate';
 
 export interface AddSubpanelOptions {
   /** Subpanel id — camelCase. Becomes file basename + view id suffix. */
@@ -25,18 +26,14 @@ export interface AddSubpanelResult {
 }
 
 export function addSubpanel(opts: AddSubpanelOptions): AddSubpanelResult {
-  const name = normalizeCamel(opts.name);
-  if (!name) throw new Error(`Invalid webview view name: ${opts.name}`);
-  if (!opts.menu) throw new Error('menu is required (target container)');
+  const name = assertId('subpanel name', normalizeCamel(opts.name));
+  const menu = assertId('menu id', normalizeCamel(opts.menu ?? ''));
+  assertSiblingExists(opts.projectRoot, 'menu', menu);
+
   const Pascal = name.charAt(0).toUpperCase() + name.slice(1);
   const title = opts.title ?? Pascal;
   const withApi = opts.withApi !== false;
   const apiName = `${Pascal}ViewApi`;
-
-  const menuFile = path.join(opts.projectRoot, 'src', 'menus', `${opts.menu}.ts`);
-  if (!fs.existsSync(menuFile)) {
-    throw new Error(`Menu not found: src/menus/${opts.menu}.ts — run \`vsceasy menu add\` first`);
-  }
 
   const viewTs = path.join(opts.projectRoot, 'src', 'subpanels', `${name}.ts`);
   const uiDir = path.join(opts.projectRoot, 'src', 'webview', 'subpanels', name);
@@ -44,8 +41,8 @@ export function addSubpanel(opts: AddSubpanelOptions): AddSubpanelResult {
   const mainTsx = path.join(uiDir, 'main.tsx');
   const apiPath = path.join(opts.projectRoot, 'src', 'shared', 'api.ts');
 
-  if (fs.existsSync(viewTs)) throw new Error(`Webview view already exists: ${path.relative(opts.projectRoot, viewTs)}`);
-  if (fs.existsSync(uiDir)) throw new Error(`Webview dir already exists: ${path.relative(opts.projectRoot, uiDir)}`);
+  assertNoOverwrite(opts.projectRoot, viewTs, 'Subpanel');
+  assertNoOverwrite(opts.projectRoot, uiDir, 'Webview dir');
 
   const genDir = path.join(opts.templatesRoot, '_generators', 'subpanel');
   const readTpl = (n: string) => fs.readFileSync(path.join(genDir, n), 'utf8');
@@ -54,7 +51,7 @@ export function addSubpanel(opts: AddSubpanelOptions): AddSubpanelResult {
     name,
     Name: Pascal,
     title,
-    menu: opts.menu,
+    menu,
     apiImport: withApi ? `import type { ${apiName} } from '../shared/api';\n` : '',
     apiGeneric: withApi ? `<${apiName}>` : '',
     rpcBlock: withApi ? `\n  rpc: (vscode) => ({\n    // add RPC handlers here\n  }),` : '',

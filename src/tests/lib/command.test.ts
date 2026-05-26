@@ -80,7 +80,7 @@ describe('addCommand', () => {
     const project = await scaffoldProject();
     expect(() =>
       addCommand({ name: '---', projectRoot: project, templatesRoot, runGen: false }),
-    ).toThrow(/Invalid command name/);
+    ).toThrow(/command name is required|Invalid command name/);
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 

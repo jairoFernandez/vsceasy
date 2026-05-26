@@ -6,6 +6,7 @@ export interface VsceasyConfig {
   commandPrefix?: string;
   ui?: 'react';
   defaultIcon?: string;
+  defaultCategory?: string;
 }
 
 const CONFIG_FILES = ['vsceasy.config.ts', 'vsceasy.config.js', 'vsceasy.config.json'];
@@ -33,10 +34,15 @@ export function readConfig(projectRoot: string): VsceasyConfig {
 }
 
 function parseExportDefault(src: string): VsceasyConfig {
-  const match = src.match(/export\s+default\s+(\{[\s\S]*?\})\s*;?\s*$/m);
-  if (!match) return {};
+  // Try inline form first: `export default { ... }`
+  let literal = extractBracedLiteral(src, /export\s+default\s*\{/);
+  // Fall back to: `const X(:Type)? = { ... }; export default X;`
+  if (!literal) {
+    literal = extractBracedLiteral(src, /(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*(?::\s*[^=]+)?=\s*\{/);
+  }
+  if (!literal) return {};
   try {
-    const jsonish = match[1]
+    const jsonish = literal
       .replace(/\/\/.*$/gm, '')
       .replace(/,\s*([}\]])/g, '$1')
       .replace(/([{,]\s*)([A-Za-z_][\w]*)\s*:/g, '$1"$2":')
@@ -45,6 +51,22 @@ function parseExportDefault(src: string): VsceasyConfig {
   } catch {
     return {};
   }
+}
+
+function extractBracedLiteral(src: string, head: RegExp): string | null {
+  const m = head.exec(src);
+  if (!m) return null;
+  const openIdx = m.index + m[0].length - 1; // position of `{`
+  let depth = 0;
+  for (let i = openIdx; i < src.length; i++) {
+    const c = src[i];
+    if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 0) return src.slice(openIdx, i + 1);
+    }
+  }
+  return null;
 }
 
 export function writeConfig(projectRoot: string, cfg: VsceasyConfig): string {
