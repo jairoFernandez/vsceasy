@@ -13,6 +13,7 @@ import AddHelper from './helper/add';
 import AddJob from './job/add';
 import DbInit from './db/init';
 import AddModel from './model/add';
+import AddCrud from './crud/add';
 
 function group(name: string, description: string, subcommands: Command[]): Command {
   return {
@@ -40,3 +41,4 @@ export const HelperGroup = group('helper', 'Generate runtime helpers (secrets, c
 export const JobGroup = group('job', 'Manage recurring / event-triggered jobs (interval, dailyAt, on, onFile)', [AddJob]);
 export const DbGroup = group('db', 'Initialize the project database (mini-ORM)', [DbInit]);
 export const ModelGroup = group('model', 'Manage typed models (entities + repos) under src/models/', [AddModel]);
+export const CrudGroup = group('crud', 'Scaffold full CRUD UI (service + list panel + form panel + RPC) for a model', [AddCrud]);

@@ -14,6 +14,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
   - `notifications` — `notify.{info,warn,error,confirm}` + `withProgress`.
   - `cache` — in-memory TTL + LRU cache (`createCache({ ttlMs, max })`) with `wrap(key, fn)` memoization, in-flight de-dupe, and `refresh(key, fn)`. Pairs with the ORM for cheap reads.
 - **`vsceasy db init`** — scaffold the project database at `src/helpers/db.ts` (idempotent). Exposes `initDb(ctx)` + `db()` singleton + `defineEntity<T>()`. Filesystem JSON provider out of the box (`--provider storage|global`). Provider interface designed to host SQLite/etc. next.
+- **`vsceasy crud add --model X`** — Rails-style scaffold: reads `src/models/X.ts`, generates `src/services/XService.ts`, `src/panels/{xsList,xForm}.ts`, React webview bundles, and appends `XsListApi` + `XFormApi` to `src/shared/api.ts`. Auto-renders inputs by TS type (number, boolean, Date, literal union → select, string → text). Optional menu wiring (none / existing / new). Optional `src/models/X.crud.ts` overrides labels, hidden fields, field order, and input kinds per field.
 - **`vsceasy model add --name X`** — typed entity + repo under `src/models/X.ts`. Interactive field loop (`name:type` per line, empty to finish) or compact flag spec `--fields "id:string!,email?:string@,score:number"`. Flags: `!` = primaryKey, `@` = indexed, `?` after name = optional. Generates `interface X`, `export const Xs = defineEntity<X>(...)`, and `export const XsRepo = () => db()(Xs)`. Requires `db init` first.
 
 ### Removed

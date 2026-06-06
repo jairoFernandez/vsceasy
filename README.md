@@ -110,6 +110,8 @@ vsceasy
 │   └── init            scaffold project database (mini-ORM)  at src/helpers/db.ts
 ├── model
 │   └── add             typed entity + repo under src/models/
+├── crud
+│   └── add             full CRUD scaffold (service + list panel + form panel + menu wire)
 ├── doctor              diagnose project + safe --fix
 └── upgrade             sync framework-owned files from the bundled templates
 ```
@@ -323,6 +325,54 @@ Field-spec grammar (interactive loop + `--fields`):
 - `name:type!` — primary key (defaults to `id` or first field)
 - `name:type@` — indexed
 - combine: `score:number!@`
+
+### `crud add` (Rails-style scaffold)
+End-to-end CRUD UI for a model. Reads `src/models/X.ts`, generates:
+
+```
+src/services/UserService.ts        ← business logic between RPC and repo
+src/panels/usersList.ts            ← list panel (RPC: list, delete, openForm)
+src/panels/userForm.ts             ← form panel (RPC: get, save, cancel)
+src/webview/panels/usersList/      ← React table w/ Edit + Delete buttons
+src/webview/panels/userForm/       ← React form, inputs inferred from TS types
+src/shared/api.ts                  ← appends UsersListApi + UserFormApi
+src/menus/users.ts (optional)      ← if --menu new:users
+```
+
+Inputs auto-inferred:
+- `string` → `<input type="text">`
+- `number` → `<input type="number">`
+- `boolean` → `<input type="checkbox">`
+- `Date` → `<input type="date">`
+- `'a' | 'b' | 'c'` → `<select>` with options
+- `null | undefined` unions stripped before inference
+
+```bash
+# Interactive — picks menu policy (none | existing | new)
+vsceasy crud add --model User
+
+# Scripted
+vsceasy crud add --model User --menu new:users
+vsceasy crud add --model Post --menu existing:settings
+vsceasy crud add --model Note --menu "(no menu)"
+```
+
+#### Custom overrides — `src/models/X.crud.ts`
+Optional file next to your model:
+```ts
+export default {
+  title: 'People',                       // display label
+  icon: 'person',                        // codicon for menu
+  hidden: ['createdAt'],                 // strip from list + form
+  order: ['name', 'email', 'role'],      // explicit field order
+  fields: {
+    name: { label: 'Full name' },
+    bio:  { input: 'textarea', placeholder: 'Short bio…' },
+    role: { input: 'select', options: ['admin', 'editor', 'viewer'] },
+    email: { hideInList: true },         // visible in form, hidden in table
+  },
+};
+```
 
 #### Cache
 ```ts
