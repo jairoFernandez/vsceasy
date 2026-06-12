@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { substitute } from '../scaffold';
-import { assertNoOverwrite } from '../validate';
 import { readConfig } from '../config';
 
 export type HelperKind = 'secrets' | 'config' | 'state' | 'notifications' | 'cache';
@@ -50,7 +49,7 @@ export function addHelper(opts: AddHelperOptions): AddHelperResult {
   if (fs.existsSync(target) && !opts.force) {
     skipped.push(target);
   } else {
-    if (fs.existsSync(target)) assertNoOverwrite(opts.projectRoot, target, 'Helper'); // unreachable when force=true
+    // Reached only when the file is absent, or force=true (overwrite intended).
     fs.writeFileSync(target, substitute(fs.readFileSync(tpl, 'utf8'), vars));
     created.push(target);
   }

@@ -62,6 +62,19 @@ describe('addHelper', () => {
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 
+  test('--force overwrites an existing helper instead of throwing', async () => {
+    const project = await scaffoldProject();
+    const file = path.join(project, 'src/helpers/secrets.ts');
+    addHelper({ kind: 'secrets', projectRoot: project, templatesRoot });
+    fs.writeFileSync(file, '// hand-edited\n');
+
+    const result = addHelper({ kind: 'secrets', force: true, projectRoot: project, templatesRoot });
+    expect(result.created).toContain(file);
+    expect(result.skipped).toEqual([]);
+    expect(fs.readFileSync(file, 'utf8')).not.toBe('// hand-edited\n');
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
   test('rejects unknown kind', async () => {
     const project = await scaffoldProject();
     expect(() =>
