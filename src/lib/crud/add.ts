@@ -235,7 +235,7 @@ function renderInput(field: ParsedField, override?: CrudFieldOverride): string {
       );
     case 'date':
       return wrap(
-        `        <input type="date"${required} value={(form.${name} as any) ?? ''} onChange={(e) => onChange('${name}', e.target.value as any)} />`,
+        `        <input type="date"${required} value={toDateInput(form.${name})} onChange={(e) => onChange('${name}', e.target.value as any)} />`,
       );
     case 'select': {
       const opts = (spec.options ?? [])

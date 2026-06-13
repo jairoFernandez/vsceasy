@@ -1,6 +1,10 @@
-# vsceasy
+<p align="center">
+  <img src="assets/logo-mark.svg" alt="vsceasy octopus mascot" width="96" height="96" />
+</p>
 
-Build VS Code extensions fast. React UI + typed RPC bridge between extension and webview + zero-config build.
+<h1 align="center">vsceasy</h1>
+
+<p align="center">Build VS Code extensions fast. React UI + typed RPC bridge between extension and webview + zero-config build.</p>
 
 > Status: v0.1 — React UI. Typed RPC bridge + file-based registry + scaffolding for panels, commands, menus, tree views, subpanels, status bars.
 

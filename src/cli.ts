@@ -17,6 +17,15 @@ const cli = new CLI(
       preset: 'retro-space',
       title: 'vsceasy',
       subtitle: 'VS Code Extension Framework',
+      asciiArt: [
+        '      .-""""-.',
+        "     / o    o \\",
+        '    |    ..    |',
+        "     \\  '--'  /",
+        '     /`-.__.-`\\',
+        '   _/ /|/||\\|\\ \\_',
+        '  `--`-`-``-`-`--`',
+      ],
     },
     defaultCommands: {
       rotatePassphrase: false,

@@ -1,0 +1,58 @@
+<svg width="680" height="360" viewBox="0 0 680 360" role="img" aria-labelledby="t d" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, Segoe UI, sans-serif">
+  <title id="t">vsceasy octopus logo</title>
+  <desc id="d">A friendly coral octopus mascot whose eight tentacles reach out to the artifacts vsceasy generates: a panel, a command, a menu, a database and a job.</desc>
+
+  <g transform="translate(150,40)">
+    <path d="M30 160 q-46 18 -52 64" fill="none" stroke="#F0997B" stroke-width="13" stroke-linecap="round"/>
+    <path d="M52 184 q-30 36 -20 78" fill="none" stroke="#F0997B" stroke-width="13" stroke-linecap="round"/>
+    <path d="M80 192 q-8 44 -30 70" fill="none" stroke="#F0997B" stroke-width="13" stroke-linecap="round"/>
+    <path d="M100 192 q8 44 30 70" fill="none" stroke="#F0997B" stroke-width="13" stroke-linecap="round"/>
+    <path d="M128 184 q30 36 20 78" fill="none" stroke="#F0997B" stroke-width="13" stroke-linecap="round"/>
+    <path d="M150 160 q46 18 52 64" fill="none" stroke="#F0997B" stroke-width="13" stroke-linecap="round"/>
+
+    <ellipse cx="90" cy="120" rx="78" ry="74" fill="#F0997B" stroke="#D85A30" stroke-width="3"/>
+
+    <circle cx="66" cy="112" r="14" fill="#ffffff"/>
+    <circle cx="114" cy="112" r="14" fill="#ffffff"/>
+    <circle cx="69" cy="115" r="6.5" fill="#26211C"/>
+    <circle cx="111" cy="115" r="6.5" fill="#26211C"/>
+    <circle cx="71" cy="112" r="2" fill="#ffffff"/>
+    <circle cx="113" cy="112" r="2" fill="#ffffff"/>
+    <path d="M78 142 q12 10 24 0" fill="none" stroke="#D85A30" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="48" cy="132" rx="9" ry="6" fill="#F5C4B3" opacity="0.85"/>
+    <ellipse cx="132" cy="132" rx="9" ry="6" fill="#F5C4B3" opacity="0.85"/>
+  </g>
+
+  <g>
+    <g transform="translate(70,250)">
+      <rect x="0" y="0" width="58" height="40" rx="7" fill="#FAECE7" stroke="#D85A30" stroke-width="2.5"/>
+      <rect x="8" y="9" width="42" height="5" rx="2.5" fill="#D85A30"/>
+      <rect x="8" y="20" width="30" height="5" rx="2.5" fill="#F0997B"/>
+      <rect x="8" y="29" width="36" height="5" rx="2.5" fill="#F0997B"/>
+      <text x="29" y="56" font-size="11" fill="#993C1D" text-anchor="middle">panel</text>
+    </g>
+    <g transform="translate(150,288)">
+      <rect x="0" y="0" width="58" height="40" rx="7" fill="#FAECE7" stroke="#D85A30" stroke-width="2.5"/>
+      <text x="29" y="27" font-size="20" fill="#D85A30" text-anchor="middle" font-family="ui-monospace, monospace">{ }</text>
+      <text x="29" y="56" font-size="11" fill="#993C1D" text-anchor="middle">command</text>
+    </g>
+    <g transform="translate(300,300)">
+      <rect x="0" y="0" width="58" height="40" rx="7" fill="#FAECE7" stroke="#D85A30" stroke-width="2.5"/>
+      <rect x="11" y="11" width="6" height="6" rx="1.5" fill="#D85A30"/><rect x="22" y="12" width="26" height="4" rx="2" fill="#F0997B"/>
+      <rect x="11" y="22" width="6" height="6" rx="1.5" fill="#D85A30"/><rect x="22" y="23" width="26" height="4" rx="2" fill="#F0997B"/>
+      <text x="29" y="56" font-size="11" fill="#993C1D" text-anchor="middle">menu</text>
+    </g>
+    <g transform="translate(430,288)">
+      <rect x="0" y="0" width="58" height="40" rx="7" fill="#FAECE7" stroke="#D85A30" stroke-width="2.5"/>
+      <ellipse cx="29" cy="13" rx="16" ry="6" fill="none" stroke="#D85A30" stroke-width="2.5"/>
+      <path d="M13 13 v14 q0 6 16 6 q16 0 16 -6 v-14" fill="none" stroke="#D85A30" stroke-width="2.5"/>
+      <text x="29" y="56" font-size="11" fill="#993C1D" text-anchor="middle">db</text>
+    </g>
+    <g transform="translate(510,250)">
+      <rect x="0" y="0" width="58" height="40" rx="7" fill="#FAECE7" stroke="#D85A30" stroke-width="2.5"/>
+      <circle cx="29" cy="20" r="13" fill="none" stroke="#D85A30" stroke-width="2.5"/>
+      <path d="M29 13 v8 l6 4" fill="none" stroke="#D85A30" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="29" y="56" font-size="11" fill="#993C1D" text-anchor="middle">job</text>
+    </g>
+  </g>
+</svg>

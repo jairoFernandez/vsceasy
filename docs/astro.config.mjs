@@ -17,6 +17,11 @@ export default defineConfig({
       title: 'vsceasy',
       description:
         'Build VS Code extensions fast — React UI, typed RPC, file-based routing, and a mini-ORM, all scaffolded from the CLI.',
+      logo: {
+        src: './src/assets/logo-mark.svg',
+        alt: 'vsceasy octopus mascot',
+      },
+      favicon: '/favicon.svg',
       social: {
         github: 'https://github.com/jairoFernandez/vsceasy',
       },
@@ -42,6 +47,9 @@ export default defineConfig({
             { label: '2. Model', slug: 'tutorial/02-model' },
             { label: '3. CRUD UI', slug: 'tutorial/03-crud' },
             { label: '4. Job & run', slug: 'tutorial/04-job-and-run' },
+            { label: '5. Menus', slug: 'tutorial/05-menus' },
+            { label: '6. Status bar', slug: 'tutorial/06-statusbar' },
+            { label: '7. Sidebar views', slug: 'tutorial/07-sidebar-views' },
           ],
         },
         {

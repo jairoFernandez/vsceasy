@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 470" font-family="-apple-system, Segoe UI, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Todos container with menu tree, Stats subpanel and By Priority tree</title>
+  <desc id="d">The Todos activity-bar container showing the menu item tree, a Stats webview with totals, and the By Priority tree view grouped by priority.</desc>
+  <rect width="320" height="470" fill="#252526"/>
+
+  <g transform="translate(14,26)">
+    <path d="M0 -4 l5 4 l-5 4" fill="none" stroke="#cccccc" stroke-width="1.4"/>
+    <text x="14" y="4" fill="#cccccc" font-size="12" font-weight="700">TODOS</text>
+  </g>
+  <g font-size="13" fill="#cdcdcd">
+    <text x="44" y="56">Panels</text>
+    <text x="44" y="80">Actions</text>
+    <text x="30" y="104" fill="#9d9d9d">&#8801;</text><text x="48" y="104">Todos</text>
+    <text x="30" y="128" fill="#9d9d9d">+</text><text x="48" y="128">New Todo</text>
+  </g>
+
+  <line x1="0" y1="146" x2="320" y2="146" stroke="#1a1a1a"/>
+  <g transform="translate(14,168)">
+    <path d="M0 -4 l5 4 l-5 4" fill="none" stroke="#cccccc" stroke-width="1.4"/>
+    <text x="14" y="4" fill="#cccccc" font-size="12" font-weight="700">STATS</text>
+  </g>
+  <text x="20" y="206" fill="#e7e7e7" font-size="17" font-weight="500">Stats</text>
+  <g font-size="13" fill="#cdcdcd">
+    <text x="20" y="234">Total: <tspan fill="#ffffff" font-weight="700">4</tspan></text>
+    <text x="20" y="256">Done: <tspan fill="#ffffff" font-weight="700">1</tspan></text>
+    <text x="20" y="278">Overdue: <tspan fill="#ffffff" font-weight="700">1</tspan></text>
+  </g>
+
+  <line x1="0" y1="304" x2="320" y2="304" stroke="#1a1a1a"/>
+  <g transform="translate(14,326)">
+    <path d="M0 -4 l5 4 l-5 4" fill="none" stroke="#cccccc" stroke-width="1.4"/>
+    <text x="14" y="4" fill="#cccccc" font-size="12" font-weight="700">BY PRIORITY</text>
+  </g>
+  <g font-size="13" fill="#cdcdcd">
+    <path d="M30 354 l5 4 l-5 4" fill="none" stroke="#9d9d9d" stroke-width="1.2"/>
+    <text x="44" y="362" fill="#9d9d9d">&#128293;</text><text x="62" y="362">high <tspan fill="#7a7a7a">1</tspan></text>
+    <path d="M30 384 l5 4 l-5 4" fill="none" stroke="#9d9d9d" stroke-width="1.2"/>
+    <circle cx="50" cy="386" r="4" fill="#9d9d9d"/><text x="62" y="390">medium <tspan fill="#7a7a7a">2</tspan></text>
+    <path d="M30 414 l5 4 l-5 4" fill="none" stroke="#9d9d9d" stroke-width="1.2"/>
+    <circle cx="50" cy="416" r="4" fill="none" stroke="#9d9d9d"/><text x="62" y="420">low <tspan fill="#7a7a7a">1</tspan></text>
+  </g>
+</svg>

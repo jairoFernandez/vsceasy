@@ -92,7 +92,12 @@ Starting from an empty project, four commands produced:
 
 and `bun run gen` kept `package.json` and the registry in sync the whole way.
 
-## Where to go next
+The CRUD step already gave us an activity-bar menu. The next steps go deeper into
+how that menu works and what else can dock inside it.
+
+Next: [menus — the navigation model →](/tutorial/05-menus/)
+
+## Reference
 
 - [The mini-ORM](/guides/orm/) — queries, indexes, and providers behind `TodosRepo()`.
 - [Typed RPC](/guides/rpc/) — how the host ↔ webview bridge stays type-safe.

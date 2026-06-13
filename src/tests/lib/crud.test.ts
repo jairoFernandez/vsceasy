@@ -138,10 +138,38 @@ describe('addCrud', () => {
     // pre-loads on mount via pendingId + get, and clears after creating a new row
     expect(formAppSrc).toMatch(/api\.pendingId\(\)/);
     expect(formAppSrc).toMatch(/const wasNew = editingId == null/);
+    // Regression: a reveal (focus/visibility) with no pending id must NOT reset
+    // the form — that would wipe a row the user is mid-edit. Only the initial
+    // mount resets to empty. The reveal listeners therefore pass `load(false)`,
+    // and `load` only clears the form when its `initial` arg is true.
+    expect(formAppSrc).toMatch(/load\(false\)/);
+    expect(formAppSrc).toMatch(/load\(true\)/);
+    expect(formAppSrc).toMatch(/if \(initial\) \{\s*setForm\(emptyForm\)/);
 
     const formApi = fs.readFileSync(path.join(project, 'src/shared/api.ts'), 'utf8');
     expect(formApi).toMatch(/pendingId\(\): Promise<User\['id'\] \| null>/);
 
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('date fields bind through toDateInput so ISO/Date values prefill', async () => {
+    const project = await scaffoldWithUser();
+    addModel({
+      name: 'Event',
+      fields: [
+        { name: 'id', type: 'string', primaryKey: true },
+        { name: 'startsAt', type: 'Date' },
+      ],
+      projectRoot: project,
+      templatesRoot,
+    });
+    addCrud({ model: 'Event', menu: 'none', projectRoot: project, templatesRoot, runGen: false });
+
+    const formApp = fs.readFileSync(path.join(project, 'src/webview/panels/eventForm/App.tsx'), 'utf8');
+    // The date input must normalize stored values (ISO string / Date) to
+    // yyyy-MM-dd, otherwise <input type="date"> shows blank when editing.
+    expect(formApp).toMatch(/function toDateInput/);
+    expect(formApp).toMatch(/type="date"[^>]*value=\{toDateInput\(form\.startsAt\)\}/);
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 

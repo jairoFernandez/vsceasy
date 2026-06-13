@@ -43,6 +43,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Fixed
 - **`crud add --menu` flag parsing** — passing a raw policy string (`--menu none`, `--menu new:<id>`, `--menu existing:<id>`) non-interactively was mis-mapped to `existing:<literal>`, so `--menu none` failed with `Menu not found: src/menus/none.ts`. The flag forms now work the same as the interactive choices (which was already the documented behavior).
+- **Generated CRUD form wiped on reveal** — the scaffolded form panel re-ran its loader on every focus/visibility change. With no row pending it reset to an empty "New" form, discarding whatever the user was typing (e.g. ticking a boolean then losing focus). The loader now only resets on the initial mount; later reveals adopt a newly-requested edit row but otherwise leave the in-progress form untouched. Re-run `crud add` (or pull the change into existing `*/App.tsx` form panels) to pick up the fix.
+- **Generated CRUD date fields didn't prefill when editing** — `<input type="date">` only accepts a `yyyy-MM-dd` value, but stored dates are ISO strings (or `Date` objects), so editing a row showed the date field blank. The generated form now normalizes through a `toDateInput()` helper. Re-run `crud add` (or add the helper to existing form panels) to pick up the fix.
 
 ## [0.0.1] — 2026-05-21
 

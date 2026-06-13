@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 210" font-family="-apple-system, Segoe UI, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">By Priority tree expanded</title>
+  <desc id="d">The By Priority tree view with the high group expanded, showing the todo Write the tutorial under it.</desc>
+  <rect width="320" height="210" fill="#252526"/>
+
+  <g transform="translate(14,28)">
+    <path d="M0 -4 l5 4 l-5 4" fill="none" stroke="#cccccc" stroke-width="1.4"/>
+    <text x="14" y="4" fill="#cccccc" font-size="12" font-weight="700">BY PRIORITY</text>
+  </g>
+
+  <g font-size="13" fill="#cdcdcd">
+    <path d="M30 56 l5 4 l-5 4" fill="none" stroke="#9d9d9d" stroke-width="1.2"/>
+    <text x="44" y="64" fill="#cf8a3b">&#128293;</text><text x="62" y="64">high <tspan fill="#7a7a7a">1</tspan></text>
+
+    <rect x="26" y="74" width="290" height="22" fill="#04395e"/>
+    <path d="M52 80 l5 4 l-5 4" fill="none" stroke="#9d9d9d" stroke-width="1.2"/>
+    <circle cx="72" cy="86" r="5" fill="none" stroke="#cdcdcd"/>
+    <text x="86" y="90" fill="#ffffff">Write the tutorial</text>
+
+    <path d="M30 116 l5 4 l-5 4" fill="none" stroke="#9d9d9d" stroke-width="1.2"/>
+    <circle cx="50" cy="118" r="4" fill="#9d9d9d"/><text x="62" y="122">medium <tspan fill="#7a7a7a">2</tspan></text>
+
+    <path d="M30 146 l5 4 l-5 4" fill="none" stroke="#9d9d9d" stroke-width="1.2"/>
+    <circle cx="50" cy="148" r="4" fill="none" stroke="#9d9d9d"/><text x="62" y="152">low <tspan fill="#7a7a7a">1</tspan></text>
+  </g>
+
+  <text x="26" y="190" fill="#6a6a6a" font-size="11">Click a todo &#8594; opens todoForm</text>
+</svg>
