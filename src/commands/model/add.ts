@@ -1,4 +1,5 @@
 import { Command, ParamType, prompt } from '@ideascol/cli-maker';
+import * as fs from 'fs';
 import * as path from 'path';
 import { addModel, ModelField } from '../../lib/model/add';
 import { parseFieldsSpec, parseFieldLine } from '../../lib/model/parseFields';
@@ -9,16 +10,28 @@ const FIELD_HELP = [
   '',
   'Interactive field loop: enter `name:type` per line, empty line to finish.',
   '  Examples:',
-  '    id:string!         — `!` after type = primary key',
-  '    name:string        — required field',
-  '    email?:string      — `?` after name = optional',
-  '    createdAt:number   — number type',
-  '    role:"a"|"b"       — literal union',
-  '    tag:string@        — `@` after type = indexed',
-  '    score:number!@     — primary key + indexed',
+  '    id:string!            — `!` after type = primary key',
+  '    name:string           — required field',
+  '    email?:string         — `?` after name = optional',
+  '    createdAt:number      — number type',
+  '    role:"a"|"b"          — literal union',
+  '    tag:string@           — `@` after type = indexed',
+  '    score:number!@        — primary key + indexed',
+  '    category:ref(Category) — relation → FK categoryId + dropdown of Category',
   '',
   'If no `!` is set, `id` (or first field) becomes the primary key.',
 ].join('\n');
+
+/** List existing model names (PascalCase) for relation hints. */
+function existingModels(projectRoot: string): string[] {
+  const dir = path.join(projectRoot, 'src', 'models');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => /\.ts$/.test(f) && !f.endsWith('.crud.ts'))
+    .map((f) => f.replace(/\.ts$/, ''))
+    .sort();
+}
 
 const addModelCommand: Command = {
   name: 'add',
@@ -57,7 +70,7 @@ const addModelCommand: Command = {
       if (args.fields) {
         fields = parseFieldsSpec(String(args.fields));
       } else {
-        fields = await promptFieldsLoop();
+        fields = await promptFieldsLoop(projectRoot);
       }
       if (fields.length === 0) {
         throw new Error('At least one field is required.');
@@ -75,6 +88,12 @@ const addModelCommand: Command = {
       const rel = (p: string) => path.relative(projectRoot, p);
       console.log(`\n✓ Model created (primaryKey: ${result.primaryKey}${result.indexes.length ? `, indexes: ${result.indexes.join(', ')}` : ''}).\n`);
       for (const f of result.created) console.log(`  + ${rel(f)}`);
+      if (result.relations.length) {
+        console.log('');
+        for (const r of result.relations) {
+          console.log(`  ↪ ${r.field} → ${r.model}${r.label ? ` (label: ${r.label})` : ''}  — crud will render a dropdown`);
+        }
+      }
       console.log(`\n  Usage:\n    import { ${plural(args.name)}Repo } from '../models/${pascal(args.name)}';\n    await ${plural(args.name)}Repo().insert({ ... });\n`);
     } catch (err: any) {
       console.error(`\n✗ ${err.message}\n`);
@@ -83,9 +102,14 @@ const addModelCommand: Command = {
   },
 };
 
-async function promptFieldsLoop(): Promise<ModelField[]> {
+async function promptFieldsLoop(projectRoot: string): Promise<ModelField[]> {
   console.log('\n  Field syntax: `name:type` — flags: `!` (primary) `@` (indexed) `?` after name (optional)');
   console.log('  Examples: `id:string!`, `email?:string@`, `score:number`');
+  console.log('  Relation: `category:ref(Category)` — FK + dropdown of the related model.');
+  const models = existingModels(projectRoot);
+  if (models.length) {
+    console.log(`  Models you can relate to: ${models.join(', ')}`);
+  }
   console.log('  Empty line finishes.\n');
   const fields: ModelField[] = [];
   while (true) {

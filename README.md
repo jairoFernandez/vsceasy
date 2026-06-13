@@ -8,6 +8,14 @@
 
 <p align="center"><em>Pronounced <strong>"vee-see-easy"</strong> in English (<code>VSC</code> + <code>easy</code>) — or <strong>"visici"</strong> for Spanish speakers.</em></p>
 
+<p align="center">
+  <video src="https://github.com/jairoFernandez/vsceasy/releases/download/promo-assets/vsceasy-promo.mp4" width="720" controls></video>
+</p>
+
+<p align="center">
+  <a href="https://github.com/jairoFernandez/vsceasy/releases/download/promo-assets/vsceasy-promo.mp4">▶ Watch the 30-second promo</a>
+</p>
+
 > Status: v0.1 — React UI. Typed RPC bridge + file-based registry + scaffolding for panels, commands, menus, tree views, subpanels, status bars.
 
 ## Install

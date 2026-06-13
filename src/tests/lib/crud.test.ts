@@ -173,6 +173,57 @@ describe('addCrud', () => {
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 
+  test('relation fields render a dropdown populated over RPC', async () => {
+    const project = await scaffoldWithUser();
+    addModel({
+      name: 'Category',
+      plural: 'Categories',
+      fields: [
+        { name: 'id', type: 'string', primaryKey: true },
+        { name: 'name', type: 'string' },
+      ],
+      projectRoot: project,
+      templatesRoot,
+    });
+    addModel({
+      name: 'Task',
+      fields: [
+        { name: 'id', type: 'string', primaryKey: true },
+        { name: 'title', type: 'string' },
+        { name: 'category', type: 'ref', relation: { model: 'Category' } },
+      ],
+      projectRoot: project,
+      templatesRoot,
+    });
+    addCrud({ model: 'Task', menu: 'none', projectRoot: project, templatesRoot, runGen: false });
+
+    // Form API gains options().
+    const api = fs.readFileSync(path.join(project, 'src/shared/api.ts'), 'utf8');
+    expect(api).toMatch(/options\(\): Promise<Record<string, \{ value: string; label: string \}\[\]>>/);
+
+    // Form panel imports the related repo and implements options().
+    const panel = fs.readFileSync(path.join(project, 'src/panels/taskForm.ts'), 'utf8');
+    expect(panel).toMatch(/import \{ CategoriesRepo \} from '\.\.\/models\/Category'/);
+    expect(panel).toMatch(/async options\(\)/);
+    expect(panel).toMatch(/categoryId: \(await CategoriesRepo\(\)\.findMany\(\)\)/);
+
+    // Form webview loads options and renders a populated <select> for the FK.
+    const formApp = fs.readFileSync(path.join(project, 'src/webview/panels/taskForm/App.tsx'), 'utf8');
+    expect(formApp).toMatch(/api\.options\(\)\.then\(setRelOptions\)/);
+    expect(formApp).toMatch(/relOptions\['categoryId'\]/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('non-relation CRUD has no relation scaffolding', async () => {
+    const project = await scaffoldWithUser();
+    addCrud({ model: 'User', menu: 'none', projectRoot: project, templatesRoot, runGen: false });
+    const panel = fs.readFileSync(path.join(project, 'src/panels/userForm.ts'), 'utf8');
+    const formApp = fs.readFileSync(path.join(project, 'src/webview/panels/userForm/App.tsx'), 'utf8');
+    expect(panel).not.toMatch(/async options\(\)/);
+    expect(formApp).not.toMatch(/relOptions/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
   test('wires into new menu when --menu new:<id>', async () => {
     const project = await scaffoldWithUser();
     const r = addCrud({

@@ -1,11 +1,22 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+export interface ParsedRelation {
+  /** FK field on this model (e.g. `categoryId`). */
+  field: string;
+  /** Related model name (e.g. `Category`). */
+  model: string;
+  /** Field on the related model to show in the picker. */
+  label?: string;
+}
+
 export interface ParsedField {
   name: string;
   /** Raw TS type as written in the interface (e.g. `string`, `number`, `'a' | 'b'`, `Date`). */
   type: string;
   optional: boolean;
+  /** Set when this field is a foreign key declared via `<Name>Relations`. */
+  relation?: ParsedRelation;
 }
 
 export interface ParsedModel {
@@ -23,6 +34,8 @@ export interface ParsedModel {
   indexes: string[];
   /** Ordered field list from the interface body. */
   fields: ParsedField[];
+  /** FK field → relation metadata, keyed by FK field name. */
+  relations: Record<string, ParsedRelation>;
   /** Absolute path the model was read from. */
   path: string;
 }
@@ -64,7 +77,28 @@ export function parseModelFile(file: string): ParsedModel {
 
   const id = path.basename(file).replace(/\.(ts|tsx)$/, '');
 
-  return { name, id, plural, collection, primaryKey: pk, indexes, fields, path: file };
+  // Relation metadata: `export const <Name>Relations = { categoryId: { model: 'Category', label: 'name' }, ... }`
+  const relations = parseRelations(src, name);
+  for (const f of fields) {
+    const r = relations[f.name];
+    if (r) f.relation = r;
+  }
+
+  return { name, id, plural, collection, primaryKey: pk, indexes, fields, relations, path: file };
+}
+
+function parseRelations(src: string, name: string): Record<string, ParsedRelation> {
+  const out: Record<string, ParsedRelation> = {};
+  const block = new RegExp(`export\\s+const\\s+${name}Relations\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*as\\s+const`, 'm').exec(src);
+  if (!block) return out;
+  const body = block[1];
+  // each entry: `categoryId: { model: 'Category', label: 'name' },`
+  const re = /([A-Za-z_][A-Za-z0-9_]*)\s*:\s*\{\s*model\s*:\s*['"`]([^'"`]+)['"`]\s*(?:,\s*label\s*:\s*['"`]([^'"`]+)['"`]\s*)?\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(body))) {
+    out[m[1]] = { field: m[1], model: m[2], label: m[3] };
+  }
+  return out;
 }
 
 /** Parse an interface body — fields are `name[?]: type;` (type may include `|`). */

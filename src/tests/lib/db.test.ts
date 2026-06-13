@@ -5,6 +5,7 @@ import * as os from 'os';
 import { scaffold } from '../../lib/scaffold';
 import { initDb, dbExists } from '../../lib/db/init';
 import { addModel } from '../../lib/model/add';
+import { parseFieldsSpec, parseRef } from '../../lib/model/parseFields';
 import { wireInitDb } from '../../lib/db/wire';
 
 const templatesRoot = path.resolve(__dirname, '../../../templates');
@@ -244,6 +245,74 @@ describe('model add', () => {
     expect(() =>
       addModel({ name: 'Empty', fields: [], projectRoot: project, templatesRoot }),
     ).toThrow(/at least one field/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+});
+
+describe('parseRef / relation spec', () => {
+  test('parseRef reads ref(Model) and ref(Model, label=field)', () => {
+    expect(parseRef('ref(Category)')).toEqual({ model: 'Category' });
+    expect(parseRef('ref(Category, label=name)')).toEqual({ model: 'Category', label: 'name' });
+    expect(parseRef('string')).toBeNull();
+    expect(parseRef('ref()')).toBeNull();
+  });
+
+  test('parseFieldsSpec keeps ref(...) intact despite the inner comma', () => {
+    const fields = parseFieldsSpec('id:string!, category:ref(Category, label=name), title:string');
+    expect(fields.map((f) => f.name)).toEqual(['id', 'category', 'title']);
+    const cat = fields.find((f) => f.name === 'category')!;
+    expect(cat.type).toBe('ref');
+    expect(cat.relation).toEqual({ model: 'Category', label: 'name' });
+  });
+});
+
+describe('model add — relations', () => {
+  test('emits an FK field + relation metadata block', async () => {
+    const project = await scaffoldProject();
+    initDb({ projectRoot: project, templatesRoot });
+    addModel({
+      name: 'Category',
+      plural: 'Categories',
+      fields: [
+        { name: 'id', type: 'string', primaryKey: true },
+        { name: 'name', type: 'string' },
+      ],
+      projectRoot: project,
+      templatesRoot,
+    });
+    const r = addModel({
+      name: 'Todo',
+      fields: [
+        { name: 'id', type: 'string', primaryKey: true },
+        { name: 'title', type: 'string' },
+        { name: 'category', type: 'ref', relation: { model: 'Category' } },
+      ],
+      projectRoot: project,
+      templatesRoot,
+    });
+    expect(r.relations).toEqual([{ field: 'categoryId', model: 'Category' }]);
+    const body = fs.readFileSync(path.join(project, 'src/models/Todo.ts'), 'utf8');
+    expect(body).toMatch(/categoryId: string;/);
+    expect(body).not.toMatch(/category: ref/);
+    expect(body).toMatch(/export const TodoRelations = \{/);
+    expect(body).toMatch(/categoryId: \{ model: 'Category' \}/);
+    fs.rmSync(path.dirname(project), { recursive: true, force: true });
+  });
+
+  test('rejects a ref to a model that does not exist', async () => {
+    const project = await scaffoldProject();
+    initDb({ projectRoot: project, templatesRoot });
+    expect(() =>
+      addModel({
+        name: 'Todo',
+        fields: [
+          { name: 'id', type: 'string', primaryKey: true },
+          { name: 'author', type: 'ref', relation: { model: 'Author' } },
+        ],
+        projectRoot: project,
+        templatesRoot,
+      }),
+    ).toThrow(/Author.*does not exist/);
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });
 });

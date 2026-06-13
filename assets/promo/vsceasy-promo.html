@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --coral: #f0997b;
+        --coral-deep: #d85a30;
+        --blush: #f5c4b3;
+        --ink: #1b1714;
+        --panel: #221d18;
+        --panel-2: #2b2520;
+        --cream: #f5ede6;
+        --muted: #b8a99c;
+        --vsc-blue: #3794ff;
+        --green: #89d185;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #000;
+        font-family: "Inter", sans-serif;
+      }
+
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--ink); color: var(--cream); }
+
+      .scene { position: absolute; inset: 0; background-color: var(--ink); will-change: opacity, transform; }
+      .scene-content {
+        position: relative; z-index: 2; width: 100%; height: 100%;
+        display: flex; flex-direction: column; justify-content: center;
+        padding: 130px 160px; box-sizing: border-box;
+      }
+
+      .glow { position: absolute; border-radius: 50%; filter: blur(90px); z-index: 1; pointer-events: none; }
+      .grain {
+        position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0.04;
+        background-image: radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px);
+        background-size: 4px 4px; mix-blend-mode: overlay;
+      }
+      .reg {
+        position: absolute; font-family: "JetBrains Mono", monospace; font-size: 19px;
+        letter-spacing: 0.18em; color: var(--muted); opacity: 0.55; z-index: 4;
+      }
+      .rule { height: 3px; background: var(--coral-deep); transform-origin: left center; }
+
+      /* SCENE 1 hero */
+      #s1 .octo { width: 280px; height: 280px; }
+      #s1 .wordmark { font-size: 168px; font-weight: 800; letter-spacing: -0.04em; line-height: 0.9; color: var(--cream); }
+      #s1 .wordmark .vsc { color: var(--coral); }
+      #s1 .tag { font-size: 40px; font-weight: 500; color: var(--muted); margin-top: 18px; max-width: 1100px; }
+      #s1 .pron { display: inline-flex; gap: 28px; margin-top: 34px; font-family: "JetBrains Mono", monospace; font-size: 26px; }
+      #s1 .pron span {
+        padding: 12px 22px; border: 2px solid var(--coral-deep); border-radius: 14px;
+        color: var(--coral); background: rgba(216,90,48,0.08);
+      }
+      #s1 .pron span b { color: var(--blush); font-weight: 600; }
+      #s1 .top-row { display: flex; align-items: center; gap: 56px; }
+
+      /* SCENE 2 promise */
+      #s2 .kicker { font-family: "JetBrains Mono", monospace; font-size: 24px; letter-spacing: 0.22em; color: var(--coral); text-transform: uppercase; }
+      #s2 .head { font-size: 122px; font-weight: 800; letter-spacing: -0.03em; line-height: 0.98; margin-top: 26px; max-width: 1400px; }
+      #s2 .head em { font-style: normal; color: var(--coral); }
+      #s2 .pills { display: flex; gap: 22px; margin-top: 60px; flex-wrap: wrap; }
+      #s2 .pill { font-size: 30px; font-weight: 600; padding: 18px 34px; border-radius: 999px; background: var(--panel-2); border: 2px solid rgba(240,153,123,0.35); color: var(--cream); }
+      #s2 .pill .dot { color: var(--coral); margin-right: 12px; }
+
+      /* SCENE 3 terminal */
+      #s3 .scene-content { justify-content: center; align-items: center; }
+      #s3 .term { width: 1320px; background: #16120f; border: 2px solid rgba(240,153,123,0.28); border-radius: 20px; box-shadow: 0 40px 120px rgba(0,0,0,0.6); overflow: hidden; }
+      #s3 .term-bar { display: flex; align-items: center; gap: 12px; padding: 22px 28px; background: #1f1a16; border-bottom: 2px solid rgba(255,255,255,0.05); }
+      #s3 .tb { width: 17px; height: 17px; border-radius: 50%; }
+      #s3 .tb.r { background: #ff5f57; } #s3 .tb.y { background: #febc2e; } #s3 .tb.g { background: #28c840; }
+      #s3 .term-title { margin-left: 18px; font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--muted); }
+      #s3 .term-body { padding: 44px 48px; font-family: "JetBrains Mono", monospace; font-size: 34px; line-height: 1.7; }
+      #s3 .prompt { color: var(--coral); }
+      #s3 .cmd { color: var(--cream); }
+      #s3 .caret { display: inline-block; width: 16px; height: 38px; background: var(--coral); vertical-align: -6px; margin-left: 4px; }
+      #s3 .out { color: var(--green); opacity: 0; }
+      #s3 .out .dim { color: var(--muted); }
+      #s3 .head3 { position: absolute; top: 120px; left: 160px; font-size: 46px; font-weight: 700; color: var(--cream); z-index: 5; }
+      #s3 .head3 b { color: var(--coral); }
+
+      /* SCENE 4 grid */
+      #s4 .kicker { font-family: "JetBrains Mono", monospace; font-size: 24px; letter-spacing: 0.22em; color: var(--coral); text-transform: uppercase; }
+      #s4 .head { font-size: 84px; font-weight: 800; letter-spacing: -0.03em; margin-top: 18px; }
+      #s4 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 54px; max-width: 1560px; }
+      #s4 .card { background: var(--panel); border: 2px solid rgba(255,255,255,0.06); border-left: 6px solid var(--coral); border-radius: 18px; padding: 36px 40px; }
+      #s4 .card h3 { font-size: 42px; font-weight: 700; color: var(--cream); }
+      #s4 .card p { font-size: 27px; color: var(--muted); margin-top: 12px; line-height: 1.4; }
+      #s4 .card .ico { font-size: 40px; }
+
+      /* SCENE 5 CTA */
+      #s5 .scene-content { align-items: center; justify-content: center; text-align: center; }
+      #s5 .octo { width: 200px; height: 200px; }
+      #s5 .wordmark { font-size: 130px; font-weight: 800; letter-spacing: -0.04em; margin-top: 24px; }
+      #s5 .wordmark .vsc { color: var(--coral); }
+      #s5 .made { font-size: 46px; color: var(--muted); margin-top: 12px; }
+      #s5 .made b { color: var(--blush); }
+      #s5 .install { margin-top: 48px; font-family: "JetBrains Mono", monospace; font-size: 34px; padding: 22px 40px; background: #16120f; border: 2px solid var(--coral-deep); border-radius: 16px; color: var(--cream); }
+      #s5 .install .p { color: var(--coral); }
+      #s5 .fade-black { position: absolute; inset: 0; z-index: 9; background: #000; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+
+      <audio id="bgm" data-start="0" data-duration="30" data-track-index="9" src="assets/music.mp3" data-volume="1"></audio>
+
+      <!-- ============ SCENE 1 — HERO ============ -->
+      <div id="s1" class="scene">
+        <div class="glow" style="width:760px;height:760px;background:rgba(216,90,48,0.30);top:-220px;left:-160px;"></div>
+        <div class="glow" style="width:560px;height:560px;background:rgba(240,153,123,0.20);bottom:-200px;right:-120px;"></div>
+        <div class="grain"></div>
+        <div class="reg" style="top:64px;left:160px;">@vsceasy/cli · v0.1</div>
+        <div class="reg" style="bottom:64px;right:160px;">BUILD · SHIP · EASY</div>
+        <div class="scene-content">
+          <div class="top-row">
+            <svg class="octo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 40 q-9 4 -10 13" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+              <path d="M21 45 q-6 8 -3 15" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+              <path d="M27 47 q-2 9 -6 14" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+              <path d="M37 47 q2 9 6 14" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+              <path d="M43 45 q6 8 3 15" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+              <path d="M48 40 q9 4 10 13" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+              <ellipse cx="32" cy="29" rx="20" ry="19" fill="#F0997B" stroke="#D85A30" stroke-width="2.4"/>
+              <circle cx="25" cy="26" r="5.6" fill="#ffffff"/>
+              <circle cx="39" cy="26" r="5.6" fill="#ffffff"/>
+              <circle cx="26.5" cy="27.2" r="2.7" fill="#26211C"/>
+              <circle cx="40.5" cy="27.2" r="2.7" fill="#26211C"/>
+              <circle cx="27.6" cy="26.2" r="0.9" fill="#ffffff"/>
+              <circle cx="41.6" cy="26.2" r="0.9" fill="#ffffff"/>
+              <path d="M28 35 q4 3.5 8 0" fill="none" stroke="#D85A30" stroke-width="2.2" stroke-linecap="round"/>
+              <ellipse cx="17.5" cy="32" rx="3.4" ry="2.2" fill="#F5C4B3"/>
+              <ellipse cx="46.5" cy="32" rx="3.4" ry="2.2" fill="#F5C4B3"/>
+            </svg>
+            <div class="wordmark"><span class="vsc">vsc</span>easy</div>
+          </div>
+          <div class="rule" style="width:520px;height:4px;margin-top:36px;"></div>
+          <div class="tag">Build VS Code extensions fast — React UI, typed RPC, zero-config build.</div>
+          <div class="pron">
+            <span>EN&nbsp;&nbsp;<b>vee-see-easy</b></span>
+            <span>ES&nbsp;&nbsp;<b>visici</b></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SCENE 2 — PROMISE ============ -->
+      <div id="s2" class="scene" style="opacity:0;">
+        <div class="glow" style="width:680px;height:680px;background:rgba(216,90,48,0.26);top:-180px;right:-140px;"></div>
+        <div class="grain"></div>
+        <div class="reg" style="top:64px;left:160px;">01 — WHY</div>
+        <div class="scene-content">
+          <div class="kicker">No boilerplate</div>
+          <div class="head">Skip the <em>wiring.</em> Ship the feature.</div>
+          <div class="pills">
+            <div class="pill"><span class="dot">◆</span>File-based routing</div>
+            <div class="pill"><span class="dot">◆</span>Typed RPC bridge</div>
+            <div class="pill"><span class="dot">◆</span>React webviews</div>
+            <div class="pill"><span class="dot">◆</span>Build pipeline</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SCENE 3 — SCAFFOLD ============ -->
+      <div id="s3" class="scene" style="opacity:0;">
+        <div class="glow" style="width:720px;height:720px;background:rgba(240,153,123,0.16);bottom:-220px;left:-160px;"></div>
+        <div class="grain"></div>
+        <div class="reg" style="top:64px;right:160px;">02 — SCAFFOLD</div>
+        <div class="head3">One command. <b>Whole project.</b></div>
+        <div class="scene-content">
+          <div class="term">
+            <div class="term-bar">
+              <div class="tb r"></div><div class="tb y"></div><div class="tb g"></div>
+              <div class="term-title">~/projects — zsh</div>
+            </div>
+            <div class="term-body">
+              <div><span class="prompt">$</span> <span class="cmd" id="s3cmd"></span><span class="caret" id="s3caret"></span></div>
+              <div class="out" id="s3o1"><span class="dim">✓</span> scaffolded panels · commands · RPC bridge</div>
+              <div class="out" id="s3o2"><span class="dim">✓</span> git initialized · deps installed</div>
+              <div class="out" id="s3o3"><span class="dim">→</span> cd my-extension && bun run dev</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SCENE 4 — WHAT YOU GET ============ -->
+      <div id="s4" class="scene" style="opacity:0;">
+        <div class="glow" style="width:640px;height:640px;background:rgba(216,90,48,0.22);top:-160px;left:-120px;"></div>
+        <div class="grain"></div>
+        <div class="reg" style="bottom:64px;right:160px;">03 — WHAT YOU GET</div>
+        <div class="scene-content">
+          <div class="kicker">Codegen, not a runtime</div>
+          <div class="head">Plain TypeScript + React. You own it.</div>
+          <div class="grid">
+            <div class="card" id="s4c1"><div class="ico">🗂️</div><h3>File-based routing</h3><p>One file per panel, command, menu, tree view.</p></div>
+            <div class="card" id="s4c2"><div class="ico">🔌</div><h3>Typed RPC</h3><p>One interface types extension + webview. No message plumbing.</p></div>
+            <div class="card" id="s4c3"><div class="ico">⚛️</div><h3>React webviews</h3><p>Themed with VS Code variables. form · list · dashboard.</p></div>
+            <div class="card" id="s4c4"><div class="ico">🗄️</div><h3>Mini-ORM</h3><p>Typed entities + CRUD scaffolding over a model.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SCENE 5 — CTA ============ -->
+      <div id="s5" class="scene" style="opacity:0;">
+        <div class="glow" style="width:820px;height:820px;background:rgba(216,90,48,0.30);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+        <div class="grain"></div>
+        <div class="scene-content">
+          <svg class="octo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 40 q-9 4 -10 13" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+            <path d="M21 45 q-6 8 -3 15" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+            <path d="M27 47 q-2 9 -6 14" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+            <path d="M37 47 q2 9 6 14" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+            <path d="M43 45 q6 8 3 15" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+            <path d="M48 40 q9 4 10 13" fill="none" stroke="#F0997B" stroke-width="5.5" stroke-linecap="round"/>
+            <ellipse cx="32" cy="29" rx="20" ry="19" fill="#F0997B" stroke="#D85A30" stroke-width="2.4"/>
+            <circle cx="25" cy="26" r="5.6" fill="#ffffff"/>
+            <circle cx="39" cy="26" r="5.6" fill="#ffffff"/>
+            <circle cx="26.5" cy="27.2" r="2.7" fill="#26211C"/>
+            <circle cx="40.5" cy="27.2" r="2.7" fill="#26211C"/>
+            <circle cx="27.6" cy="26.2" r="0.9" fill="#ffffff"/>
+            <circle cx="41.6" cy="26.2" r="0.9" fill="#ffffff"/>
+            <path d="M28 35 q4 3.5 8 0" fill="none" stroke="#D85A30" stroke-width="2.2" stroke-linecap="round"/>
+            <ellipse cx="17.5" cy="32" rx="3.4" ry="2.2" fill="#F5C4B3"/>
+            <ellipse cx="46.5" cy="32" rx="3.4" ry="2.2" fill="#F5C4B3"/>
+          </svg>
+          <div class="wordmark"><span class="vsc">vsc</span>easy</div>
+          <div class="made">VS Code, <b>made easy.</b></div>
+          <div class="install"><span class="p">$</span> bunx @vsceasy/cli create my-extension</div>
+        </div>
+        <div class="fade-black" id="fadeblack"></div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      /* ===== SCENE 1 — HERO (0 – 5.4) ===== */
+      tl.from("#s1 .octo", { scale: 0.4, opacity: 0, rotation: -12, duration: 0.8, ease: "back.out(1.7)" }, 0.2);
+      tl.from("#s1 .wordmark", { y: 60, opacity: 0, duration: 0.7, ease: "power3.out" }, 0.45);
+      tl.from("#s1 .rule", { scaleX: 0, duration: 0.6, ease: "power2.inOut" }, 0.9);
+      tl.from("#s1 .tag", { y: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, 1.1);
+      tl.from("#s1 .pron span", { y: 24, opacity: 0, scale: 0.9, duration: 0.5, stagger: 0.12, ease: "back.out(2)" }, 1.5);
+      tl.from("#s1 .reg", { opacity: 0, duration: 0.6, stagger: 0.1 }, 0.6);
+      tl.to("#s1 .octo", { y: -14, duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: 1 }, 1.2);
+      tl.to("#s1 .glow", { scale: 1.12, duration: 2.4, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.5);
+
+      /* transition 1 → 2 : push slide (5.0 – 5.4) */
+      tl.to("#s1", { xPercent: -8, opacity: 0, duration: 0.4, ease: "power2.inOut" }, 5.0);
+      tl.fromTo("#s2", { opacity: 0, xPercent: 8 }, { opacity: 1, xPercent: 0, duration: 0.4, ease: "power2.inOut" }, 5.0);
+
+      /* ===== SCENE 2 — PROMISE (5.4 – 10.8) ===== */
+      tl.from("#s2 .kicker", { x: -40, opacity: 0, duration: 0.5, ease: "expo.out" }, 5.5);
+      tl.from("#s2 .head", { y: 50, opacity: 0, duration: 0.7, ease: "power3.out" }, 5.7);
+      tl.from("#s2 .pill", { y: 40, opacity: 0, scale: 0.92, duration: 0.5, stagger: 0.13, ease: "back.out(1.6)" }, 6.3);
+      tl.from("#s2 .reg", { opacity: 0, duration: 0.5 }, 5.6);
+      tl.to("#s2 .glow", { scale: 1.15, x: 40, duration: 2.6, ease: "sine.inOut", yoyo: true, repeat: 1 }, 5.6);
+
+      /* transition 2 → 3 : crossfade + scale (10.4 – 10.85) */
+      tl.to("#s2", { opacity: 0, scale: 1.04, duration: 0.4, ease: "power2.in" }, 10.4);
+      tl.fromTo("#s3", { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }, 10.45);
+
+      /* ===== SCENE 3 — SCAFFOLD (10.85 – 18.0) ===== */
+      tl.from("#s3 .head3", { y: -30, opacity: 0, duration: 0.5, ease: "power2.out" }, 10.9);
+      tl.from("#s3 .term", { y: 50, opacity: 0, scale: 0.96, duration: 0.6, ease: "power3.out" }, 11.0);
+      tl.from("#s3 .reg", { opacity: 0, duration: 0.5 }, 11.0);
+      const fullCmd = "bunx @vsceasy/cli create my-extension";
+      const typer = { n: 0 };
+      tl.to(typer, {
+        n: fullCmd.length, duration: 1.8, ease: "none",
+        onUpdate: () => {
+          const el = document.getElementById("s3cmd"); if (!el) return;
+          el.textContent = fullCmd.slice(0, Math.round(typer.n));
+        }
+      }, 11.5);
+      tl.to("#s3caret", { opacity: 0, duration: 0.45, ease: "steps(1)", yoyo: true, repeat: 8 }, 11.5);
+      tl.to("#s3o1", { opacity: 1, duration: 0.01 }, 13.5);
+      tl.from("#s3o1", { x: -20, duration: 0.3, ease: "power2.out" }, 13.5);
+      tl.to("#s3o2", { opacity: 1, duration: 0.01 }, 13.9);
+      tl.from("#s3o2", { x: -20, duration: 0.3, ease: "power2.out" }, 13.9);
+      tl.to("#s3o3", { opacity: 1, duration: 0.01 }, 14.3);
+      tl.from("#s3o3", { x: -20, duration: 0.3, ease: "power2.out" }, 14.3);
+      tl.to("#s3caret", { opacity: 0, duration: 0.2, overwrite: "auto" }, 14.2);
+
+      /* transition 3 → 4 : push up (17.6 – 18.0) */
+      tl.to("#s3", { yPercent: -6, opacity: 0, duration: 0.4, ease: "power2.inOut" }, 17.6);
+      tl.fromTo("#s4", { opacity: 0, yPercent: 6 }, { opacity: 1, yPercent: 0, duration: 0.4, ease: "power2.inOut" }, 17.6);
+
+      /* ===== SCENE 4 — WHAT YOU GET (18.0 – 24.8) ===== */
+      tl.from("#s4 .kicker", { x: -40, opacity: 0, duration: 0.5, ease: "expo.out" }, 18.1);
+      tl.from("#s4 .head", { y: 40, opacity: 0, duration: 0.6, ease: "power3.out" }, 18.3);
+      tl.from("#s4 .card", { y: 50, opacity: 0, scale: 0.94, duration: 0.55, stagger: 0.14, ease: "back.out(1.5)" }, 18.7);
+      tl.from("#s4 .reg", { opacity: 0, duration: 0.5 }, 18.4);
+
+      /* transition 4 → 5 : crossfade (24.4 – 24.9) */
+      tl.to("#s4", { opacity: 0, scale: 1.03, duration: 0.4, ease: "power2.in" }, 24.4);
+      tl.fromTo("#s5", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }, 24.45);
+
+      /* ===== SCENE 5 — CTA (24.9 – 30.0) ===== */
+      tl.from("#s5 .octo", { scale: 0.5, opacity: 0, rotation: 10, duration: 0.7, ease: "back.out(1.8)" }, 24.9);
+      tl.from("#s5 .wordmark", { y: 40, opacity: 0, duration: 0.6, ease: "power3.out" }, 25.2);
+      tl.from("#s5 .made", { y: 24, opacity: 0, duration: 0.5, ease: "power2.out" }, 25.5);
+      tl.from("#s5 .install", { y: 30, opacity: 0, scale: 0.95, duration: 0.55, ease: "back.out(1.5)" }, 25.8);
+      tl.to("#s5 .octo", { y: -12, duration: 1.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 26.2);
+      tl.to("#s5 .glow", { scale: 1.1, duration: 2.0, ease: "sine.inOut", yoyo: true, repeat: 1 }, 25.0);
+      tl.to("#fadeblack", { opacity: 1, duration: 0.7, ease: "power2.in" }, 29.3);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

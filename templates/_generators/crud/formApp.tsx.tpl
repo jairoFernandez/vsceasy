@@ -22,6 +22,7 @@ export function App() {
   const [editingId, setEditingId] = useState<{{Name}}['{{primaryKey}}'] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+{{relationOptionsState}}
 
   const load = useCallback(async (initial: boolean) => {
     // The list stashes a row id before revealing this panel. Pull it (the host
@@ -59,6 +60,7 @@ export function App() {
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [load]);
+{{relationOptionsLoad}}
 
   const onChange = <K extends keyof FormState>(k: K, v: FormState[K]) => {
     setForm((f) => ({ ...f, [k]: v }));

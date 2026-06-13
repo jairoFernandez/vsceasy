@@ -76,6 +76,26 @@ export function addCrud(opts: AddCrudOptions): AddCrudResult {
     prefix,
   };
 
+  // Relations among the visible fields — resolve the related model's label field
+  // and plural repo handle so the form can populate a dropdown.
+  const modelsDir = path.dirname(modelFile);
+  const relations = visible
+    .filter((f) => f.relation)
+    .map((f) => {
+      const r = f.relation!;
+      const related = parseModelFile(path.join(modelsDir, `${r.model}.ts`));
+      const labelField = r.label ?? firstStringField(related) ?? related.primaryKey;
+      return {
+        field: f.name,                 // FK field on this model (categoryId)
+        model: r.model,                // related model name (Category)
+        plural: related.plural,        // related repo handle (Categories)
+        pk: related.primaryKey,        // related pk (id)
+        labelField,                    // shown in the dropdown (name)
+      };
+    });
+
+  const relVars = buildRelationVars(relations);
+
   const created: string[] = [];
   const modified: string[] = [];
 
@@ -107,7 +127,7 @@ export function addCrud(opts: AddCrudOptions): AddCrudResult {
   writeFromTpl(
     path.join(opts.templatesRoot, '_generators', 'crud', 'formPanel.ts.tpl'),
     formPanelPath,
-    baseVars,
+    { ...baseVars, ...relVars },
     created,
   );
 
@@ -146,7 +166,7 @@ export function addCrud(opts: AddCrudOptions): AddCrudResult {
   writeFromTpl(
     path.join(opts.templatesRoot, '_generators', 'crud', 'formApp.tsx.tpl'),
     path.join(formWebDir, 'App.tsx'),
-    { ...baseVars, formFieldInputs: formInputs, emptyFormLiteral: emptyLit },
+    { ...baseVars, ...relVars, formFieldInputs: formInputs, emptyFormLiteral: emptyLit },
     created,
   );
   writeFromTpl(
@@ -158,7 +178,7 @@ export function addCrud(opts: AddCrudOptions): AddCrudResult {
 
   // 6. Append APIs to src/shared/api.ts
   appendApi(apiPath, listApiName, model, created, modified);
-  appendApiForm(apiPath, formApiName, model, created, modified);
+  appendApiForm(apiPath, formApiName, model, created, modified, relations.length > 0);
 
   // 7. Menu wiring
   let menuInfo: AddCrudResult['menu'];
@@ -223,6 +243,19 @@ function renderInput(field: ParsedField, override?: CrudFieldOverride): string {
     `        <span style={{ opacity: 0.8 }}>${labelText}</span>\n` +
     `${input}\n` +
     `      </label>`;
+
+  // Relation field → dropdown populated from the related model's rows. Options
+  // come from `relOptions` state (loaded over RPC); we store the related row's id.
+  if (field.relation) {
+    return wrap(
+      `        <select${required} value={(form.${name} as any) ?? ''} onChange={(e) => onChange('${name}', e.target.value as any)}>\n` +
+      `          <option value=""></option>\n` +
+      `          {(relOptions['${name}'] ?? []).map((o) => (\n` +
+      `            <option key={o.value} value={o.value}>{o.label}</option>\n` +
+      `          ))}\n` +
+      `        </select>`,
+    );
+  }
 
   switch (spec.kind as InputKind) {
     case 'number':
@@ -299,12 +332,17 @@ function appendApiForm(
   model: { name: string; primaryKey: string },
   created: string[],
   modified: string[],
+  hasRelations: boolean,
 ) {
+  const optionsLine = hasRelations
+    ? `  options(): Promise<Record<string, { value: string; label: string }[]>>;\n`
+    : '';
   const sig =
     `\nexport interface ${apiName} {\n` +
     `  pendingId(): Promise<${model.name}['${model.primaryKey}'] | null>;\n` +
     `  get(id: ${model.name}['${model.primaryKey}'] | null): Promise<${model.name} | null>;\n` +
     `  save(row: ${model.name}): Promise<${model.name}>;\n` +
+    optionsLine +
     `  cancel(): Promise<void>;\n` +
     `}\n`;
   ensureImport(apiPath, model.name);
@@ -400,4 +438,58 @@ function runGen(cwd: string): boolean {
 
 function which(cmd: string): boolean {
   return spawnSync(process.platform === 'win32' ? 'where' : 'which', [cmd], { stdio: 'ignore' }).status === 0;
+}
+
+// ── relations ────────────────────────────────────────────────────────────────
+
+interface ResolvedRelation {
+  field: string;       // FK on this model (categoryId)
+  model: string;       // related model (Category)
+  plural: string;      // related repo handle (Categories)
+  pk: string;          // related primary key (id)
+  labelField: string;  // field shown in the dropdown (name)
+}
+
+/** First plain-string field of a model (used as the default dropdown label). */
+function firstStringField(model: ReturnType<typeof parseModelFile>): string | undefined {
+  return model.fields.find((f) => f.type.trim() === 'string' && f.name !== model.primaryKey)?.name;
+}
+
+/**
+ * Build the template vars that inject relation support into the form panel and
+ * form webview. All empty when there are no relations, so non-relational CRUD
+ * output is byte-for-byte unchanged.
+ */
+function buildRelationVars(relations: ResolvedRelation[]): Record<string, string> {
+  if (relations.length === 0) {
+    return { relationImports: '', relationOptionsHandler: '', relationOptionsState: '', relationOptionsLoad: '' };
+  }
+
+  // Form panel: import each related repo once, then an `options()` RPC handler
+  // returning `{ [fkField]: { value, label }[] }`.
+  const uniqueRepos = [...new Map(relations.map((r) => [r.plural, r])).values()];
+  const relationImports = uniqueRepos
+    .map((r) => `import { ${r.plural}Repo } from '../models/${r.model}';`)
+    .join('\n') + '\n';
+
+  const handlerLines = relations
+    .map(
+      (r) =>
+        `      ${r.field}: (await ${r.plural}Repo().findMany()).map((x) => ({ value: String(x.${r.pk}), label: String(x.${r.labelField}) })),`,
+    )
+    .join('\n');
+  const relationOptionsHandler =
+    `    async options() {\n` +
+    `      return {\n` +
+    `${handlerLines}\n` +
+    `      };\n` +
+    `    },\n`;
+
+  // Form webview: `relOptions` state + a one-shot load on mount.
+  const relationOptionsState =
+    `  const [relOptions, setRelOptions] = useState<Record<string, { value: string; label: string }[]>>({});`;
+  const relationOptionsLoad =
+    `\n  useEffect(() => { void api.options().then(setRelOptions); }, []);`;
+
+  return { relationImports, relationOptionsHandler, relationOptionsState, relationOptionsLoad };
 }

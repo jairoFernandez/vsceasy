@@ -48,3 +48,25 @@ my-extension/
 - Each panel/subpanel UI → **vite** → `dist/webview/<kind>/<name>/`.
 - `bun run dev` runs both in watch; **F5** launches the dev host.
 - `bun run package` → `.vsix` via `@vscode/vsce`.
+
+## When do I need to run `gen`?
+
+`gen` rewrites two things: `src/extension/_registry.ts` (what panels / commands /
+menus / jobs / etc. exist) and `package.json#contributes` (how they're declared to
+VS Code). So:
+
+**Run `gen`** when a hand edit changes *what exists* or *how it's contributed*:
+
+- Add, delete, or rename a file in `src/panels/`, `src/commands/`, `src/menus/`,
+  `src/statusBars/`, `src/subpanels/`, `src/treeViews/`, or `src/jobs/`.
+- Change a panel/command/menu's `id`, `title`, `command`, `menu`, `icon`,
+  `keybinding`, or `when`.
+
+**You don't need `gen`** when a hand edit only touches *logic*:
+
+- The body of an `rpc`, `run`, or `getChildren` handler.
+- A webview `App.tsx` (vite recompiles that, not `gen`).
+- A model, service, store, or helper — those aren't in the registry.
+
+The `vsceasy` generators run `gen` for you. And `bun run dev`, `build`, and
+`launch` all run it first — so if you use those, you rarely run `gen` by hand.

@@ -1,4 +1,4 @@
-import type { ModelField } from './add';
+import type { ModelField, FieldRelation } from './add';
 
 /**
  * Parse a compact model field spec into `ModelField[]`.
@@ -8,17 +8,36 @@ import type { ModelField } from './add';
  *   `!` after type → primaryKey
  *   `@` after type → indexed
  *
- * Example: `id:string!,name:string,email?:string@,score:number`
+ * Relations use `name:ref(Model)` or `name:ref(Model, label=field)`:
+ *   category:ref(Category)             → FK categoryId, dropdown of Category rows
+ *   category:ref(Category, label=name) → show Category.name in the dropdown
+ *
+ * Example: `id:string!,name:string,email?:string@,category:ref(Category)`
  */
 export function parseFieldsSpec(spec: string): ModelField[] {
-  return spec
-    .split(',')
+  // Split on commas that are NOT inside ref(...) parens.
+  return splitTopLevel(spec)
     .map((s) => s.trim())
     .filter(Boolean)
     .map(parseFieldLine);
 }
 
-/** Parse a single `name[?]:type[!][@]` line. Throws on malformed input. */
+/** Split on commas outside of parentheses (so `ref(A, label=b)` stays intact). */
+function splitTopLevel(spec: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of spec) {
+    if (ch === '(') depth++;
+    else if (ch === ')') depth = Math.max(0, depth - 1);
+    if (ch === ',' && depth === 0) { out.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  if (cur.trim()) out.push(cur);
+  return out;
+}
+
+/** Parse a single `name[?]:type[!][@]` line (or `name:ref(Model)`). Throws on malformed input. */
 export function parseFieldLine(raw: string): ModelField {
   const line = raw.trim();
   if (!line) throw new Error('Empty field spec.');
@@ -34,6 +53,12 @@ export function parseFieldLine(raw: string): ModelField {
     name = name.slice(0, -1);
   }
 
+  // Relation: `ref(Model)` or `ref(Model, label=field)`.
+  const relation = parseRef(type);
+  if (relation) {
+    return { name, type: 'ref', optional, relation };
+  }
+
   let primaryKey = false;
   let indexed = false;
   // Strip trailing flags (in any order)
@@ -45,4 +70,13 @@ export function parseFieldLine(raw: string): ModelField {
   if (!type) throw new Error(`Field "${raw}" has no type after flags.`);
 
   return { name, type, optional, primaryKey, indexed };
+}
+
+/** Parse `ref(Model)` / `ref(Model, label=field)`. Returns null when not a ref. */
+export function parseRef(type: string): FieldRelation | null {
+  const m = /^ref\s*\(\s*([A-Za-z][A-Za-z0-9_]*)\s*(?:,\s*label\s*=\s*([A-Za-z][A-Za-z0-9_]*)\s*)?\)$/.exec(type.trim());
+  if (!m) return null;
+  const model = m[1];
+  const label = m[2];
+  return label ? { model, label } : { model };
 }

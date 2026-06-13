@@ -36,6 +36,10 @@ vsceasy crud add --model user --menu new:admin
   delete uses a native `showWarningMessage` modal.
 - **Edit pre-loads.** Clicking Edit stashes the row id; the form pulls it on mount
   and pre-fills via `get(id)`. Creating a new row clears the form afterward.
+- **Relations become dropdowns.** A `ref(Model)` field (see
+  [`model add`](/commands/model-add/#relations)) renders as a `<select>` populated
+  from the related model's rows — loaded over RPC via a generated `options()`
+  handler. The form stores the related row's id.
 
 ## Examples
 

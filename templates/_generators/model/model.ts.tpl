@@ -14,4 +14,4 @@ export const {{Plural}} = defineEntity<{{Name}}>('{{collection}}', {
  *   import { {{Plural}}Repo } from '../models/{{Name}}';
  *   await {{Plural}}Repo().insert({ ... });
  */
-export const {{Plural}}Repo = () => db()({{Plural}});
+export const {{Plural}}Repo = () => db()({{Plural}});{{relationsBlock}}

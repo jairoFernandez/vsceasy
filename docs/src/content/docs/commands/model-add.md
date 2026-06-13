@@ -38,6 +38,51 @@ score:number!@        primary key + indexed
 
 If no `!` is set, `id` (or the first field) becomes the primary key.
 
+## Relations
+
+Point a field at another model with `ref(Model)` — Symfony-style. The field
+becomes a `<name>Id` foreign key, and the relation is recorded so
+[`crud add`](/commands/crud-add/) renders a **populated dropdown** for it.
+
+```text
+category:ref(Category)              FK categoryId, dropdown of Category rows
+category:ref(Category, label=name)  show Category.name in the dropdown
+```
+
+The referenced model must already exist (`model add` errors otherwise, naming the
+model to create first). In the interactive loop, the prompt lists the models you
+can relate to.
+
+```bash
+vsceasy model add --name category --fields "id:string!,name:string"
+vsceasy model add --name todo \
+  --fields "id:string!,title:string,category:ref(Category)"
+```
+
+```ts title="src/models/Todo.ts" {4,12-14}
+export interface Todo {
+  id: string;
+  title: string;
+  categoryId: string;  // → Category
+}
+
+export const Todos = defineEntity<Todo>('todos', { primaryKey: 'id' });
+export const TodosRepo = () => db()(Todos);
+
+/** Relation metadata — used by `vsceasy crud add` to populate pickers. */
+export const TodoRelations = {
+  categoryId: { model: 'Category' },
+} as const;
+```
+
+The default dropdown label is the related model's first string field; override it
+with `label=<field>`.
+
+:::note
+Relations are **ManyToOne** (a foreign key on this model). The FK stores the
+related row's id; there's no join table or cascade — the mini-ORM stays simple.
+:::
+
 ## Examples
 
 ```bash

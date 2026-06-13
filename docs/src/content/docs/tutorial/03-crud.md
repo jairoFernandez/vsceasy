@@ -154,4 +154,10 @@ The **Priority** dropdown's options come straight from the union in the model �
 - **Edit pre-fill.** Edit stashes the row id; the form pulls it on mount and
   pre-fills via `get(id)`. Creating a new row clears the form afterward.
 
+:::tip[Relating models]
+A field can point at another model with `ref(Model)` — the form then renders a
+dropdown populated from that model's rows. See the
+[Relations guide](/guides/relations/).
+:::
+
 Next: [add a reminder job and run it →](/tutorial/04-job-and-run/)

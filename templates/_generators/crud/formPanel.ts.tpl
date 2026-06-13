@@ -3,7 +3,7 @@ import { {{Name}}Service } from '../services/{{Name}}Service';
 import { takePending{{Name}}Id } from '../services/{{name}}FormNav';
 import type { {{Name}}FormApi } from '../shared/api';
 import type { {{Name}} } from '../models/{{Name}}';
-
+{{relationImports}}
 export default definePanel<{{Name}}FormApi>({
   title: '{{title}}',
   column: 'beside',
@@ -25,7 +25,7 @@ export default definePanel<{{Name}}FormApi>({
       void vscode.commands.executeCommand('{{prefix}}.open{{Plural}}List');
       return saved;
     },
-    async cancel() {
+{{relationOptionsHandler}}    async cancel() {
       // No-op — webview closes itself.
     },
   }),

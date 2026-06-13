@@ -5,6 +5,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 ## [Unreleased]
 
 ### Added
+- **Model relations — `ref(Model)` fields with populated CRUD dropdowns.** Symfony-`make:entity`-style relations.
+  - `vsceasy model add --fields "…,category:ref(Category)"` emits a `categoryId` foreign key plus a `<Name>Relations` metadata block. `ref(Category, label=name)` picks the dropdown label field. The referenced model must exist (errors otherwise, naming what to create); the interactive loop lists relatable models.
+  - `crud add` reads the relation metadata and generates a populated `<select>`: an `options()` RPC handler on the form panel loads the related rows, and the form webview renders a dropdown of them and stores the chosen id. Non-relational CRUD output is unchanged.
+  - ManyToOne only (FK on this model) — no join table or cascade. See the [Relations guide](https://vsceasy.dev/guides/relations/).
 - **Reactivity — keep a webview in sync with data.** A visual element can now track a source and update the instant it changes, no manual refresh.
   - ORM entities fire change events on every mutation; subscribe with `watchEntity(Todos, () => emit('todos:changed'))` from your generated `db.ts`.
   - `defineStore(initial)` — a framework-agnostic observable value (`get`/`set`/`update`/`subscribe`) for non-ORM state. Scaffold one with **`vsceasy store add --name X --type number|string|boolean|json`**.

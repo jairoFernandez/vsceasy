@@ -61,6 +61,7 @@ export default defineConfig({
             { label: 'Webview components', slug: 'guides/components' },
             { label: 'CRUD scaffolding', slug: 'guides/crud' },
             { label: 'The mini-ORM', slug: 'guides/orm' },
+            { label: 'Relations', slug: 'guides/relations' },
             { label: 'Reactivity', slug: 'guides/reactivity' },
             { label: 'Publishing', slug: 'guides/publishing' },
           ],

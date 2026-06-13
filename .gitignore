@@ -5,3 +5,7 @@ src/lib/templatesData.ts
 *.log
 example-*/
 .DS_Store
+
+# Promo video + music live in the `promo-assets` GitHub Release, not the repo.
+assets/promo/*.mp4
+assets/promo/music*.mp3

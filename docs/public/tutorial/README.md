@@ -13,6 +13,8 @@ as text, render crisply at any zoom, and adapt to the page.
 | `statusbar.svg` | The **Todos** status bar item bound to the list panel. | `tutorial/06-statusbar.md` |
 | `sidebar-views.svg` | The **Todos** container: menu tree + Stats subpanel (totals) + By Priority tree view. | `tutorial/07-sidebar-views.md` |
 | `treeview-expanded.svg` | The **By Priority** tree with the high group expanded, showing a todo node. | `tutorial/07-sidebar-views.md` |
+| `reactivity-stats.svg` | The Stats subpanel before/after a save — updates live. | `tutorial/08-reactivity.md` |
+| `relation-form.svg` | A CRUD form with a Category field rendered as a populated dropdown. | `guides/relations.md` |
 
 They reproduce the live `todo-demo` extension built in the tutorial. To swap in
 real screenshots later, drop PNGs with the same base name and update the `.svg`
