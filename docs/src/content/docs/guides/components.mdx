@@ -4,17 +4,14 @@ description: A themed React component library + ready-made panel UI templates.
 ---
 
 import Showcase from '../../../components/vsceasy/Showcase.tsx';
+import { ButtonDemo, InputDemo, FieldDemo, CardDemo, ListDemo } from '../../../components/vsceasy/demos.tsx';
 
 Webviews start blank, but you don't have to. vsceasy ships a themed component
 library and panel UI templates that use it.
 
-## Live preview
-
-These are the actual components, rendered with representative VS Code theme
-tokens. Toggle the theme and interact with them — this is what `Button`, `Input`,
-`Field`, `Card`, and `List` look like in a real webview.
-
-<Showcase client:load />
+Every preview below is the **real** component, synced verbatim from the generator
+templates and rendered with representative VS Code theme tokens. Toggle
+Dark/Light to see it adapt the way it does inside the editor.
 
 ## The component library
 
@@ -29,18 +26,110 @@ the user's theme in light and dark mode.
 ```tsx
 import { Button, Input, Field, Card, List } from '../../components';
 import '../../components/components.css';
-
-function Form() {
-  return (
-    <Card title="New entry">
-      <Field label="Name" htmlFor="name">
-        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-      </Field>
-      <Button type="submit">Save</Button>
-    </Card>
-  );
-}
 ```
+
+## Components
+
+### Button
+
+A theme-aware button with `primary` (default) and `secondary` variants. Passes
+through all native `<button>` props.
+
+<ButtonDemo client:visible />
+
+```tsx
+<Button onClick={save}>Save</Button>
+<Button variant="secondary">Cancel</Button>
+<Button disabled>Saving…</Button>
+```
+
+| Prop | Type | Notes |
+| ---- | ---- | ----- |
+| `variant` | `'primary' \| 'secondary'` | Default `primary`. |
+| …rest | `ButtonHTMLAttributes` | `onClick`, `disabled`, `type`, … |
+
+### Input
+
+A theme-aware text input. Forwards its ref and all native `<input>` props.
+
+<InputDemo client:visible />
+
+```tsx
+<Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
+```
+
+| Prop | Type | Notes |
+| ---- | ---- | ----- |
+| …rest | `InputHTMLAttributes` | `value`, `onChange`, `type`, `placeholder`, … |
+
+### Field
+
+A labeled wrapper for a control, with optional `hint` or `error` text below it.
+
+<FieldDemo client:visible />
+
+```tsx
+<Field label="Email" htmlFor="email" error={invalid ? 'Enter a valid email.' : undefined}>
+  <Input id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+</Field>
+```
+
+| Prop | Type | Notes |
+| ---- | ---- | ----- |
+| `label` | string | Required. |
+| `htmlFor` | string | Ties the label to the control. |
+| `hint` | string | Shown when there's no error. |
+| `error` | string | Replaces the hint, styled as an error. |
+
+### Card
+
+A bordered surface for grouping content, with an optional title and an actions
+row in the header.
+
+<CardDemo client:visible />
+
+```tsx
+<Card title="Settings" actions={<Button variant="secondary">Edit</Button>}>
+  …content…
+</Card>
+```
+
+| Prop | Type | Notes |
+| ---- | ---- | ----- |
+| `title` | string | Optional header title. |
+| `actions` | ReactNode | Optional header actions (right-aligned). |
+| `children` | ReactNode | Card body. |
+
+### List
+
+A selectable list. Rows highlight on hover and call `onSelect` when clicked.
+Renders an empty state when there are no items.
+
+<ListDemo client:visible />
+
+```tsx
+<List
+  items={users}
+  getKey={(u) => u.id}
+  onSelect={(u) => setSelected(u.id)}
+  renderItem={(u) => u.name}
+  empty="No users yet."
+/>
+```
+
+| Prop | Type | Notes |
+| ---- | ---- | ----- |
+| `items` | `T[]` | The rows. |
+| `getKey` | `(item, i) => string \| number` | Stable React key. |
+| `renderItem` | `(item, i) => ReactNode` | Row content. |
+| `onSelect` | `(item, i) => void` | Optional; makes rows clickable. |
+| `empty` | ReactNode | Shown when `items` is empty. |
+
+## All together
+
+Composed into a small CRUD-style screen — the shape a generated panel takes.
+
+<Showcase client:visible />
 
 ## Panel templates
 
