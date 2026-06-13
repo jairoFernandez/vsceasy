@@ -87,6 +87,14 @@ export function addCrud(opts: AddCrudOptions): AddCrudResult {
     created,
   );
 
+  // 1b. Form navigation hand-off (list → form edit id)
+  writeFromTpl(
+    path.join(opts.templatesRoot, '_generators', 'crud', 'formNav.ts.tpl'),
+    path.join(opts.projectRoot, 'src', 'services', `${camelLower(model.name)}FormNav.ts`),
+    baseVars,
+    created,
+  );
+
   // 2. List panel
   writeFromTpl(
     path.join(opts.templatesRoot, '_generators', 'crud', 'listPanel.ts.tpl'),
@@ -294,6 +302,7 @@ function appendApiForm(
 ) {
   const sig =
     `\nexport interface ${apiName} {\n` +
+    `  pendingId(): Promise<${model.name}['${model.primaryKey}'] | null>;\n` +
     `  get(id: ${model.name}['${model.primaryKey}'] | null): Promise<${model.name} | null>;\n` +
     `  save(row: ${model.name}): Promise<${model.name}>;\n` +
     `  cancel(): Promise<void>;\n` +

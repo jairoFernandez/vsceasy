@@ -127,6 +127,20 @@ describe('addCrud', () => {
     const formPanel = fs.readFileSync(path.join(project, 'src/panels/userForm.ts'), 'utf8');
     // save reveals the list panel so the new row shows
     expect(formPanel).toMatch(/executeCommand\('[^']*\.openUsersList'\)/);
+    // form exposes pendingId() so the webview can pre-load for editing
+    expect(formPanel).toMatch(/takePendingUserId/);
+
+    // edit hand-off: nav stash file generated + list sets the pending id
+    expect(r.created).toContain(path.join(project, 'src/services/userFormNav.ts'));
+    expect(listPanel).toMatch(/setPendingUserId/);
+
+    const formAppSrc = fs.readFileSync(path.join(project, 'src/webview/panels/userForm/App.tsx'), 'utf8');
+    // pre-loads on mount via pendingId + get, and clears after creating a new row
+    expect(formAppSrc).toMatch(/api\.pendingId\(\)/);
+    expect(formAppSrc).toMatch(/const wasNew = editingId == null/);
+
+    const formApi = fs.readFileSync(path.join(project, 'src/shared/api.ts'), 'utf8');
+    expect(formApi).toMatch(/pendingId\(\): Promise<User\['id'\] \| null>/);
 
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });

@@ -1,5 +1,6 @@
 import { definePanel } from '../shared/vsceasy';
 import { {{Name}}Service } from '../services/{{Name}}Service';
+import { takePending{{Name}}Id } from '../services/{{name}}FormNav';
 import type { {{Name}}FormApi } from '../shared/api';
 import type { {{Name}} } from '../models/{{Name}}';
 
@@ -8,6 +9,10 @@ export default definePanel<{{Name}}FormApi>({
   column: 'beside',
   command: { title: '{{title}}: New / Edit' },
   rpc: (vscode) => ({
+    async pendingId() {
+      // Consumed once by the webview on mount to decide edit vs new.
+      return (takePending{{Name}}Id() as {{Name}}['{{primaryKey}}'] | null) ?? null;
+    },
     async get(id) {
       if (!id) return null;
       return {{Name}}Service.get(id as {{Name}}['{{primaryKey}}']);

@@ -1,5 +1,6 @@
 import { definePanel } from '../shared/vsceasy';
 import { {{Name}}Service } from '../services/{{Name}}Service';
+import { setPending{{Name}}Id } from '../services/{{name}}FormNav';
 import type { {{Plural}}ListApi } from '../shared/api';
 
 export default definePanel<{{Plural}}ListApi>({
@@ -21,7 +22,8 @@ export default definePanel<{{Plural}}ListApi>({
       return {{Name}}Service.delete(id);
     },
     async openForm(id) {
-      // Defer to the form panel — opens beside the current view.
+      // Stash the id so the form can pre-load it on mount, then reveal the form.
+      setPending{{Name}}Id(id ?? null);
       await vscode.commands.executeCommand('{{prefix}}.open{{Name}}Form', id ?? null);
     },
   }),
