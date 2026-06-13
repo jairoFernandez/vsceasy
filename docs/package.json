@@ -5,8 +5,11 @@
   "type": "module",
   "description": "Documentation site for vsceasy (Astro + Starlight). Not part of the CLI build or npm package.",
   "scripts": {
+    "sync:components": "bun scripts/syncComponents.ts",
+    "predev": "bun run sync:components",
     "dev": "astro dev",
-    "start": "astro dev",
+    "start": "bun run sync:components && astro dev",
+    "prebuild": "bun run sync:components",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"

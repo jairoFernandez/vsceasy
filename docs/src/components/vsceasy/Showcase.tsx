@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Button } from './Button';
-import { Input } from './Input';
-import { Field } from './Field';
-import { Card } from './Card';
-import { List } from './List';
-import './components.css';
+// These are synced verbatim from templates/_generators/components — the exact
+// sources `vsceasy components add` writes into a project. See scripts/syncComponents.ts.
+import { Button } from './generated/Button';
+import { Input } from './generated/Input';
+import { Field } from './generated/Field';
+import { Card } from './generated/Card';
+import { List } from './generated/List';
+import './generated/components.css';
 import './theme.css';
 
 type Theme = 'dark' | 'light';

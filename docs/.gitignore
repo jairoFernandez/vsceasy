@@ -7,3 +7,5 @@ node_modules/
 # env
 .env
 .env.production
+# component sources synced from templates/_generators/components (source of truth)
+src/components/vsceasy/generated/
