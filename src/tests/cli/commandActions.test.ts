@@ -87,6 +87,29 @@ describe('create command action', () => {
     // simpleName 'cool-tool' → title-cased displayName
     expect(pkg.displayName).toBe('Cool Tool');
   });
+
+  test('--git and --install flags attempt git init and dependency install', async () => {
+    process.chdir(tmpRoot);
+    const spawn = childProcess.spawnSync as unknown as ReturnType<typeof spyOn>;
+    spawn.mockClear();
+    await createCommand.action({ name: 'flagged', preset: 'minimal', git: true, install: true });
+    // spawnSync is globally mocked to status 1, so which() reports the tool
+    // missing — but the flags must still drive the lookups. which() spawns
+    // `which <cmd>`, so the looked-up tool is in args[1].
+    const probed = spawn.mock.calls
+      .filter((c: any[]) => c[0] === 'which' || c[0] === 'where')
+      .map((c: any[]) => c[1]?.[0]);
+    expect(probed).toContain('git');
+    expect(probed.some((c: string) => c === 'bun' || c === 'npm')).toBe(true);
+  });
+
+  test('--git=false and --install=false skip both steps without spawning', async () => {
+    process.chdir(tmpRoot);
+    const spawn = childProcess.spawnSync as unknown as ReturnType<typeof spyOn>;
+    spawn.mockClear();
+    await createCommand.action({ name: 'noflags', preset: 'minimal', git: false, install: false });
+    expect(spawn.mock.calls.length).toBe(0);
+  });
 });
 
 // ── helper add ───────────────────────────────────────────────────────────────

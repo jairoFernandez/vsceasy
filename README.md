@@ -20,13 +20,13 @@ vsceasy --version
 
 ```bash
 bunx @vsceasy/cli create my-extension
+# prompts to init git + install deps, then:
 cd my-extension
-bun install
 bun run dev
 # press F5 in VS Code to launch the Extension Development Host
 ```
 
-Or with flags:
+Or with flags — `--git` / `--install` skip the post-scaffold prompts:
 
 ```bash
 bunx @vsceasy/cli create \
@@ -34,7 +34,9 @@ bunx @vsceasy/cli create \
   --displayName "My Extension" \
   --description "Does cool things" \
   --publisher my-publisher \
-  --ui react
+  --ui react \
+  --git \
+  --install
 ```
 
 ## What you get

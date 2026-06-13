@@ -31,10 +31,13 @@ prefix any `vsceasy <cmd>` with `bunx @vsceasy/cli <cmd>`.
 bunx @vsceasy/cli create my-extension
 # or, if installed globally: vsceasy create my-extension
 cd my-extension
-bun install
 ```
 
-Or fully scripted:
+After scaffolding, `create` offers to **initialize a git repository** and
+**install dependencies** (defaults to yes on both). Accept the install prompt and
+you can skip `bun install` yourself.
+
+Or fully scripted — `--git` / `--install` skip the prompts:
 
 ```bash
 bunx @vsceasy/cli create \
@@ -43,7 +46,9 @@ bunx @vsceasy/cli create \
   --description "Does cool things" \
   --publisher my-publisher \
   --ui react \
-  --preset full
+  --preset full \
+  --git \
+  --install
 ```
 
 `--preset full` includes a sample panel + RPC. `--preset minimal` gives an empty

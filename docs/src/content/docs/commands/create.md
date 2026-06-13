@@ -20,6 +20,8 @@ vsceasy create my-extension
 | `--ui` | `react` | UI framework. Only `react` for now. |
 | `--preset` | `minimal` \| `full` | `full` (default) adds a sample panel + RPC; `minimal` is empty. |
 | `--dir` | text | Target directory. Defaults to `./<name>`. |
+| `--git` | boolean | Initialize a git repository. Skips the prompt; set `--git=false` to opt out. |
+| `--install` | boolean | Install dependencies (bun, falling back to npm). Skips the prompt; set `--install=false` to opt out. |
 
 ## Examples
 
@@ -40,6 +42,19 @@ vsceasy create --name @acme/cool-tool --dir tools/cool
 ```
 
 ## After scaffolding
+
+When run in an interactive terminal, `create` then offers to:
+
+- **Initialize a git repository** (`git init` in the project).
+- **Install dependencies** with the first available package manager (`bun`, falling back to `npm`).
+
+Both default to yes. Pass `--git` / `--install` (or `--git=false` / `--install=false`) to skip the prompts — handy for scripting and CI:
+
+```bash
+vsceasy create --name my-extension --preset full --git --install
+```
+
+In non-interactive contexts (CI, piped input) without those flags the prompts are skipped and you run the steps yourself:
 
 ```bash
 cd my-extension
