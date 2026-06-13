@@ -108,8 +108,17 @@ No manual `postMessage`. No string-typed message channels.
 
 Structure: `vsceasy <resource> <verb> [flags]`. Every command runs interactively when flags are omitted (banner + per-param prompts) or fully scripted via flags.
 
+New to the project? Run the guided wizard:
+
+```bash
+vsceasy wizard
+```
+
+It detects whether you're inside a vsceasy project — outside it walks you through `create`, inside it menus the common generators (panel, command, database, model, helper) and points you at the rest.
+
 ```
 vsceasy
+├── wizard              interactive guided flow (create or add features)
 ├── create              scaffold a new extension project
 ├── panel
 │   └── add             new webview panel + optional typed RPC (opens in editor area)

@@ -1,6 +1,7 @@
 import { CLI } from '@ideascol/cli-maker';
 
 import CommandCreate from './commands/create';
+import CommandWizard from './commands/wizard';
 import CommandDoctor from './commands/doctor';
 import CommandUpgrade from './commands/upgrade';
 import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup, SubpanelGroup, TreeViewGroup, TestGroup, PublishGroup, HelperGroup, JobGroup, DbGroup, ModelGroup, CrudGroup } from './commands/groups';
@@ -25,6 +26,7 @@ const cli = new CLI(
 );
 
 cli.command(CommandCreate);
+cli.command(CommandWizard);
 cli.command(PanelGroup);
 cli.command(MenuGroup);
 cli.command(CommandGroup);
