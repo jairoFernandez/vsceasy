@@ -149,9 +149,15 @@ export interface CreateDbOptions {
 }
 
 export function createDb(ctx: vscode.ExtensionContext, opts: CreateDbOptions): Db {
-  const baseUri = opts.provider === 'global' ? ctx.globalStorageUri : ctx.storageUri;
+  // `storageUri` is only defined when a workspace/folder is open. `globalStorageUri`
+  // is always available — fall back to it so the extension still activates with no
+  // folder open (e.g. the Extension Development Host on first launch).
+  const baseUri =
+    opts.provider === 'global'
+      ? ctx.globalStorageUri
+      : (ctx.storageUri ?? ctx.globalStorageUri);
   if (!baseUri) {
-    throw new Error('createDb: storage URI unavailable (open a workspace or use provider: "global").');
+    throw new Error('createDb: no storage URI available from the extension context.');
   }
   const root = path.join(baseUri.fsPath, opts.subdir ?? 'db');
   const provider = new StorageProvider(root);

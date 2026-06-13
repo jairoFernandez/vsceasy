@@ -189,11 +189,26 @@ describe('orm runtime — createDb / singleton', () => {
     expect(fs.existsSync(path.join(tmp, 'custom', 's.json'))).toBe(true);
   });
 
-  test('createDb throws when the chosen storage URI is unavailable', async () => {
+  test('createDb throws only when no storage URI is available at all', async () => {
     const mod = await loadOrm(tmp);
     const ctx = { storageUri: undefined, globalStorageUri: undefined, subscriptions: [] };
-    expect(() => mod.createDb(ctx, { provider: 'storage' })).toThrow(/storage URI unavailable/);
-    expect(() => mod.createDb(ctx, { provider: 'global' })).toThrow(/storage URI unavailable/);
+    expect(() => mod.createDb(ctx, { provider: 'storage' })).toThrow(/no storage URI available/);
+    expect(() => mod.createDb(ctx, { provider: 'global' })).toThrow(/no storage URI available/);
+  });
+
+  test("provider:'storage' falls back to globalStorageUri when no workspace is open", async () => {
+    const mod = await loadOrm(tmp);
+    // storageUri undefined (no folder open), globalStorageUri present — must not throw.
+    const ctx = {
+      storageUri: undefined,
+      globalStorageUri: { fsPath: path.join(tmp, 'global') },
+      subscriptions: [] as { dispose(): void }[],
+    };
+    const E = mod.defineEntity('fallback', { primaryKey: 'id' });
+    const orm = mod.createDb(ctx, { provider: 'storage' });
+    await orm(E).insert({ id: 1 });
+    // written under the global root, not a workspace root
+    expect(fs.existsSync(path.join(tmp, 'global', 'db', 'fallback.json'))).toBe(true);
   });
 
   test('db() throws before initDb, returns shared instance after, idempotent', async () => {
