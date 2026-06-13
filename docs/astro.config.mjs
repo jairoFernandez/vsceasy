@@ -37,6 +37,7 @@ export default defineConfig({
             { label: 'Concepts', slug: 'concepts' },
             { label: 'Project layout', slug: 'project-layout' },
             { label: 'Glossary', slug: 'glossary' },
+            { label: 'Roadmap', slug: 'roadmap' },
           ],
         },
         {
