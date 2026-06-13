@@ -141,7 +141,7 @@ describe('wizard — inside a project', () => {
     answers = ['model', 'user', 'id:string!,name:string,email?:string@'];
     logs = [];
     await runWizard({ templatesRoot, cwd: project });
-    expect(fs.existsSync(path.join(project, 'src/models/user.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(project, 'src/models/User.ts'))).toBe(true);
     expect(logs.join('\n')).toContain('primaryKey: id');
   });
 
