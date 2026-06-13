@@ -37,7 +37,7 @@ const addJobCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
 
       const trigger = resolveTrigger(args);
 

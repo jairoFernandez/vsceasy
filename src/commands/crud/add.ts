@@ -56,7 +56,7 @@ const addCrudCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
 
       let menuSpec: string | undefined;
       const choice = String(args.menu ?? NONE_SENTINEL);

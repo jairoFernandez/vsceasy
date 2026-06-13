@@ -31,7 +31,7 @@ const createCommand: Command = {
         ui,
         preset,
         targetDir,
-        templatesRoot: findTemplatesRoot(__dirname),
+        templatesRoot: findTemplatesRoot(),
       });
       const rel = path.relative(process.cwd(), targetDir) || '.';
       console.log(`\n✓ Created ${name} at ${rel}\n`);

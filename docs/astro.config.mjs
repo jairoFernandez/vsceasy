@@ -1,11 +1,17 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
+import mermaid from 'astro-mermaid';
 
 export default defineConfig({
   // Set `site` to the deployed URL when publishing (enables canonical + sitemap).
   site: 'https://vsceasy.dev',
   integrations: [
+    // Must run before Starlight so it transforms ```mermaid blocks first.
+    mermaid({
+      theme: 'default',
+      autoTheme: true, // follow Starlight light/dark
+    }),
     react(),
     starlight({
       title: 'vsceasy',

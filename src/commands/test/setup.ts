@@ -12,7 +12,7 @@ const testSetupCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
       const result = setupTests({ projectRoot, templatesRoot, force: !!args.force });
       const rel = (p: string) => path.relative(projectRoot, p);
       console.log('\n✓ Test setup complete.\n');

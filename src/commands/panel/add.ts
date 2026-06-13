@@ -27,7 +27,7 @@ const addPanelCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
       const result = addPanel({
         name: args.name,
         title: args.title,

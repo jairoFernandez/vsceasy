@@ -18,11 +18,11 @@ const { GREEN, DIM, BOLD, RST, CYAN, YELLOW } = style;
  * to the same lib functions the CLI commands use. Anything not wired here is
  * surfaced as the exact `vsceasy …` command to run.
  *
- * Designed for `findTemplatesRoot(__dirname)` to resolve the bundled templates
+ * Designed for `findTemplatesRoot()` to resolve the bundled templates
  * whether running from src/ or dist/.
  */
 export async function runWizard(opts: { templatesRoot?: string; cwd?: string } = {}): Promise<void> {
-  const templatesRoot = opts.templatesRoot ?? findTemplatesRoot(__dirname);
+  const templatesRoot = opts.templatesRoot ?? findTemplatesRoot();
   const cwd = opts.cwd ?? process.cwd();
 
   let projectRoot: string | null = null;

@@ -47,7 +47,7 @@ const addModelCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
 
       if (!dbExists(projectRoot)) {
         throw new Error('No `src/helpers/db.ts` found. Run `vsceasy db init` first.');

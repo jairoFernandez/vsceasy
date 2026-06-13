@@ -134,7 +134,7 @@ const addStatusBarCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
 
       const isNewCmd = args.bindTo === 'create new command';
       const isPanel = args.bindTo === 'panel';

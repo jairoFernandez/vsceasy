@@ -26,7 +26,7 @@ const addMenuCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
 
       const name = String(args.name).trim();
       if (!name) throw new Error('Menu name is required');

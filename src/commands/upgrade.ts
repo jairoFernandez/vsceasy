@@ -47,7 +47,7 @@ const upgradeCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
       const apply = args.apply === true || args.apply === 'true';
 
       const result = upgrade({

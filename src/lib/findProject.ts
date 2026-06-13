@@ -34,12 +34,27 @@ export function findProjectRoot(start: string = process.cwd()): string {
  * Resolves the bundled templates/ directory. Works whether the CLI runs from
  * the source tree (src/) or the compiled dist/.
  */
-export function findTemplatesRoot(fromFile: string = __dirname): string {
-  const candidates = [
-    path.resolve(fromFile, '..', 'templates'),
-    path.resolve(fromFile, '..', '..', 'templates'),
-    path.resolve(fromFile, '..', '..', '..', 'templates'),
-  ];
-  for (const c of candidates) if (fs.existsSync(c)) return c;
-  throw new Error(`templates/ directory not found near ${fromFile}`);
+/**
+ * Resolves the bundled templates/ directory by walking up from `fromFile`
+ * until a directory containing `templates/` is found.
+ *
+ * Callers must pass a runtime-real path (e.g. `process.argv[1]`, the CLI entry
+ * node actually executes). Do NOT pass `__dirname`: the bundler inlines it as
+ * the absolute build-machine path (e.g. /home/runner/work/.../src/commands/x),
+ * which does not exist on a user's machine.
+ */
+export function findTemplatesRoot(fromFile: string = process.argv[1] ?? __dirname): string {
+  let dir = path.dirname(path.resolve(fromFile));
+  const { root } = path.parse(dir);
+  const tried: string[] = [];
+  while (true) {
+    const candidate = path.join(dir, 'templates');
+    tried.push(candidate);
+    if (fs.existsSync(candidate)) return candidate;
+    if (dir === root) break;
+    dir = path.dirname(dir);
+  }
+  throw new Error(
+    `templates/ directory not found. Looked in:\n  ${tried.join('\n  ')}`,
+  );
 }

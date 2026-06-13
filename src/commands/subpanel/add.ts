@@ -39,7 +39,7 @@ const addSubpanelCommand: Command = {
   action: async (args) => {
     try {
       const projectRoot = findProjectRoot();
-      const templatesRoot = findTemplatesRoot(__dirname);
+      const templatesRoot = findTemplatesRoot();
       const result = addSubpanel({
         name: String(args.name),
         title: args.title ? String(args.title) : undefined,

@@ -8,7 +8,7 @@ const wizardCommand: Command = {
   params: [],
   action: async () => {
     try {
-      await runWizard({ templatesRoot: findTemplatesRoot(__dirname) });
+      await runWizard({ templatesRoot: findTemplatesRoot() });
     } catch (err: any) {
       console.error(`\n✗ ${err.message}\n`);
       process.exitCode = 1;
