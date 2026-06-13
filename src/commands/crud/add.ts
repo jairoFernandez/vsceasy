@@ -59,13 +59,17 @@ const addCrudCommand: Command = {
       const templatesRoot = findTemplatesRoot();
 
       let menuSpec: string | undefined;
-      const choice = String(args.menu ?? NONE_SENTINEL);
-      if (choice === NONE_SENTINEL) {
+      const choice = String(args.menu ?? NONE_SENTINEL).trim();
+      // Accept raw policy strings from flags (e.g. --menu none, --menu new:todos,
+      // --menu existing:settings) as well as the interactive sentinels.
+      if (choice === NONE_SENTINEL || choice === 'none') {
         menuSpec = 'none';
       } else if (choice === NEW_SENTINEL) {
         const id = args.newMenuId ? String(args.newMenuId).trim() : await prompt('  new menu id: ');
         if (!id) throw new Error('New menu id required.');
         menuSpec = `new:${id}`;
+      } else if (choice.startsWith('new:') || choice.startsWith('existing:')) {
+        menuSpec = choice;
       } else {
         menuSpec = `existing:${choice}`;
       }

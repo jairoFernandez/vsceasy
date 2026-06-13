@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" font-family="-apple-system, Segoe UI, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">New Todos form panel</title>
+  <desc id="d">The generated form panel beside the list, with text inputs for Id and Title, a checkbox for Done, a dropdown for Priority, and a date picker for Due Date, plus Save and Reset.</desc>
+  <rect width="900" height="440" fill="#1e1e1e"/>
+
+  <rect x="0" y="0" width="470" height="440" fill="#1e1e1e"/>
+  <rect x="0" y="0" width="470" height="36" fill="#252526"/>
+  <text x="16" y="23" fill="#cccccc" font-size="13">Todos</text>
+  <text x="24" y="74" fill="#e7e7e7" font-size="18" font-weight="500">Todos</text>
+  <g fill="#9d9d9d" font-size="12">
+    <text x="24" y="108">Id</text><text x="70" y="108">Title</text><text x="200" y="108">Priority</text>
+  </g>
+  <g fill="#d4d4d4" font-size="12">
+    <text x="24" y="134">t4</text><text x="70" y="134">Review CRUD scaffold</text><text x="200" y="134">medium</text>
+    <text x="24" y="160">t3</text><text x="70" y="160">Buy coffee</text><text x="200" y="160">low</text>
+    <text x="24" y="186">t2</text><text x="70" y="186">Ship vsceasy 0.2</text><text x="200" y="186">medium</text>
+    <text x="24" y="212">t1</text><text x="70" y="212">Write the tutorial</text><text x="200" y="212">high</text>
+  </g>
+
+  <rect x="470" y="0" width="430" height="440" fill="#1e1e1e"/>
+  <rect x="470" y="0" width="430" height="36" fill="#252526"/>
+  <rect x="470" y="0" width="2" height="440" fill="#2a2a2a"/>
+  <text x="486" y="23" fill="#cccccc" font-size="13">Todos</text>
+
+  <text x="500" y="74" fill="#e7e7e7" font-size="20" font-weight="500">New Todos</text>
+
+  <text x="500" y="108" fill="#9d9d9d" font-size="13">Id</text>
+  <rect x="500" y="116" width="370" height="30" rx="3" fill="#3c3c3c" stroke="#5a5a5a"/>
+
+  <text x="500" y="172" fill="#9d9d9d" font-size="13">Title</text>
+  <rect x="500" y="180" width="370" height="30" rx="3" fill="#3c3c3c" stroke="#5a5a5a"/>
+
+  <text x="500" y="236" fill="#9d9d9d" font-size="13">Done</text>
+  <rect x="676" y="222" width="16" height="16" rx="2" fill="#3c3c3c" stroke="#5a5a5a"/>
+
+  <text x="500" y="280" fill="#9d9d9d" font-size="13">Priority</text>
+  <rect x="500" y="288" width="370" height="30" rx="3" fill="#3c3c3c" stroke="#5a5a5a"/>
+  <path d="M852 299 l6 6 l6 -6" fill="none" stroke="#cccccc" stroke-width="1.5"/>
+
+  <text x="500" y="344" fill="#9d9d9d" font-size="13">Due Date</text>
+  <rect x="500" y="352" width="370" height="30" rx="3" fill="#3c3c3c" stroke="#5a5a5a"/>
+  <text x="510" y="372" fill="#8a8a8a" font-size="13">dd/mm/yyyy</text>
+
+  <rect x="500" y="398" width="64" height="28" rx="4" fill="#0e639c"/>
+  <text x="532" y="417" fill="#ffffff" font-size="13" text-anchor="middle">Save</text>
+  <rect x="574" y="398" width="68" height="28" rx="4" fill="#3a3d41"/>
+  <text x="608" y="417" fill="#ffffff" font-size="13" text-anchor="middle">Reset</text>
+</svg>

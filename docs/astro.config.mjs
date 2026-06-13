@@ -35,6 +35,16 @@ export default defineConfig({
           ],
         },
         {
+          label: 'Tutorial: Todo extension',
+          items: [
+            { label: 'Overview', slug: 'tutorial' },
+            { label: '1. Scaffold', slug: 'tutorial/01-scaffold' },
+            { label: '2. Model', slug: 'tutorial/02-model' },
+            { label: '3. CRUD UI', slug: 'tutorial/03-crud' },
+            { label: '4. Job & run', slug: 'tutorial/04-job-and-run' },
+          ],
+        },
+        {
           label: 'Guides',
           items: [
             { label: 'The wizard', slug: 'guides/wizard' },

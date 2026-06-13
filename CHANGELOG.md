@@ -41,6 +41,9 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Bumped to **0.1.0** — first signed/tagged release.
 - Dropped Svelte/Vue/Vanilla mentions from docs and CLI options. Only React UI is supported in this release.
 
+### Fixed
+- **`crud add --menu` flag parsing** — passing a raw policy string (`--menu none`, `--menu new:<id>`, `--menu existing:<id>`) non-interactively was mis-mapped to `existing:<literal>`, so `--menu none` failed with `Menu not found: src/menus/none.ts`. The flag forms now work the same as the interactive choices (which was already the documented behavior).
+
 ## [0.0.1] — 2026-05-21
 
 - Initial MVP. React template, typed RPC bridge, file-based registry, CLI generators (`panel`, `command`, `menu`, `rpc`, `statusBar`, `subpanel`), `doctor`, `upgrade`.

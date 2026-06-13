@@ -17,6 +17,9 @@ import { scaffold } from '../../lib/scaffold';
 import createCommand from '../../commands/create';
 import addPanelCommand from '../../commands/panel/add';
 import addHelperCommand from '../../commands/helper/add';
+import addCrudCommand from '../../commands/crud/add';
+import { initDb } from '../../lib/db/init';
+import { addModel } from '../../lib/model/add';
 
 const templatesRoot = path.resolve(__dirname, '../../../templates');
 
@@ -109,6 +112,45 @@ describe('create command action', () => {
     spawn.mockClear();
     await createCommand.action({ name: 'noflags', preset: 'minimal', git: false, install: false });
     expect(spawn.mock.calls.length).toBe(0);
+  });
+});
+
+// ── crud add ──────────────────────────────────────────────────────────────────
+
+async function scaffoldWithModel(dir: string): Promise<string> {
+  const project = await scaffoldInto(dir);
+  initDb({ projectRoot: project, templatesRoot });
+  addModel({
+    name: 'Todo',
+    fields: [
+      { name: 'id', type: 'string', primaryKey: true },
+      { name: 'title', type: 'string' },
+      { name: 'done', type: 'boolean' },
+    ],
+    projectRoot: project,
+    templatesRoot,
+  });
+  return project;
+}
+
+describe('crud add command action — menu flag parsing', () => {
+  // Regression: raw policy flags (--menu none | new:<id> | existing:<id>) were
+  // mis-mapped to `existing:<literal>`, so `--menu none` looked for src/menus/none.ts.
+  test('--menu none scaffolds CRUD without a menu (no "menus/none.ts" error)', async () => {
+    const project = await scaffoldWithModel(tmpRoot);
+    process.chdir(project);
+    await addCrudCommand.action({ model: 'Todo', menu: 'none' });
+    expect(errs.join('\n')).not.toContain('Menu not found');
+    expect(fs.existsSync(path.join(project, 'src/panels/todosList.ts'))).toBe(true);
+    expect(fs.existsSync(path.join(project, 'src/menus/none.ts'))).toBe(false);
+  });
+
+  test('--menu new:<id> creates the named menu', async () => {
+    const project = await scaffoldWithModel(tmpRoot);
+    process.chdir(project);
+    await addCrudCommand.action({ model: 'Todo', menu: 'new:todos' });
+    expect(errs.join('\n')).not.toContain('Menu not found');
+    expect(fs.existsSync(path.join(project, 'src/menus/todos.ts'))).toBe(true);
   });
 });
 

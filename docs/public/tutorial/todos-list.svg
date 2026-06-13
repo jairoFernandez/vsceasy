@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" font-family="-apple-system, Segoe UI, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Todos list panel</title>
+  <desc id="d">The generated list panel showing four seeded todos with Id, Title, Done, Priority and Due Date columns, plus Refresh, New, Edit and Delete actions.</desc>
+  <rect width="900" height="360" fill="#1e1e1e"/>
+  <rect width="900" height="36" fill="#252526"/>
+  <rect x="0" y="0" width="120" height="36" fill="#1e1e1e"/>
+  <text x="16" y="23" fill="#cccccc" font-size="13">Todos</text>
+  <rect x="118" y="0" width="2" height="36" fill="#0e639c"/>
+
+  <text x="32" y="78" fill="#e7e7e7" font-size="22" font-weight="500">Todos</text>
+  <g>
+    <rect x="690" y="58" width="78" height="28" rx="4" fill="#0e639c"/>
+    <text x="729" y="77" fill="#ffffff" font-size="13" text-anchor="middle">Refresh</text>
+    <rect x="776" y="58" width="72" height="28" rx="4" fill="#0e639c"/>
+    <text x="812" y="77" fill="#ffffff" font-size="13" text-anchor="middle">+ New</text>
+  </g>
+
+  <line x1="32" y1="108" x2="868" y2="108" stroke="#3c3c3c" stroke-width="1"/>
+  <g fill="#9d9d9d" font-size="13" font-weight="500">
+    <text x="40" y="102">Id</text>
+    <text x="92" y="102">Title</text>
+    <text x="300" y="102">Done</text>
+    <text x="380" y="102">Priority</text>
+    <text x="480" y="102">Due Date</text>
+  </g>
+
+  <g font-size="13" fill="#d4d4d4">
+    <g>
+      <text x="40" y="140">t4</text>
+      <text x="92" y="140">Review CRUD scaffold</text>
+      <text x="300" y="140">false</text>
+      <text x="380" y="140">medium</text>
+      <rect x="690" y="126" width="52" height="24" rx="4" fill="#3a3d41"/>
+      <text x="716" y="142" fill="#ffffff" text-anchor="middle">Edit</text>
+      <rect x="750" y="126" width="64" height="24" rx="4" fill="#3a3d41"/>
+      <text x="782" y="142" fill="#ffffff" text-anchor="middle">Delete</text>
+      <line x1="32" y1="152" x2="868" y2="152" stroke="#2a2a2a"/>
+    </g>
+    <g>
+      <text x="40" y="178">t3</text>
+      <text x="92" y="178">Buy coffee</text>
+      <text x="300" y="178">true</text>
+      <text x="380" y="178">low</text>
+      <rect x="690" y="164" width="52" height="24" rx="4" fill="#3a3d41"/>
+      <text x="716" y="180" fill="#ffffff" text-anchor="middle">Edit</text>
+      <rect x="750" y="164" width="64" height="24" rx="4" fill="#3a3d41"/>
+      <text x="782" y="180" fill="#ffffff" text-anchor="middle">Delete</text>
+      <line x1="32" y1="190" x2="868" y2="190" stroke="#2a2a2a"/>
+    </g>
+    <g>
+      <text x="40" y="216">t2</text>
+      <text x="92" y="216">Ship vsceasy 0.2</text>
+      <text x="300" y="216">false</text>
+      <text x="380" y="216">medium</text>
+      <text x="480" y="216">2026-06-20T09:00:00.000Z</text>
+      <rect x="690" y="202" width="52" height="24" rx="4" fill="#3a3d41"/>
+      <text x="716" y="218" fill="#ffffff" text-anchor="middle">Edit</text>
+      <rect x="750" y="202" width="64" height="24" rx="4" fill="#3a3d41"/>
+      <text x="782" y="218" fill="#ffffff" text-anchor="middle">Delete</text>
+      <line x1="32" y1="228" x2="868" y2="228" stroke="#2a2a2a"/>
+    </g>
+    <g>
+      <text x="40" y="254">t1</text>
+      <text x="92" y="254">Write the tutorial</text>
+      <text x="300" y="254">false</text>
+      <text x="380" y="254">high</text>
+      <text x="480" y="254">2026-06-10T09:00:00.000Z</text>
+      <rect x="690" y="240" width="52" height="24" rx="4" fill="#3a3d41"/>
+      <text x="716" y="256" fill="#ffffff" text-anchor="middle">Edit</text>
+      <rect x="750" y="240" width="64" height="24" rx="4" fill="#3a3d41"/>
+      <text x="782" y="256" fill="#ffffff" text-anchor="middle">Delete</text>
+      <line x1="32" y1="266" x2="868" y2="266" stroke="#2a2a2a"/>
+    </g>
+  </g>
+</svg>
