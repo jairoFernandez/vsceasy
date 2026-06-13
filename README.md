@@ -44,6 +44,34 @@ my-extension/
 └── package.json                    # esbuild for extension, vite for UI
 ```
 
+## Command map
+
+```mermaid
+flowchart TD
+    V["vsceasy"] --> CR["create<br/>scaffold project"]
+    V --> UI_["ui features"]
+    V --> DATA["data"]
+    V --> OPS["ops"]
+    UI_ --> P["panel add"]
+    UI_ --> SP["subpanel add"]
+    UI_ --> MN["menu add / edit"]
+    UI_ --> TV["treeview add"]
+    UI_ --> CMD["command add"]
+    UI_ --> SB["statusBar add"]
+    UI_ --> RPC["rpc add"]
+    DATA --> DB["db init"]
+    DATA --> MD["model add"]
+    DATA --> CRUD["crud add"]
+    OPS --> JOB["job add"]
+    OPS --> HLP["helper add"]
+    OPS --> TST["test setup"]
+    OPS --> PUB["publish init"]
+    OPS --> DOC["doctor"]
+    OPS --> UPG["upgrade"]
+```
+
+Run `vsceasy <group> <subcommand> --help` for details on any command.
+
 ## Typed RPC
 
 Define the contract once:

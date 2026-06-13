@@ -41,6 +41,22 @@ my-extension/
 
 ## File-based registry
 
+```mermaid
+flowchart LR
+    subgraph src["src/ convention dirs"]
+        P["panels/"]
+        C["commands/"]
+        M["menus/"]
+        T["treeViews/"]
+        S["subpanels/"]
+        B["statusBars/"]
+    end
+    P & C & M & T & S & B --> G["scripts/gen.ts<br/>(scan)"]
+    G --> R["_registry.ts"]
+    G --> K["package.json<br/>#contributes"]
+    R --> A["bootstrap(registry)<br/>on activate"]
+```
+
 `scripts/gen.ts` scans the convention dirs:
 
 | Dir              | API              | Becomes …                                       |
@@ -57,6 +73,21 @@ my-extension/
 ## RPC bridge
 
 Transport: `webview.postMessage` + `acquireVsCodeApi`.
+
+```mermaid
+sequenceDiagram
+    participant UI as React UI<br/>(webview)
+    participant C as rpc client
+    participant E as extension host
+    participant H as panel handler
+    UI->>C: api.getUser(id)
+    C->>E: postMessage { id, kind:'call', method, args }
+    E->>H: dispatch by method name
+    H-->>E: return value (or throw)
+    E-->>C: postMessage { id, kind:'result', ok, value|error }
+    C-->>UI: resolve / reject Promise
+    Note over UI,H: typed end-to-end via shared/api.ts
+```
 
 Protocol:
 ```
