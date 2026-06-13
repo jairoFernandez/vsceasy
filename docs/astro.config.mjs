@@ -23,6 +23,7 @@ export default defineConfig({
             { label: 'Quick start', slug: 'quick-start' },
             { label: 'Concepts', slug: 'concepts' },
             { label: 'Project layout', slug: 'project-layout' },
+            { label: 'Glossary', slug: 'glossary' },
           ],
         },
         {
