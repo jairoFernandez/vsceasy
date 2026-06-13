@@ -22,7 +22,20 @@ export function App() {
     }
   }, []);
 
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => {
+    void reload();
+    // Webviews keep their state when hidden (retainContextWhenHidden), so the
+    // mount effect won't re-run when the panel is revealed again. Reload when the
+    // webview regains focus/visibility so edits made in another panel show up.
+    const onFocus = () => { void reload(); };
+    const onVisible = () => { if (document.visibilityState === 'visible') void reload(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [reload]);
 
   const onDelete = async (id: {{Name}}['{{primaryKey}}']) => {
     if (!confirm('Delete this row?')) return;
@@ -34,7 +47,10 @@ export function App() {
     <div style={{ padding: 16, color: 'var(--vscode-foreground)' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h2 style={{ margin: 0 }}>{{title}}</h2>
-        <button onClick={() => api.openForm()}>+ New</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => void reload()} disabled={loading}>{loading ? 'Loading…' : 'Refresh'}</button>
+          <button onClick={() => api.openForm()}>+ New</button>
+        </div>
       </header>
 
       {error && <div style={{ color: 'var(--vscode-errorForeground)', marginBottom: 8 }}>{error}</div>}
