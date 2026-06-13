@@ -1,0 +1,53 @@
+---
+title: Webview components
+description: A themed React component library + ready-made panel UI templates.
+---
+
+Webviews start blank, but you don't have to. vsceasy ships a themed component
+library and panel UI templates that use it.
+
+## The component library
+
+```bash
+vsceasy components add
+```
+
+Writes `Button`, `Input`, `Field`, `Card`, `List` (+ `components.css`) into
+`src/webview/components/`, all styled with `var(--vscode-*)` tokens so they match
+the user's theme in light and dark mode.
+
+```tsx
+import { Button, Input, Field, Card, List } from '../../components';
+import '../../components/components.css';
+
+function Form() {
+  return (
+    <Card title="New entry">
+      <Field label="Name" htmlFor="name">
+        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+      </Field>
+      <Button type="submit">Save</Button>
+    </Card>
+  );
+}
+```
+
+## Panel templates
+
+`panel add --template` starts a panel from a working screen built on these
+components, with the matching RPC method already wired.
+
+```bash
+vsceasy panel add --name signup --template form
+vsceasy panel add --name items  --template list
+vsceasy panel add --name stats  --template dashboard
+```
+
+| Template | UI | RPC added |
+| -------- | -- | --------- |
+| `form` | inputs + Save | `save(input)` |
+| `list` | list + Refresh | `list()` |
+| `dashboard` | stat cards | `stats()` |
+
+Non-blank templates auto-generate the component library on first use and force
+the typed API on. Fill in the handler in the panel and you have a working screen.

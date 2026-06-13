@@ -1,0 +1,62 @@
+---
+title: vsceasy
+description: Build VS Code extensions fast — React UI, typed RPC, file-based routing, and a mini-ORM, all scaffolded from the CLI.
+template: splash
+hero:
+  tagline: Build VS Code extensions fast. React UI, typed RPC, file-based routing, and a mini-ORM — scaffolded from one CLI.
+  actions:
+    - text: Quick start
+      link: /quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: Browse commands
+      link: /commands/
+      icon: open-book
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Why vsceasy
+
+<CardGrid stagger>
+  <Card title="One file = one feature" icon="document">
+    Drop a file in `panels/`, `commands/`, `menus/`, `treeViews/` — the generator
+    wires the registry and `package.json#contributes` for you.
+  </Card>
+  <Card title="Typed RPC bridge" icon="random">
+    Call `api.method(args)` from the webview. One shared interface types both
+    sides. No manual `postMessage`.
+  </Card>
+  <Card title="React webviews" icon="laptop">
+    Panels and subpanels ship a React UI wired to the RPC client, themed with VS
+    Code tokens. Start blank or from a `form` / `list` / `dashboard` template.
+  </Card>
+  <Card title="Batteries included" icon="setting">
+    A mini-ORM, CRUD scaffolding, jobs, helpers, a component library, a test
+    harness, and publish tooling — each one command away.
+  </Card>
+</CardGrid>
+
+## 30-second tour
+
+```bash
+bunx vsceasy create my-extension
+cd my-extension && bun install
+bun run dev          # build + watch
+# press F5 in VS Code to launch the Extension Development Host
+```
+
+Then add features as you go:
+
+```bash
+vsceasy panel add --name dashboard --template dashboard
+vsceasy db init && vsceasy model add --name user --fields "id:string!,name:string,email?:string@"
+vsceasy crud add --model user --menu new:admin
+```
+
+Or run the guided flow and let it ask:
+
+```bash
+vsceasy wizard
+```

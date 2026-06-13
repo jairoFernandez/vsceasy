@@ -1,0 +1,19 @@
+{
+  "name": "vsceasy-docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Documentation site for vsceasy (Astro + Starlight). Not part of the CLI build or npm package.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.30.0",
+    "astro": "^5.1.0",
+    "sharp": "^0.33.5"
+  }
+}
