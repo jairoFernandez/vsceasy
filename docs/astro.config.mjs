@@ -1,10 +1,12 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import react from '@astrojs/react';
 
 export default defineConfig({
   // Set `site` to the deployed URL when publishing (enables canonical + sitemap).
   site: 'https://vsceasy.dev',
   integrations: [
+    react(),
     starlight({
       title: 'vsceasy',
       description:
