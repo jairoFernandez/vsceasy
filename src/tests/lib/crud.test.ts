@@ -116,6 +116,17 @@ describe('addCrud', () => {
     const listApp = fs.readFileSync(path.join(project, 'src/webview/panels/usersList/App.tsx'), 'utf8');
     expect(listApp).toMatch(/Name<\/th>/);
     expect(listApp).toMatch(/Email<\/th>/);
+    // list reloads on reveal (webviews retain context when hidden) + has Refresh
+    expect(listApp).toMatch(/visibilitychange/);
+    expect(listApp).toMatch(/Refresh/);
+    // delete must NOT gate on the browser confirm() (disabled in webviews)
+    expect(listApp).not.toContain('if (!confirm(');
+
+    const listPanel = fs.readFileSync(path.join(project, 'src/panels/usersList.ts'), 'utf8');
+    expect(listPanel).toMatch(/showWarningMessage/); // host-side delete confirm
+    const formPanel = fs.readFileSync(path.join(project, 'src/panels/userForm.ts'), 'utf8');
+    // save reveals the list panel so the new row shows
+    expect(formPanel).toMatch(/executeCommand\('[^']*\.openUsersList'\)/);
 
     fs.rmSync(path.dirname(project), { recursive: true, force: true });
   });

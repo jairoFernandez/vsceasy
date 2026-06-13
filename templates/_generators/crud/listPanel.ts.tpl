@@ -11,6 +11,13 @@ export default definePanel<{{Plural}}ListApi>({
       return {{Name}}Service.list();
     },
     async delete(id) {
+      // Confirm in the host — browser confirm() is disabled in webviews.
+      const pick = await vscode.window.showWarningMessage(
+        `Delete {{title}} "${String(id)}"?`,
+        { modal: true },
+        'Delete',
+      );
+      if (pick !== 'Delete') return false;
       return {{Name}}Service.delete(id);
     },
     async openForm(id) {

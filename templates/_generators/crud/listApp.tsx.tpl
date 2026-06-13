@@ -38,7 +38,8 @@ export function App() {
   }, [reload]);
 
   const onDelete = async (id: {{Name}}['{{primaryKey}}']) => {
-    if (!confirm('Delete this row?')) return;
+    // `confirm()` is disabled inside VS Code webviews — confirmation happens in
+    // the host (the `delete` RPC handler shows a modal). Just call + reload.
     await api.delete(id);
     await reload();
   };

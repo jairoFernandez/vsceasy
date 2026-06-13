@@ -15,6 +15,9 @@ export default definePanel<{{Name}}FormApi>({
     async save(row) {
       const saved = await {{Name}}Service.save(row);
       void vscode.window.showInformationMessage(`{{title}} saved (${String(saved.{{primaryKey}})})`);
+      // Reveal the list so the new/edited row shows. Revealing fires the list
+      // webview's focus/visibility listener, which reloads it.
+      void vscode.commands.executeCommand('{{prefix}}.open{{Plural}}List');
       return saved;
     },
     async cancel() {
