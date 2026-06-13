@@ -14,6 +14,7 @@ import AddJob from './job/add';
 import DbInit from './db/init';
 import AddModel from './model/add';
 import AddCrud from './crud/add';
+import AddComponents from './components/add';
 
 function group(name: string, description: string, subcommands: Command[]): Command {
   return {
@@ -42,3 +43,4 @@ export const JobGroup = group('job', 'Manage recurring / event-triggered jobs (i
 export const DbGroup = group('db', 'Initialize the project database (mini-ORM)', [DbInit]);
 export const ModelGroup = group('model', 'Manage typed models (entities + repos) under src/models/', [AddModel]);
 export const CrudGroup = group('crud', 'Scaffold full CRUD UI (service + list panel + form panel + RPC) for a model', [AddCrud]);
+export const ComponentsGroup = group('components', 'Generate a theme-aware React component library for webviews', [AddComponents]);

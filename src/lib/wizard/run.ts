@@ -2,8 +2,9 @@ import * as path from 'path';
 import { select, askText, confirm, style } from '../interactive';
 import { findProjectRoot, findTemplatesRoot } from '../findProject';
 import { scaffold } from '../scaffold';
-import { addPanel } from '../panel/add';
+import { addPanel, PanelTemplate } from '../panel/add';
 import { addCommand } from '../command/add';
+import { addComponents } from '../components/add';
 import { addHelper, HELPER_KINDS, HelperKind } from '../helper/add';
 import { addModel } from '../model/add';
 import { parseFieldsSpec } from '../model/parseFields';
@@ -53,6 +54,7 @@ type Action =
   | 'command'
   | 'model'
   | 'helper'
+  | 'components'
   | 'db'
   | 'more';
 
@@ -65,6 +67,7 @@ async function wizardInProject(projectRoot: string, templatesRoot: string): Prom
       { label: 'Database', value: 'db', hint: 'init the mini-ORM' },
       { label: 'Model', value: 'model', hint: 'entity + repo' },
       { label: 'Helper', value: 'helper', hint: 'secrets/config/state/…' },
+      { label: 'Components', value: 'components', hint: 'themed React UI library' },
       { label: 'Something else…', value: 'more', hint: 'show the full command list' },
     ],
     { filter: false },
@@ -86,6 +89,8 @@ async function wizardInProject(projectRoot: string, templatesRoot: string): Prom
       return wizardModel(projectRoot, templatesRoot);
     case 'helper':
       return wizardHelper(projectRoot, templatesRoot);
+    case 'components':
+      return wizardComponents(projectRoot, templatesRoot);
     case 'more':
       return showMore();
   }
@@ -129,10 +134,31 @@ async function wizardPanel(projectRoot: string, templatesRoot: string): Promise<
   const name = (await askText('Panel id (e.g. settings)')).trim();
   if (!name) return cancel();
   const title = (await askText('Tab title', toTitle(name))).trim();
-  const withApi = await confirm('Generate a typed RPC API for it?', true);
-  const result = addPanel({ name, title: title || undefined, withApi, projectRoot, templatesRoot, runGen: false });
+  const template = await select<PanelTemplate>(
+    'Starter UI',
+    [
+      { label: 'blank', value: 'blank', hint: 'empty React component' },
+      { label: 'form', value: 'form', hint: 'inputs + save RPC' },
+      { label: 'list', value: 'list', hint: 'list + load RPC' },
+      { label: 'dashboard', value: 'dashboard', hint: 'stat cards + RPC' },
+    ],
+    { filter: false },
+  ).catch(() => 'blank' as PanelTemplate);
+  // Non-blank templates force the API on; only ask for blank.
+  const withApi = template === 'blank' ? await confirm('Generate a typed RPC API for it?', true) : true;
+  const result = addPanel({ name, title: title || undefined, template, withApi, projectRoot, templatesRoot, runGen: false });
   report(projectRoot, 'Panel', result.created, result.modified, result.skipped);
   hintGen(result.genRan);
+}
+
+async function wizardComponents(projectRoot: string, templatesRoot: string): Promise<void> {
+  const result = addComponents({ projectRoot, templatesRoot });
+  if (result.created.length === 0) {
+    console.log(`${DIM}Component library already present (src/webview/components/).${RST}\n`);
+    return;
+  }
+  report(projectRoot, 'Components', result.created, [], result.skipped);
+  console.log(`${DIM}Import:${RST} import { Button, Card, List } from '../../components';\n`);
 }
 
 async function wizardCommand(projectRoot: string, templatesRoot: string): Promise<void> {

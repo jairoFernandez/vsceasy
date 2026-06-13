@@ -95,17 +95,40 @@ describe('wizard — outside a project', () => {
 });
 
 describe('wizard — inside a project', () => {
-  test('adds a panel via the panel branch', async () => {
+  test('adds a blank panel via the panel branch', async () => {
     const project = await scaffoldProject();
     answers = [
       'panel', // top menu select
       'settings', // panel id
       '', // title → default
-      true, // withApi confirm
+      'blank', // template select
+      true, // withApi confirm (only asked for blank)
     ];
     await runWizard({ templatesRoot, cwd: project });
     expect(fs.existsSync(path.join(project, 'src/panels/settings.ts'))).toBe(true);
     expect(logs.join('\n')).toContain('Panel ready');
+  });
+
+  test('adds a form-template panel that pulls in components and a save RPC', async () => {
+    const project = await scaffoldProject();
+    answers = [
+      'panel', // menu
+      'signup', // id
+      '', // title → default
+      'form', // template — non-blank, so withApi is NOT asked
+    ];
+    await runWizard({ templatesRoot, cwd: project });
+    const app = fs.readFileSync(path.join(project, 'src/webview/panels/signup/App.tsx'), 'utf8');
+    expect(app).toContain('await api.save({ name, email });');
+    expect(fs.existsSync(path.join(project, 'src/webview/components/index.ts'))).toBe(true);
+  });
+
+  test('components branch generates the library', async () => {
+    const project = await scaffoldProject();
+    answers = ['components'];
+    await runWizard({ templatesRoot, cwd: project });
+    expect(fs.existsSync(path.join(project, 'src/webview/components/Button.tsx'))).toBe(true);
+    expect(logs.join('\n')).toContain('Components ready');
   });
 
   test('initializes the database then a model in two runs', async () => {

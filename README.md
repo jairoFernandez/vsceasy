@@ -149,6 +149,8 @@ vsceasy
 │   └── add             typed entity + repo under src/models/
 ├── crud
 │   └── add             full CRUD scaffold (service + list panel + form panel + menu wire)
+├── components
+│   └── add             themed React UI library (Button/Input/Field/Card/List) for webviews
 ├── doctor              diagnose project + safe --fix
 └── upgrade             sync framework-owned files from the bundled templates
 ```
@@ -158,8 +160,21 @@ Run `vsceasy <resource> --help` for verbs and `vsceasy <resource> <verb> --help`
 ### `panel add`
 ```bash
 vsceasy panel add --name settings --title "Settings" --withApi yes
+
+# start from a working UI instead of a blank component:
+vsceasy panel add --name signup --template form       # inputs + save() RPC
+vsceasy panel add --name items  --template list        # list + load() RPC
+vsceasy panel add --name stats  --template dashboard   # stat cards + stats() RPC
 ```
 Generates `src/panels/<name>.ts` + `src/webview/panels/<name>/{App.tsx,main.tsx}` + appends `<Name>Api` to `src/shared/api.ts` when `withApi=yes`.
+
+`--template` (`blank` | `form` | `list` | `dashboard`, default `blank`) starts the panel from a working UI built with the shared component library (auto-generated on first use via `components add`) and wires the matching RPC method. Non-blank templates force `--withApi` on.
+
+### `components add`
+```bash
+vsceasy components add          # idempotent; --force to overwrite
+```
+Writes a theme-aware React component library (`Button`, `Input`, `Field`, `Card`, `List` + `components.css`) to `src/webview/components/`, styled with VS Code theme tokens (`var(--vscode-*)`). Import it from any webview: `import { Button, Card, List } from '../../components'`.
 
 ### `command add`
 ```bash

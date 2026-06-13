@@ -3,6 +3,10 @@ import * as path from 'path';
 import { spawnSync } from 'child_process';
 import { substitute } from '../scaffold';
 import { assertId, assertNoOverwrite } from '../validate';
+import { addComponents, componentsExist } from '../components/add';
+
+export type PanelTemplate = 'blank' | 'form' | 'list' | 'dashboard';
+export const PANEL_TEMPLATES: PanelTemplate[] = ['blank', 'form', 'list', 'dashboard'];
 
 export interface AddPanelOptions {
   /** Panel id — camelCase recommended. */
@@ -11,6 +15,12 @@ export interface AddPanelOptions {
   title?: string;
   /** Generate a typed RPC API interface in src/shared/api.ts. Default true. */
   withApi?: boolean;
+  /**
+   * Starter UI. `blank` = empty App.tsx. `form`/`list`/`dashboard` generate a
+   * working UI built from src/webview/components (auto-generated if missing) and
+   * wire matching RPC methods. Non-blank templates force `withApi` on. Default `blank`.
+   */
+  template?: PanelTemplate;
   /** Project root (output of findProjectRoot). */
   projectRoot: string;
   /** Bundled templates root (output of findTemplatesRoot). */
@@ -30,7 +40,12 @@ export function addPanel(opts: AddPanelOptions): AddPanelResult {
   const name = assertId('panel name', normalizeCamel(opts.name));
   const Pascal = name.charAt(0).toUpperCase() + name.slice(1);
   const title = opts.title ?? Pascal;
-  const withApi = opts.withApi !== false;
+  const template = opts.template ?? 'blank';
+  if (!PANEL_TEMPLATES.includes(template)) {
+    throw new Error(`Unknown panel template "${template}". Available: ${PANEL_TEMPLATES.join(', ')}.`);
+  }
+  // Non-blank templates are RPC-driven — force the API on regardless of withApi.
+  const withApi = template !== 'blank' ? true : opts.withApi !== false;
   const apiName = `${Pascal}Api`;
 
   const panelTs = path.join(opts.projectRoot, 'src', 'panels', `${name}.ts`);
@@ -62,18 +77,28 @@ export function addPanel(opts: AddPanelOptions): AddPanelResult {
   const modified: string[] = [];
   const skipped: string[] = [];
 
+  // Non-blank templates depend on the shared component library.
+  if (template !== 'blank' && !componentsExist(opts.projectRoot)) {
+    const comp = addComponents({ projectRoot: opts.projectRoot, templatesRoot: opts.templatesRoot });
+    created.push(...comp.created);
+  }
+
   fs.mkdirSync(path.dirname(panelTs), { recursive: true });
   fs.writeFileSync(panelTs, substitute(readTpl('panel.ts.tpl'), vars));
   created.push(panelTs);
 
   fs.mkdirSync(uiDir, { recursive: true });
-  fs.writeFileSync(appTsx, substitute(readTpl('App.tsx.tpl'), vars));
+  const appSrc =
+    template === 'blank'
+      ? readTpl('App.tsx.tpl')
+      : fs.readFileSync(path.join(genDir, 'templates', template, 'App.tsx.tpl'), 'utf8');
+  fs.writeFileSync(appTsx, substitute(appSrc, { ...vars, ...TEMPLATE_VARS[template] }));
   created.push(appTsx);
   fs.writeFileSync(mainTsx, substitute(readTpl('main.tsx.tpl'), vars));
   created.push(mainTsx);
 
   if (withApi) {
-    appendApi(apiPath, apiName, created, modified, skipped);
+    appendApi(apiPath, apiName, API_BODY[template], created, modified, skipped);
   }
 
   let genRan = false;
@@ -84,10 +109,11 @@ export function addPanel(opts: AddPanelOptions): AddPanelResult {
   return { created, modified, skipped, genRan };
 }
 
-function appendApi(apiPath: string, apiName: string, created: string[], modified: string[], skipped: string[]) {
+function appendApi(apiPath: string, apiName: string, body: string, created: string[], modified: string[], skipped: string[]) {
+  const decl = `export interface ${apiName} {${body}}\n`;
   if (!fs.existsSync(apiPath)) {
     fs.mkdirSync(path.dirname(apiPath), { recursive: true });
-    fs.writeFileSync(apiPath, `export interface ${apiName} {}\n`);
+    fs.writeFileSync(apiPath, decl);
     created.push(apiPath);
     return;
   }
@@ -98,9 +124,25 @@ function appendApi(apiPath: string, apiName: string, created: string[], modified
     return;
   }
   const sep = current.endsWith('\n') ? '\n' : '\n\n';
-  fs.writeFileSync(apiPath, current + `${sep}export interface ${apiName} {}\n`);
+  fs.writeFileSync(apiPath, current + sep + decl);
   modified.push(apiPath);
 }
+
+/** RPC interface bodies per template. Empty for blank (renders `{}`). */
+const API_BODY: Record<PanelTemplate, string> = {
+  blank: '',
+  form: '\n  save(input: { name: string; email: string }): Promise<void>;\n',
+  list: '\n  list(): Promise<{ id: string; label: string }[]>;\n',
+  dashboard: '\n  stats(): Promise<{ total: number; active: number; updatedAt: string }>;\n',
+};
+
+/** App.tsx body substitutions per template (the RPC call site). */
+const TEMPLATE_VARS: Record<PanelTemplate, Record<string, string>> = {
+  blank: {},
+  form: { submitCall: 'await api.save({ name, email });' },
+  list: { loadCall: 'setRows(await api.list());' },
+  dashboard: { statsCall: 'setStats(await api.stats());' },
+};
 
 function runGen(cwd: string): boolean {
   const tryRun = (cmd: string, args: string[]) => {

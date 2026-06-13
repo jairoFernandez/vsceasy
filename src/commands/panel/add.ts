@@ -1,6 +1,6 @@
 import { Command, ParamType } from '@ideascol/cli-maker';
 import * as path from 'path';
-import { addPanel } from '../../lib/panel/add';
+import { addPanel, PANEL_TEMPLATES, PanelTemplate } from '../../lib/panel/add';
 import { findProjectRoot, findTemplatesRoot } from '../../lib/findProject';
 
 const addPanelCommand: Command = {
@@ -10,8 +10,15 @@ const addPanelCommand: Command = {
     { name: 'name', description: 'Panel id (e.g. settings)', required: true, type: ParamType.Text },
     { name: 'title', description: 'Tab title shown in VS Code', required: false, type: ParamType.Text },
     {
+      name: 'template',
+      description: 'Starter UI (blank | form | list | dashboard)',
+      required: false,
+      type: ParamType.List,
+      options: PANEL_TEMPLATES as unknown as any[],
+    },
+    {
       name: 'withApi',
-      description: 'Generate typed RPC API interface',
+      description: 'Generate typed RPC API interface (forced on for non-blank templates)',
       required: false,
       type: ParamType.List,
       options: ['yes', 'no'],
@@ -24,6 +31,7 @@ const addPanelCommand: Command = {
       const result = addPanel({
         name: args.name,
         title: args.title,
+        template: (args.template as PanelTemplate) || undefined,
         withApi: args.withApi ? args.withApi !== 'no' : true,
         projectRoot,
         templatesRoot,
