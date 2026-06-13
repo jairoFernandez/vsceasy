@@ -1,6 +1,6 @@
 {
   "name": "@vsceasy/cli",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Build VS Code extensions fast — React UI + typed RPC bridge between extension and webview + file-based routing for panels, commands, menus, tree views, and subpanels.",
   "main": "dist/index.js",
   "scripts": {

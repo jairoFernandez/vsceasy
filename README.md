@@ -6,6 +6,8 @@
 
 <p align="center">Build VS Code extensions fast. React UI + typed RPC bridge between extension and webview + zero-config build.</p>
 
+<p align="center"><em>Pronounced <strong>"vee-see-easy"</strong> in English (<code>VSC</code> + <code>easy</code>) — or <strong>"visici"</strong> for Spanish speakers.</em></p>
+
 > Status: v0.1 — React UI. Typed RPC bridge + file-based registry + scaffolding for panels, commands, menus, tree views, subpanels, status bars.
 
 ## Install

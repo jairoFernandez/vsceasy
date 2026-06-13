@@ -7,6 +7,15 @@ vsceasy is a CLI that scaffolds and grows VS Code extensions. It is **codegen**,
 not a runtime you ship — your extension has no dependency on vsceasy at run time.
 The CLI writes plain TypeScript + React into your project; you own and edit it.
 
+:::tip[How to say it]
+**vsceasy** is a blend of `VSC` (VS Code) and `easy`.
+
+- **English:** "vee-see-easy"
+- **Español:** "visici"
+
+That's the whole pitch in the name: VS Code, made easy.
+:::
+
 ## What you get
 
 - **File-based routing.** One file per panel, command, menu, tree view,
