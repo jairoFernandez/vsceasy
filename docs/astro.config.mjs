@@ -3,17 +3,17 @@ import starlight from '@astrojs/starlight';
 
 export default defineConfig({
   // Set `site` to the deployed URL when publishing (enables canonical + sitemap).
-  // site: 'https://your-domain.example',
+  site: 'https://vsceasy.dev',
   integrations: [
     starlight({
       title: 'vsceasy',
       description:
         'Build VS Code extensions fast — React UI, typed RPC, file-based routing, and a mini-ORM, all scaffolded from the CLI.',
       social: {
-        github: 'https://github.com/your-org/vsceasy',
+        github: 'https://github.com/jairoFernandez/vsceasy',
       },
       editLink: {
-        baseUrl: 'https://github.com/your-org/vsceasy/edit/main/docs/',
+        baseUrl: 'https://github.com/jairoFernandez/vsceasy/edit/main/docs/',
       },
       sidebar: [
         {

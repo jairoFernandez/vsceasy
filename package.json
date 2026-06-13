@@ -1,6 +1,6 @@
 {
   "name": "@vsceasy/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Build VS Code extensions fast — React UI + typed RPC bridge between extension and webview + file-based routing for panels, commands, menus, tree views, and subpanels.",
   "main": "dist/index.js",
   "scripts": {
@@ -47,6 +47,14 @@
   ],
   "engines": {
     "node": ">=24.11.1"
+  },
+  "homepage": "https://vsceasy.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jairoFernandez/vsceasy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jairoFernandez/vsceasy/issues"
   },
   "publishConfig": {
     "access": "public"
