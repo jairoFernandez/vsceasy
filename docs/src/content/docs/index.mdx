@@ -41,13 +41,15 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 ## 30-second tour
 
 ```bash
-bunx vsceasy create my-extension
+bunx @vsceasy/cli create my-extension
 cd my-extension && bun install
 bun run dev          # build + watch
 # press F5 in VS Code to launch the Extension Development Host
 ```
 
-Then add features as you go:
+Then add features as you go. Install the binary globally
+(`bun add -g @vsceasy/cli`) to use the short `vsceasy` form below — or prefix
+each with `bunx @vsceasy/cli`:
 
 ```bash
 vsceasy panel add --name dashboard --template dashboard

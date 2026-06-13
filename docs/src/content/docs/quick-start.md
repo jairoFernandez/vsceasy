@@ -9,10 +9,27 @@ description: Scaffold a vsceasy extension, run it, and add your first feature.
 - **bun** or **npm**. Examples use bun; npm works everywhere too.
 - **VS Code** to launch the Extension Development Host.
 
+## Install (optional)
+
+You can run the CLI without installing it via `bunx @vsceasy/cli …` (or
+`npx @vsceasy/cli …`). To get the shorter `vsceasy` command everywhere, install
+the binary globally:
+
+```bash
+bun add -g @vsceasy/cli   # or: npm i -g @vsceasy/cli
+
+# use globally
+vsceasy --version
+```
+
+The rest of this guide uses the global `vsceasy` form. Without a global install,
+prefix any `vsceasy <cmd>` with `bunx @vsceasy/cli <cmd>`.
+
 ## 1. Scaffold
 
 ```bash
-bunx vsceasy create my-extension
+bunx @vsceasy/cli create my-extension
+# or, if installed globally: vsceasy create my-extension
 cd my-extension
 bun install
 ```
@@ -20,7 +37,7 @@ bun install
 Or fully scripted:
 
 ```bash
-bunx vsceasy create \
+bunx @vsceasy/cli create \
   --name my-extension \
   --displayName "My Extension" \
   --description "Does cool things" \

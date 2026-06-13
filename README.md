@@ -4,10 +4,22 @@ Build VS Code extensions fast. React UI + typed RPC bridge between extension and
 
 > Status: v0.1 — React UI. Typed RPC bridge + file-based registry + scaffolding for panels, commands, menus, tree views, subpanels, status bars.
 
+## Install
+
+Run with no install via `bunx @vsceasy/cli …` (or `npx @vsceasy/cli …`), or
+install the binary globally to use the short `vsceasy` command:
+
+```bash
+bun add -g @vsceasy/cli   # or: npm i -g @vsceasy/cli
+
+# use globally
+vsceasy --version
+```
+
 ## Quick start
 
 ```bash
-bunx vsceasy create my-extension
+bunx @vsceasy/cli create my-extension
 cd my-extension
 bun install
 bun run dev
@@ -17,7 +29,7 @@ bun run dev
 Or with flags:
 
 ```bash
-bunx vsceasy create \
+bunx @vsceasy/cli create \
   --name my-extension \
   --displayName "My Extension" \
   --description "Does cool things" \
