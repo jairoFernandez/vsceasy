@@ -148,4 +148,31 @@ describe('orm runtime', () => {
 
     fs.rmSync(tmp, { recursive: true, force: true });
   });
+
+  test('watchEntity fires on every mutation, not on reads', async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vsceasy-orm-'));
+    const mod = await loadOrm(tmp);
+    const Todo = mod.defineEntity('todos', { primaryKey: 'id' });
+    const orm = mod.createDb(fakeCtx(tmp), { provider: 'storage' });
+
+    const hits: string[] = [];
+    const off = mod.watchEntity(Todo, (name: string) => hits.push(name));
+
+    await orm(Todo).insert({ id: 't1', title: 'a', done: false });
+    await orm(Todo).upsert({ id: 't1', title: 'a2', done: false });
+    await orm(Todo).update('t1', { done: true });
+    await orm(Todo).findById('t1');           // read — must NOT fire
+    await orm(Todo).findMany();                // read — must NOT fire
+    await orm(Todo).delete('t1');
+    await orm(Todo).delete('nope');            // no-op delete — must NOT fire
+
+    expect(hits).toEqual(['todos', 'todos', 'todos', 'todos']);
+
+    // Unsubscribe stops further notifications.
+    off();
+    await orm(Todo).insert({ id: 't2', title: 'b', done: false });
+    expect(hits.length).toBe(4);
+
+    fs.rmSync(tmp, { recursive: true, force: true });
+  });
 });

@@ -4,7 +4,7 @@ import CommandCreate from './commands/create';
 import CommandWizard from './commands/wizard';
 import CommandDoctor from './commands/doctor';
 import CommandUpgrade from './commands/upgrade';
-import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup, SubpanelGroup, TreeViewGroup, TestGroup, PublishGroup, HelperGroup, JobGroup, DbGroup, ModelGroup, CrudGroup, ComponentsGroup } from './commands/groups';
+import { PanelGroup, MenuGroup, CommandGroup, RpcGroup, StatusBarGroup, SubpanelGroup, TreeViewGroup, TestGroup, PublishGroup, HelperGroup, JobGroup, DbGroup, ModelGroup, CrudGroup, ComponentsGroup, StoreGroup } from './commands/groups';
 
 const cli = new CLI(
   'vsceasy',
@@ -51,6 +51,7 @@ cli.command(DbGroup);
 cli.command(ModelGroup);
 cli.command(CrudGroup);
 cli.command(ComponentsGroup);
+cli.command(StoreGroup);
 cli.command(CommandDoctor);
 cli.command(CommandUpgrade);
 

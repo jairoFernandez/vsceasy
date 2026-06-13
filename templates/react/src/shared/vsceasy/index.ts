@@ -1,5 +1,5 @@
 export { definePanel, defineCommand, defineMenu, defineStatusBar, defineSubpanel, defineTreeView, defineJob } from './define';
-export type { PanelDef, CommandDef, MenuDef, MenuItem, MenuIcon, StatusBarDef, StatusBarMenuItem, KeybindingDef, SubpanelDef, TreeViewDef, TreeNode, JobDef, JobSchedule, CodiconName } from './define';
+export type { PanelDef, CommandDef, MenuDef, MenuItem, MenuIcon, StatusBarDef, StatusBarMenuItem, KeybindingDef, SubpanelDef, TreeViewDef, TreeNode, JobDef, JobSchedule, CodiconName, RpcEmit } from './define';
 export { bootstrap } from './bootstrap';
 export type { Registry, BootstrapOptions, ActivateHook } from './bootstrap';
 export {
@@ -11,3 +11,6 @@ export {
   webviewState,
 } from './rpc';
 export type { Transport, RpcClient, Handlers, RpcClientOptions, WebviewApi } from './rpc';
+export { defineStore, watch } from './store';
+export type { Store, Watchable } from './store';
+export { listen } from './client';

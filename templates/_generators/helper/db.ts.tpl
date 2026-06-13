@@ -64,6 +64,35 @@ export interface Repository<T> {
   clear(): Promise<void>;
 }
 
+// ── Change notifications (reactivity) ────────────────────────────────────────
+
+/**
+ * Per-entity change listeners. Any mutation (insert/upsert/update/delete/...) on
+ * an entity fires its listeners with the entity name. This is the host-side hook
+ * the `watch()` helper builds on to push updates to webviews.
+ */
+const entityListeners = new Map<string, Set<(entity: string) => void>>();
+
+function emitChange(entity: string): void {
+  entityListeners.get(entity)?.forEach((cb) => {
+    try { cb(entity); } catch { /* a bad listener must not break a write */ }
+  });
+}
+
+/**
+ * Subscribe to changes on an entity. Returns an unsubscribe function.
+ *
+ *   watchEntity(Todos, () => server.emit('todos:changed'));
+ *
+ * Prefer the higher-level `watch()` helper, which wires this to an RPC emit.
+ */
+export function watchEntity<T>(entity: Entity<T>, cb: (entity: string) => void): () => void {
+  let set = entityListeners.get(entity.name);
+  if (!set) entityListeners.set(entity.name, (set = new Set()));
+  set.add(cb);
+  return () => { set!.delete(cb); };
+}
+
 // ── Provider interface (future-proof for sqlite/etc.) ────────────────────────
 
 export interface Provider {
@@ -234,6 +263,7 @@ function makeDb(provider: Provider): Db {
         }
         rows.push(row);
         await save(rows);
+        emitChange(entity.name);
         return row;
       },
       async upsert(row) {
@@ -241,6 +271,7 @@ function makeDb(provider: Provider): Db {
         const i = rows.findIndex((r) => r[pk] === row[pk]);
         if (i >= 0) rows[i] = row; else rows.push(row);
         await save(rows);
+        emitChange(entity.name);
         return row;
       },
       async update(id, patch) {
@@ -249,6 +280,7 @@ function makeDb(provider: Provider): Db {
         if (i < 0) return null;
         rows[i] = { ...rows[i], ...patch };
         await save(rows);
+        emitChange(entity.name);
         return rows[i];
       },
       async delete(id) {
@@ -257,17 +289,19 @@ function makeDb(provider: Provider): Db {
         const next = rows.filter((r) => r[pk] !== id);
         if (next.length === before) return false;
         await save(next);
+        emitChange(entity.name);
         return true;
       },
       async deleteMany(where) {
         const rows = await load();
         const next = rows.filter((r) => !match(r, where));
         const removed = rows.length - next.length;
-        if (removed > 0) await save(next);
+        if (removed > 0) { await save(next); emitChange(entity.name); }
         return removed;
       },
       async clear() {
         await save([]);
+        emitChange(entity.name);
       },
     };
   };

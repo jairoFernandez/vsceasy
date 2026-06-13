@@ -156,5 +156,9 @@ Everything connects through the menu container and id references:
 - **tree views** — data-driven trees docked in a menu container
 - **status bar** — a shortcut bound to any of the above
 
-That's the full surface area of a vsceasy UI. From here, the
-[command reference](/commands/) documents every flag.
+That's the full surface area of a vsceasy UI.
+
+The Stats view still reads its numbers once, though — save a todo and they go
+stale. The last step makes it live.
+
+Next: [make the Stats view live →](/tutorial/08-reactivity/)

@@ -50,6 +50,7 @@ export default defineConfig({
             { label: '5. Menus', slug: 'tutorial/05-menus' },
             { label: '6. Status bar', slug: 'tutorial/06-statusbar' },
             { label: '7. Sidebar views', slug: 'tutorial/07-sidebar-views' },
+            { label: '8. Reactivity', slug: 'tutorial/08-reactivity' },
           ],
         },
         {
@@ -60,6 +61,7 @@ export default defineConfig({
             { label: 'Webview components', slug: 'guides/components' },
             { label: 'CRUD scaffolding', slug: 'guides/crud' },
             { label: 'The mini-ORM', slug: 'guides/orm' },
+            { label: 'Reactivity', slug: 'guides/reactivity' },
             { label: 'Publishing', slug: 'guides/publishing' },
           ],
         },
@@ -79,6 +81,7 @@ export default defineConfig({
             { label: 'components add', slug: 'commands/components-add' },
             { label: 'db init', slug: 'commands/db-init' },
             { label: 'model add', slug: 'commands/model-add' },
+            { label: 'store add', slug: 'commands/store-add' },
             { label: 'crud add', slug: 'commands/crud-add' },
             { label: 'job add', slug: 'commands/job-add' },
             { label: 'helper add', slug: 'commands/helper-add' },

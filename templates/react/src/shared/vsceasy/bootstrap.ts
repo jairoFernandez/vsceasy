@@ -230,6 +230,13 @@ function registerTreeView(
     vscode.commands.registerCommand(refreshCmd, () => provider.refresh()),
   );
 
+  // Keep the tree live: let the def subscribe to a data source and re-run
+  // getChildren on change. The unsubscribe is disposed on deactivate.
+  if (def.watch) {
+    const off = def.watch(() => provider.refresh(), vscode, context);
+    if (off) context.subscriptions.push({ dispose: off });
+  }
+
   const dispatchCmd = `${registry.prefix}._tree.${def.id ?? id}.run`;
   context.subscriptions.push(
     vscode.commands.registerCommand(dispatchCmd, async (node: TreeNode) => {
@@ -306,9 +313,11 @@ function registerSubpanel(
       const ui = def.ui ?? `subpanels/${def.id ?? id}`;
       view.webview.html = renderHtml(view.webview, context, ui, def.title);
       if (def.rpc) {
-        const handlers = def.rpc(vscode, context);
-        const server = createRpcServer(webviewTransport(view.webview), handlers);
-        view.onDidDispose(() => server.dispose());
+        let server: ReturnType<typeof createRpcServer> | undefined;
+        const emit = (topic: string, payload?: unknown) => server?.emit(topic, payload);
+        const handlers = def.rpc(vscode, context, emit);
+        server = createRpcServer(webviewTransport(view.webview), handlers);
+        view.onDidDispose(() => server!.dispose());
       }
     },
   };
@@ -544,9 +553,13 @@ function openPanel(context: vscode.ExtensionContext, prefix: string, id: string,
   panel.webview.html = renderHtml(panel.webview, context, ui, def.title);
 
   if (def.rpc) {
-    const handlers = def.rpc(vscode, context);
-    const server = createRpcServer(webviewTransport(panel.webview), handlers);
-    panel.onDidDispose(() => server.dispose());
+    // `emit` is wired lazily: the rpc factory may call watch()/watchEntity()
+    // immediately, but the server (and thus the real emit) only exists after.
+    let server: ReturnType<typeof createRpcServer> | undefined;
+    const emit = (topic: string, payload?: unknown) => server?.emit(topic, payload);
+    const handlers = def.rpc(vscode, context, emit);
+    server = createRpcServer(webviewTransport(panel.webview), handlers);
+    panel.onDidDispose(() => server!.dispose());
   }
 
   openPanels.set(key, panel);

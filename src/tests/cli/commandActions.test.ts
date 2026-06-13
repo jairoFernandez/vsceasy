@@ -18,6 +18,7 @@ import createCommand from '../../commands/create';
 import addPanelCommand from '../../commands/panel/add';
 import addHelperCommand from '../../commands/helper/add';
 import addCrudCommand from '../../commands/crud/add';
+import addStoreCommand from '../../commands/store/add';
 import { initDb } from '../../lib/db/init';
 import { addModel } from '../../lib/model/add';
 
@@ -155,6 +156,28 @@ describe('crud add command action — menu flag parsing', () => {
 });
 
 // ── helper add ───────────────────────────────────────────────────────────────
+
+describe('store add command action', () => {
+  test('generates a typed reactive store under src/stores/', async () => {
+    const project = await scaffoldInto(tmpRoot);
+    process.chdir(project);
+    await addStoreCommand.action({ name: 'badgeCount', type: 'number', initial: '0' });
+    const file = path.join(project, 'src/stores/badgeCount.ts');
+    expect(fs.existsSync(file)).toBe(true);
+    const src = fs.readFileSync(file, 'utf8');
+    expect(src).toMatch(/defineStore<number>\(0\)/);
+    expect(src).toMatch(/export const badgeCount/);
+    expect(logs.join('\n')).toContain('Store "badgeCount" created');
+  });
+
+  test('defaults type and initial value (string → empty string)', async () => {
+    const project = await scaffoldInto(tmpRoot);
+    process.chdir(project);
+    await addStoreCommand.action({ name: 'query', type: 'string' });
+    const src = fs.readFileSync(path.join(project, 'src/stores/query.ts'), 'utf8');
+    expect(src).toMatch(/defineStore<string>\(''\)/);
+  });
+});
 
 describe('helper add command action', () => {
   test('generates a helper file into the project', async () => {

@@ -5,6 +5,12 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 ## [Unreleased]
 
 ### Added
+- **Reactivity — keep a webview in sync with data.** A visual element can now track a source and update the instant it changes, no manual refresh.
+  - ORM entities fire change events on every mutation; subscribe with `watchEntity(Todos, () => emit('todos:changed'))` from your generated `db.ts`.
+  - `defineStore(initial)` — a framework-agnostic observable value (`get`/`set`/`update`/`subscribe`) for non-ORM state. Scaffold one with **`vsceasy store add --name X --type number|string|boolean|json`**.
+  - `watch(source, effect)` (host) bridges a store/entity to an RPC emit; `listen(api, topic, cb)` (webview) runs a callback when the event arrives. Both return an unsubscribe.
+  - Panel/subpanel `rpc` factories receive a third arg, `emit`, for pushing events to their own webview. (Reuses the existing RPC event channel — no transport change.)
+  - See the [Reactivity guide](https://vsceasy.dev/guides/reactivity/) and tutorial step 8.
 - **`vsceasy create` post-scaffold setup** — after generating the project, `create` now offers to **initialize a git repository** (`git init`) and **install dependencies** (`bun`, falling back to `npm`). Both prompts default to yes in an interactive terminal. New `--git` / `--install` flags (and `--git=false` / `--install=false`) skip the prompts for scripting/CI. Non-interactive runs without the flags skip both, as before.
 - **`vsceasy job add`** — scaffold recurring / event-triggered jobs into `src/jobs/`. Schedules: `--every "60s"`, `--dailyAt "09:00"`, `--on startup|saveDocument|openDocument|changeActiveEditor|changeConfig`, `--onFile "**/*.md"`. Optional `--minIntervalMs` throttles re-runs via globalState. Runtime (`bootstrap`) auto-registers timers/listeners + cleanup on deactivate, catches errors so they don't crash the host.
 - **`command add --when <expr>`** — declare VS Code `when` clauses on commands. Auto-written to `contributes.commands[].enablement` and `contributes.menus.commandPalette` by `bun run gen`. Enables context-aware visibility (e.g. `editorTextFocus`, `resourceLangId == typescript`).

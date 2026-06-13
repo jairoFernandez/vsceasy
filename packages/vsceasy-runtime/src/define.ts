@@ -2,6 +2,18 @@ import type * as vscode from 'vscode';
 import type { Handlers } from './rpc';
 import type { CodiconName } from './codiconNames';
 
+/**
+ * Push a change to this webview over the RPC event channel. The webview reacts
+ * with `listen(api, topic, …)`. Wire it to a data source with `watch()` /
+ * `watchEntity()` inside `rpc()`:
+ *
+ *   rpc: (vscode, ctx, emit) => {
+ *     watchEntity(Todos, () => emit('todos:changed'));
+ *     return { stats: () => … };
+ *   }
+ */
+export type RpcEmit = (topic: string, payload?: unknown) => void;
+
 export interface PanelDef<H extends Handlers = Handlers> {
   /** Stable id. Default: file basename. Used as command suffix and webview key. */
   id?: string;
@@ -13,8 +25,11 @@ export interface PanelDef<H extends Handlers = Handlers> {
   column?: 'active' | 'beside' | 'one' | 'two' | 'three';
   /** Keep DOM alive when hidden. Default: true. */
   retainContext?: boolean;
-  /** RPC handlers — receives vscode namespace + extension context. */
-  rpc?: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext) => H;
+  /**
+   * RPC handlers — receives the vscode namespace, the extension context, and
+   * `emit` for pushing change events to this webview (see {@link RpcEmit}).
+   */
+  rpc?: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext, emit: RpcEmit) => H;
   /** Optional command palette entry that opens this panel. Default: true. */
   command?:
     | boolean
@@ -125,8 +140,11 @@ export interface SubpanelDef<H extends Handlers = Handlers> {
   ui?: string;
   /** Keep DOM alive when hidden. Default: true. */
   retainContext?: boolean;
-  /** RPC handlers — receives vscode namespace + extension context. */
-  rpc?: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext) => H;
+  /**
+   * RPC handlers — receives the vscode namespace, the extension context, and
+   * `emit` for pushing change events to this webview (see {@link RpcEmit}).
+   */
+  rpc?: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext, emit: RpcEmit) => H;
 }
 
 export function defineSubpanel<H extends Handlers = Handlers>(def: SubpanelDef<H>): SubpanelDef<H> {
@@ -228,6 +246,18 @@ export interface TreeViewDef {
     vscode: typeof import('vscode'),
     ctx: vscode.ExtensionContext,
   ) => TreeNode[] | Promise<TreeNode[]>;
+  /**
+   * Keep the tree live. Receives `refresh` — call it (directly or as a callback)
+   * to re-run `getChildren`. Subscribe to a data source here so the tree updates
+   * itself; return an unsubscribe to clean up.
+   *
+   *   watch: (refresh) => watchEntity(Todos, refresh),
+   */
+  watch?: (
+    refresh: () => void,
+    vscode: typeof import('vscode'),
+    ctx: vscode.ExtensionContext,
+  ) => (() => void) | void;
 }
 
 export function defineTreeView(def: TreeViewDef): TreeViewDef {
