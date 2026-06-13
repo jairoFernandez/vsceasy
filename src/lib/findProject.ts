@@ -1,5 +1,8 @@
+import * as crypto from 'crypto';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import { TEMPLATE_FILES, TEMPLATES_VERSION } from './templatesData';
 
 /**
  * Walks up from `start` looking for a package.json whose `scripts.gen` matches
@@ -31,30 +34,88 @@ export function findProjectRoot(start: string = process.cwd()): string {
 }
 
 /**
- * Resolves the bundled templates/ directory. Works whether the CLI runs from
- * the source tree (src/) or the compiled dist/.
- */
-/**
- * Resolves the bundled templates/ directory by walking up from `fromFile`
- * until a directory containing `templates/` is found.
+ * Resolves the bundled templates/ directory.
  *
- * Callers must pass a runtime-real path (e.g. `process.argv[1]`, the CLI entry
- * node actually executes). Do NOT pass `__dirname`: the bundler inlines it as
- * the absolute build-machine path (e.g. /home/runner/work/.../src/commands/x),
- * which does not exist on a user's machine.
+ * In the source tree / npm-style installs an on-disk `templates/` exists next
+ * to the code, so we return that directly (fast, no extraction). When that is
+ * absent — notably a globally installed binary whose bin is a symlink, where
+ * walking the filesystem can never reach the package — we materialize the
+ * templates embedded in the binary (see scripts/embedTemplates.ts) into a
+ * stable temp dir and return that. Either way callers get a real directory,
+ * so every fs.readFileSync/readdirSync consumer keeps working unchanged.
+ *
+ * Callers may pass a runtime-real path (e.g. `process.argv[1]`) to seed the
+ * disk walk. Do NOT pass `__dirname`: the bundler inlines it as the
+ * build-machine path, which does not exist on a user's machine.
  */
 export function findTemplatesRoot(fromFile: string = process.argv[1] ?? __dirname): string {
+  const onDisk = findTemplatesOnDisk(fromFile);
+  if (onDisk) return onDisk;
+  return materializeEmbeddedTemplates();
+}
+
+/** Walks up from `fromFile` looking for a real `templates/` dir. */
+function findTemplatesOnDisk(fromFile: string): string | undefined {
   let dir = path.dirname(path.resolve(fromFile));
   const { root } = path.parse(dir);
-  const tried: string[] = [];
   while (true) {
     const candidate = path.join(dir, 'templates');
-    tried.push(candidate);
-    if (fs.existsSync(candidate)) return candidate;
-    if (dir === root) break;
+    // Guard against a stray empty dir: require it to actually hold files.
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+      try {
+        if (fs.readdirSync(candidate).length > 0) return candidate;
+      } catch {
+        /* fall through */
+      }
+    }
+    if (dir === root) return undefined;
     dir = path.dirname(dir);
   }
-  throw new Error(
-    `templates/ directory not found. Looked in:\n  ${tried.join('\n  ')}`,
-  );
+}
+
+let materializedRoot: string | undefined;
+
+/**
+ * Writes the embedded TEMPLATE_FILES map to a temp dir once per process. The
+ * dir name includes the CLI version and a content hash so different installs
+ * never collide and stale extractions are ignored after an upgrade.
+ */
+function materializeEmbeddedTemplates(): string {
+  if (materializedRoot) return materializedRoot;
+
+  const keys = Object.keys(TEMPLATE_FILES);
+  if (keys.length === 0) {
+    throw new Error(
+      'No templates available: on-disk templates/ not found and no embedded ' +
+        'templates were bundled. This is a packaging bug — rebuild with ' +
+        '`bun run build` (runs scripts/embedTemplates.ts).',
+    );
+  }
+
+  const hash = crypto
+    .createHash('sha1')
+    .update(`${TEMPLATES_VERSION}:${keys.length}:${keys.join('|')}`)
+    .digest('hex')
+    .slice(0, 12);
+  const dest = path.join(os.tmpdir(), `vsceasy-templates-${TEMPLATES_VERSION}-${hash}`);
+
+  // A complete prior extraction is reused. We mark completion with a sentinel
+  // so a partially-written dir (crash mid-extract) is never trusted.
+  const sentinel = path.join(dest, '.complete');
+  if (fs.existsSync(sentinel)) {
+    materializedRoot = dest;
+    return dest;
+  }
+
+  fs.rmSync(dest, { recursive: true, force: true });
+  fs.mkdirSync(dest, { recursive: true });
+  for (const rel of keys) {
+    const abs = path.join(dest, rel);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, TEMPLATE_FILES[rel]);
+  }
+  fs.writeFileSync(sentinel, '');
+
+  materializedRoot = dest;
+  return dest;
 }

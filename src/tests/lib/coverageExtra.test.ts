@@ -64,21 +64,27 @@ describe('findProjectRoot — extra branches', () => {
 });
 
 describe('findTemplatesRoot', () => {
-  test('finds templates/ adjacent to the given file dir', () => {
+  test('finds a non-empty templates/ adjacent to the given file dir', () => {
     const tmp = mkTmp('vsceasy-tpl-');
     const libDir = path.join(tmp, 'dist', 'lib');
     fs.mkdirSync(libDir, { recursive: true });
     // candidate[1]: ../../templates relative to libDir → tmp/templates
-    fs.mkdirSync(path.join(tmp, 'templates'));
-    expect(findTemplatesRoot(libDir)).toBe(path.join(tmp, 'templates'));
+    const tpl = path.join(tmp, 'templates');
+    fs.mkdirSync(tpl);
+    fs.writeFileSync(path.join(tpl, 'x.tpl'), 'hi'); // must hold files to count
+    expect(findTemplatesRoot(libDir)).toBe(tpl);
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
-  test('throws when no templates/ exists near the file', () => {
+  test('falls back to embedded templates when no templates/ is near the file', () => {
     const tmp = mkTmp('vsceasy-notpl-');
     const deep = path.join(tmp, 'a', 'b', 'c', 'd');
     fs.mkdirSync(deep, { recursive: true });
-    expect(() => findTemplatesRoot(deep)).toThrow(/templates\/ directory not found/);
+    // New contract: instead of throwing, materialize the embedded templates to
+    // a temp dir and return it (this is what a globally-installed binary hits).
+    const root = findTemplatesRoot(deep);
+    expect(fs.existsSync(root)).toBe(true);
+    expect(fs.readdirSync(root).length).toBeGreaterThan(0);
     fs.rmSync(tmp, { recursive: true, force: true });
   });
 
