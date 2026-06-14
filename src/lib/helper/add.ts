@@ -3,9 +3,9 @@ import * as path from 'path';
 import { substitute } from '../scaffold';
 import { readConfig } from '../config';
 
-export type HelperKind = 'secrets' | 'config' | 'state' | 'notifications' | 'cache';
+export type HelperKind = 'secrets' | 'config' | 'state' | 'notifications' | 'cache' | 'colorize';
 
-export const HELPER_KINDS: HelperKind[] = ['secrets', 'config', 'state', 'notifications', 'cache'];
+export const HELPER_KINDS: HelperKind[] = ['secrets', 'config', 'state', 'notifications', 'cache', 'colorize'];
 
 export interface AddHelperOptions {
   kind: HelperKind;

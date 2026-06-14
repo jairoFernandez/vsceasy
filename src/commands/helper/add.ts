@@ -5,7 +5,7 @@ import { findProjectRoot, findTemplatesRoot } from '../../lib/findProject';
 
 const addHelperCommand: Command = {
   name: 'add',
-  description: 'Generate a typed helper (secrets, config, state, notifications) into src/helpers/',
+  description: 'Generate a typed helper (secrets, config, state, notifications, cache, colorize) into src/helpers/',
   params: [
     {
       name: 'kind',
@@ -42,6 +42,10 @@ const addHelperCommand: Command = {
       } else if (args.kind === 'cache') {
         console.log(
           `\n  Usage:\n    import { createCache } from '../helpers/cache';\n    const cache = createCache<User>({ ttlMs: 60_000, max: 200 });\n    const u = await cache.wrap('user:' + id, () => orm(User).findById(id));\n`,
+        );
+      } else if (args.kind === 'colorize') {
+        console.log(
+          `\n  Usage (auto-apply scoped token colors on activate):\n    import { applyTokenColors } from '../helpers/colorize';\n    await applyTokenColors('source.mylang', [\n      { scope: 'entity.name.section.mylang', settings: { foreground: '#e6c07b', fontStyle: 'bold' } },\n    ]);\n    // add a "<prefix>.colorize" boolean to contributes.configuration to opt out\n`,
         );
       } else {
         console.log('');

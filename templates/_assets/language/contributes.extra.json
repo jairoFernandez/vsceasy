@@ -26,5 +26,15 @@
       "label": "{{displayName}} Icons",
       "path": "./fileicons/{{langId}}-icon-theme.json"
     }
-  ]
+  ],
+  "configuration": {
+    "title": "{{displayName}}",
+    "properties": {
+      "{{commandPrefix}}.colorize": {
+        "type": "boolean",
+        "default": true,
+        "markdownDescription": "Automatically apply distinct section colors to `.{{langId}}` files (scoped to `{{scopeName}}`, so other languages are unaffected). Turn off to keep your theme's default colors."
+      }
+    }
+  }
 }

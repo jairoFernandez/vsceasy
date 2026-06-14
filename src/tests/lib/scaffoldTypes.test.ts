@@ -48,6 +48,11 @@ describe('scaffold --type language', () => {
         'fileicons/mylang-icon-theme.json',
         'icons/mylang.svg',
         'contributes.extra.json',
+        // auto-colorize wiring
+        'src/colorize.ts',
+        'src/helpers/colorize.ts',
+        'src/commands/applyColors.ts',
+        'src/commands/removeColors.ts',
       ]) {
         expect(fs.existsSync(path.join(project, rel))).toBe(true);
       }
@@ -70,6 +75,16 @@ describe('scaffold --type language', () => {
       const extra = JSON.parse(fs.readFileSync(path.join(project, 'contributes.extra.json'), 'utf8'));
       expect(extra.languages[0].id).toBe('mylang');
       expect(extra.grammars[0].scopeName).toBe('source.mylang');
+
+      // auto-colorize: opt-out setting + lazy activation + onActivate wiring
+      expect(extra.configuration.properties['mylang.colorize'].default).toBe(true);
+      expect(pkg.activationEvents).toEqual(['onLanguage:mylang']);
+      const ext = fs.readFileSync(path.join(project, 'src/extension/extension.ts'), 'utf8');
+      expect(ext).toContain('colorizeEnabled');
+      expect(ext).toContain("affectsConfiguration('mylang.colorize')");
+      // helper substituted the marker key with the command prefix
+      const helper = fs.readFileSync(path.join(project, 'src/helpers/colorize.ts'), 'utf8');
+      expect(helper).toContain("MARK = 'mylangColorize'");
 
       // persisted type
       expect(readConfig(project).type).toBe('language');

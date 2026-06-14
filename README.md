@@ -368,8 +368,15 @@ vsceasy helper add --kind config          # workspace.getConfiguration — typed
 vsceasy helper add --kind state           # workspace + global mementos
 vsceasy helper add --kind notifications   # toast + confirm + withProgress
 vsceasy helper add --kind cache           # in-memory TTL + LRU + wrap()
+vsceasy helper add --kind colorize        # scoped editor.tokenColorCustomizations
 # For ORM use the dedicated commands: `vsceasy db init` + `vsceasy model add`
 ```
+
+The `colorize` helper writes theme-independent token colors scoped to a single
+TextMate scope (e.g. a language's `source.x`), so only that language is
+recolored — other languages keep the user's theme. `create --type language`
+wires it automatically (auto-apply on activate behind a `<prefix>.colorize`
+opt-out setting + `Apply/Remove Colors` commands).
 For `secrets` and `state`, wire on activate:
 ```ts
 import { initSecrets } from './helpers/secrets';

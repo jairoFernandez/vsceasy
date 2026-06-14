@@ -163,6 +163,13 @@ function applyLanguage(targetDir: string, templatesRoot: string, vars: Record<st
   if (fs.existsSync(langReadme)) {
     fs.renameSync(langReadme, path.join(targetDir, 'README.md'));
   }
+  // Activate on the language so the auto-colorize onActivate hook runs.
+  const pkgPath = path.join(targetDir, 'package.json');
+  if (fs.existsSync(pkgPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    pkg.activationEvents = [`onLanguage:${vars.langId}`];
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  }
 }
 
 /** Like copyTree but substitutes {{vars}} in BOTH filenames and content. */
