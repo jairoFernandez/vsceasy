@@ -4,6 +4,8 @@ import * as path from 'path';
 export interface VsceasyConfig {
   publisher?: string;
   commandPrefix?: string;
+  /** Extension shape. Omitted for legacy 'ui' projects. */
+  type?: 'ui' | 'language' | 'empty';
   ui?: 'react';
   defaultIcon?: string;
   defaultCategory?: string;

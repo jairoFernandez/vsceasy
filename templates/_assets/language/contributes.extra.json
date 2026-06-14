@@ -1,0 +1,30 @@
+{
+  "languages": [
+    {
+      "id": "{{langId}}",
+      "aliases": ["{{displayName}}", "{{langId}}"],
+      "extensions": [".{{langId}}"],
+      "configuration": "./language-configuration.json"
+    }
+  ],
+  "grammars": [
+    {
+      "language": "{{langId}}",
+      "scopeName": "{{scopeName}}",
+      "path": "./syntaxes/{{langId}}.tmLanguage.json"
+    }
+  ],
+  "snippets": [
+    {
+      "language": "{{langId}}",
+      "path": "./snippets/{{langId}}.json"
+    }
+  ],
+  "iconThemes": [
+    {
+      "id": "{{langId}}-icons",
+      "label": "{{displayName}} Icons",
+      "path": "./fileicons/{{langId}}-icon-theme.json"
+    }
+  ]
+}

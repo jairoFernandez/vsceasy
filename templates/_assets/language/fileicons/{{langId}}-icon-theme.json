@@ -1,0 +1,13 @@
+{
+  "iconDefinitions": {
+    "{{langId}}_file": {
+      "iconPath": "../icons/{{langId}}.svg"
+    }
+  },
+  "languageIds": {
+    "{{langId}}": "{{langId}}_file"
+  },
+  "fileExtensions": {
+    "{{langId}}": "{{langId}}_file"
+  }
+}

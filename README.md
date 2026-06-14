@@ -48,10 +48,35 @@ bunx @vsceasy/cli create \
   --displayName "My Extension" \
   --description "Does cool things" \
   --publisher my-publisher \
+  --type ui \
   --ui react \
   --git \
   --install
 ```
+
+### Extension types
+
+`create` asks what kind of extension you're building (`--type`):
+
+| Type | What you get |
+|------|--------------|
+| `ui` *(default)* | React webview + typed RPC bridge. `--preset full` adds a sample panel; `--preset minimal` is empty. |
+| `language` | Language support — TextMate grammar, `language-configuration.json`, snippets, and an opt-in file-icon theme. No React. |
+| `empty` | Bare extension (`activate`/`deactivate` only). No UI, no language. |
+
+```bash
+bunx @vsceasy/cli create --name toml --type language --extensions .toml
+```
+
+### Non-generated contributions: `contributes.extra.json`
+
+`scripts/gen.ts` regenerates the parts of `package.json#contributes` it owns
+(commands, keybindings, views) on every build. Anything it doesn't generate —
+`languages`, `grammars`, `snippets`, `themes`, `iconThemes`, `walkthroughs` —
+goes in a `contributes.extra.json` file at the project root and is deep-merged
+into `package.json` on `bun run gen`. The keys gen owns always win; everything
+else from `contributes.extra.json` is preserved. The `language` scaffold ships a
+populated `contributes.extra.json` wiring up its grammar, snippets and icons.
 
 ## What you get
 

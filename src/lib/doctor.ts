@@ -45,6 +45,8 @@ export function runDoctor(opts: DoctorOptions): DoctorReport {
   results.push(...checkStatusBars(root));
   results.push(...checkSubpanels(root));
   results.push(checkContributesSync(root, pkg));
+  const langCheck = checkLanguageAssets(root, pkg);
+  if (langCheck) results.push(langCheck);
   results.push(checkActivationEvents(pkg));
   results.push(checkMarketplaceIcon(root, pkg));
   results.push(checkGenScript(root));
@@ -315,6 +317,50 @@ function checkContributesSync(root: string, pkg: any): CheckResult {
     level: 'warn',
     message: `contributes: ${stale.length} stale entry(ies) — run \`bun run gen\``,
     details: stale,
+  };
+}
+
+/**
+ * For language-support projects: verify every file referenced by the
+ * language/grammar/snippets/iconTheme contributions actually exists. Reads
+ * paths from contributes.extra.json (preferred) and the merged package.json.
+ * Returns null when the project declares no such contributions (not a language
+ * extension), so it stays silent for ui/empty projects.
+ */
+function checkLanguageAssets(root: string, pkg: any): CheckResult | null {
+  const sources: any[] = [pkg?.contributes];
+  const extraPath = path.join(root, 'contributes.extra.json');
+  if (fs.existsSync(extraPath)) {
+    try {
+      sources.push(JSON.parse(fs.readFileSync(extraPath, 'utf8')));
+    } catch {
+      return {
+        id: 'language',
+        level: 'error',
+        message: 'contributes.extra.json is not valid JSON',
+      };
+    }
+  }
+
+  const refs = new Set<string>();
+  for (const c of sources) {
+    if (!c) continue;
+    for (const l of c.languages ?? []) if (l.configuration) refs.add(l.configuration);
+    for (const g of c.grammars ?? []) if (g.path) refs.add(g.path);
+    for (const s of c.snippets ?? []) if (s.path) refs.add(s.path);
+    for (const t of c.iconThemes ?? []) if (t.path) refs.add(t.path);
+  }
+  if (refs.size === 0) return null; // not a language extension
+
+  const missing = [...refs].filter((rel) => !fs.existsSync(path.join(root, rel)));
+  if (missing.length === 0) {
+    return { id: 'language', level: 'ok', message: `language          ${refs.size} asset(s) present` };
+  }
+  return {
+    id: 'language',
+    level: 'error',
+    message: `language: ${missing.length} referenced asset(s) missing`,
+    details: missing,
   };
 }
 
