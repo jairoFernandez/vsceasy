@@ -48,10 +48,35 @@ bunx @vsceasy/cli create \
   --displayName "My Extension" \
   --description "Does cool things" \
   --publisher my-publisher \
+  --type ui \
   --ui react \
   --git \
   --install
 ```
+
+### Extension types
+
+`create` asks what kind of extension you're building (`--type`):
+
+| Type | What you get |
+|------|--------------|
+| `ui` *(default)* | React webview + typed RPC bridge. `--preset full` adds a sample panel; `--preset minimal` is empty. |
+| `language` | Language support — TextMate grammar, `language-configuration.json`, snippets, and an opt-in file-icon theme. No React. |
+| `empty` | Bare extension (`activate`/`deactivate` only). No UI, no language. |
+
+```bash
+bunx @vsceasy/cli create --name toml --type language --extensions .toml
+```
+
+### Non-generated contributions: `contributes.extra.json`
+
+`scripts/gen.ts` regenerates the parts of `package.json#contributes` it owns
+(commands, keybindings, views) on every build. Anything it doesn't generate —
+`languages`, `grammars`, `snippets`, `themes`, `iconThemes`, `walkthroughs` —
+goes in a `contributes.extra.json` file at the project root and is deep-merged
+into `package.json` on `bun run gen`. The keys gen owns always win; everything
+else from `contributes.extra.json` is preserved. The `language` scaffold ships a
+populated `contributes.extra.json` wiring up its grammar, snippets and icons.
 
 ## What you get
 
@@ -343,8 +368,15 @@ vsceasy helper add --kind config          # workspace.getConfiguration — typed
 vsceasy helper add --kind state           # workspace + global mementos
 vsceasy helper add --kind notifications   # toast + confirm + withProgress
 vsceasy helper add --kind cache           # in-memory TTL + LRU + wrap()
+vsceasy helper add --kind colorize        # scoped editor.tokenColorCustomizations
 # For ORM use the dedicated commands: `vsceasy db init` + `vsceasy model add`
 ```
+
+The `colorize` helper writes theme-independent token colors scoped to a single
+TextMate scope (e.g. a language's `source.x`), so only that language is
+recolored — other languages keep the user's theme. `create --type language`
+wires it automatically (auto-apply on activate behind a `<prefix>.colorize`
+opt-out setting + `Apply/Remove Colors` commands).
 For `secrets` and `state`, wire on activate:
 ```ts
 import { initSecrets } from './helpers/secrets';

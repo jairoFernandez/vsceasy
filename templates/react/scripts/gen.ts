@@ -1,6 +1,12 @@
 #!/usr/bin/env bun
 // Scans src/panels, src/commands, and src/menus; writes src/extension/_registry.ts
 // and syncs package.json#contributes (commands, viewsContainers, views).
+//
+// Non-generated contributes (e.g. languages, grammars, snippets, themes,
+// iconThemes, walkthroughs) go in an optional `contributes.extra.json` at the
+// project root. It is deep-merged into package.json#contributes on every run —
+// the keys gen.ts owns (commands, keybindings, menus.commandPalette,
+// viewsContainers, views) always win, everything else from extra is preserved.
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -16,6 +22,10 @@ const TREE_VIEWS_DIR = path.join(SRC, 'treeViews');
 const JOBS_DIR = path.join(SRC, 'jobs');
 const OUT = path.join(SRC, 'extension', '_registry.ts');
 const PKG_PATH = path.join(ROOT, 'package.json');
+const EXTRA_PATH = path.join(ROOT, 'contributes.extra.json');
+
+/** Keys gen.ts owns — never overridden by contributes.extra.json. */
+const GEN_OWNED_KEYS = new Set(['commands', 'keybindings', 'viewsContainers', 'views']);
 
 interface Discovered {
   id: string;
@@ -204,7 +214,52 @@ function syncPackageJson(
     delete contributes.views;
   }
 
+  mergeExtraContributes(contributes);
+
   fs.writeFileSync(PKG_PATH, JSON.stringify(pkg, null, 2) + '\n');
+}
+
+/**
+ * Deep-merge the optional `contributes.extra.json` (project root) into the
+ * package's `contributes`. Use for any contribution point gen.ts doesn't
+ * generate — languages, grammars, snippets, themes, iconThemes, walkthroughs…
+ *
+ * Rules:
+ *  - gen-owned keys (commands, keybindings, viewsContainers, views) are ignored
+ *    if present in extra — gen.ts stays authoritative for those.
+ *  - plain objects merge recursively; arrays and primitives from extra replace.
+ *
+ * NOTE: this is an inline copy of src/lib/contributesMerge.ts in the vsceasy
+ * source (the script must run standalone). Keep the two in sync.
+ */
+function mergeExtraContributes(contributes: Record<string, any>) {
+  if (!fs.existsSync(EXTRA_PATH)) return;
+  let extra: Record<string, any>;
+  try {
+    extra = JSON.parse(fs.readFileSync(EXTRA_PATH, 'utf8'));
+  } catch (err) {
+    console.warn(`! Skipping contributes.extra.json — invalid JSON: ${(err as Error).message}`);
+    return;
+  }
+  if (!extra || typeof extra !== 'object') return;
+  for (const [key, value] of Object.entries(extra)) {
+    if (GEN_OWNED_KEYS.has(key)) continue;
+    contributes[key] = deepMerge(contributes[key], value);
+  }
+}
+
+function isPlainObject(v: unknown): v is Record<string, any> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+function deepMerge(base: any, override: any): any {
+  if (isPlainObject(base) && isPlainObject(override)) {
+    const out: Record<string, any> = { ...base };
+    for (const [k, v] of Object.entries(override)) out[k] = deepMerge(base[k], v);
+    return out;
+  }
+  // arrays and primitives: override wins
+  return override;
 }
 
 function loadDef(file: string): {
