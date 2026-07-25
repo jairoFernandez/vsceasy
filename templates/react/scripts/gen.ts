@@ -23,6 +23,7 @@ const JOBS_DIR = path.join(SRC, 'jobs');
 const COMPLETIONS_DIR = path.join(SRC, 'completions');
 const INLINE_COMPLETIONS_DIR = path.join(SRC, 'inlineCompletions');
 const TYPING_GUARDS_DIR = path.join(SRC, 'typingGuards');
+const HOVERS_DIR = path.join(SRC, 'hovers');
 const DECORATIONS_DIR = path.join(SRC, 'decorations');
 const TERMINALS_DIR = path.join(SRC, 'terminals');
 const OUT = path.join(SRC, 'extension', '_registry.ts');
@@ -63,6 +64,7 @@ const REGISTRY_KINDS = [
   ['completions', 'completion'],
   ['inlineCompletions', 'inlineCompletion'],
   ['typingGuards', 'typingGuard'],
+  ['hovers', 'hover'],
   ['decorations', 'decoration'],
   ['terminals', 'terminal'],
 ] as const;
@@ -232,6 +234,7 @@ const EAGER_KINDS: RegistryKind[] = [
   'completions',
   'inlineCompletions',
   'typingGuards',
+  'hovers',
   'decorations',
   'terminals',
 ];
@@ -482,6 +485,7 @@ function main() {
     completions: scan(COMPLETIONS_DIR, registryDir),
     inlineCompletions: scan(INLINE_COMPLETIONS_DIR, registryDir),
     typingGuards: scan(TYPING_GUARDS_DIR, registryDir),
+    hovers: scan(HOVERS_DIR, registryDir),
     decorations: scan(DECORATIONS_DIR, registryDir),
     terminals: scan(TERMINALS_DIR, registryDir),
   };

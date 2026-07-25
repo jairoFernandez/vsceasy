@@ -9,6 +9,7 @@ export {
   defineCompletion,
   defineInlineCompletion,
   defineTypingGuard,
+  defineHover,
   defineDecoration,
   defineTerminal,
 } from './define';
@@ -41,6 +42,8 @@ export type {
   PasteEvent,
   DeleteEvent,
   TypingVerdict,
+  HoverDef,
+  HoverContext,
   DecorationDef,
   DecorationStyle,
   DecorationSpan,

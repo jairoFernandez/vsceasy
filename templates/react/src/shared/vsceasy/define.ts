@@ -472,6 +472,44 @@ export function defineInlineCompletion(def: InlineCompletionDef): InlineCompleti
   return def;
 }
 
+// --- Hovers (floating explanation panels) ---
+
+/** Context handed to a hover provider for the symbol under the pointer. */
+export interface HoverContext {
+  document: vscode.TextDocument;
+  position: vscode.Position;
+  /** The word under the pointer, if any. */
+  word: string;
+  /** Full text of the hovered line. */
+  line: string;
+  /** Zero-based line number. */
+  lineNumber: number;
+  token: vscode.CancellationToken;
+}
+
+export interface HoverDef {
+  /** Stable id. Default: file basename. */
+  id?: string;
+  /** Which documents this applies to. Default: all files. */
+  selector?: DocSelector;
+  /**
+   * Produce the hover content as markdown. Return null / '' to show nothing and
+   * let other providers answer.
+   *
+   * Command links (`[run](command:ext.foo)`) are enabled, so the panel can be
+   * interactive.
+   */
+  provide: (
+    ctx: HoverContext,
+    vscode: typeof import('vscode'),
+    extCtx: vscode.ExtensionContext,
+  ) => string | null | undefined | Promise<string | null | undefined>;
+}
+
+export function defineHover(def: HoverDef): HoverDef {
+  return def;
+}
+
 // --- Typing guards (intercept keystrokes / paste / edits) ---
 
 /** A single keystroke arriving through VS Code's `type` command. */
@@ -716,8 +754,20 @@ export interface TerminalDef {
   title?: string;
   /** Default working directory for `exec` / `send`. Default: first workspace folder. */
   cwd?: string;
-  /** Environment merged over `process.env` for every `exec`. */
+  /**
+   * Environment merged over `process.env` for every **captured** `exec`.
+   *
+   * This is the right place for `NO_COLOR` / `FORCE_COLOR=0` and anything else
+   * that makes output easier to parse — it deliberately does NOT reach the
+   * visible terminal, where stripping colour would only make the output harder
+   * for the user to read. Use `terminalEnv` for that one.
+   */
   env?: Record<string, string>;
+  /**
+   * Environment for the **visible** integrated terminal only. Defaults to the
+   * inherited shell environment, colours and all.
+   */
+  terminalEnv?: Record<string, string>;
   /** Default timeout in ms for `exec`. Default: 60_000. */
   timeoutMs?: number;
   /** Shell used by `exec`. Default: the platform shell. */

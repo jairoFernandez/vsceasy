@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem, StatusBarState, SubpanelDef, TreeViewDef, TreeNode, JobDef, JobSchedule, CompletionDef, CompletionItemDef, InlineCompletionDef, InlineSuggestion, TypingGuardDef, TypingVerdict, DeleteEvent, DecorationDef, DecorationStyle, DecorationSpan, TerminalDef, TerminalHandle, TerminalRunOptions, TerminalRunResult, DocSelector } from './define';
+import type { PanelDef, CommandDef, MenuDef, MenuItem, StatusBarDef, StatusBarMenuItem, StatusBarState, SubpanelDef, TreeViewDef, TreeNode, JobDef, JobSchedule, CompletionDef, CompletionItemDef, InlineCompletionDef, InlineSuggestion, TypingGuardDef, TypingVerdict, DeleteEvent, HoverDef, DecorationDef, DecorationStyle, DecorationSpan, TerminalDef, TerminalHandle, TerminalRunOptions, TerminalRunResult, DocSelector } from './define';
 import { createRpcServer, webviewTransport } from './rpc';
 
 export interface Registry {
@@ -13,6 +13,7 @@ export interface Registry {
   completions?: Record<string, CompletionDef>;
   inlineCompletions?: Record<string, InlineCompletionDef>;
   typingGuards?: Record<string, TypingGuardDef>;
+  hovers?: Record<string, HoverDef>;
   decorations?: Record<string, DecorationDef>;
   terminals?: Record<string, TerminalDef>;
   /** Command prefix from package.json (e.g. "myExt"). */
@@ -112,6 +113,12 @@ export function bootstrap(registry: Registry, options: BootstrapOptions = {}) {
 
     if (registry.typingGuards && Object.keys(registry.typingGuards).length) {
       registerTypingGuards(context, registry.typingGuards);
+    }
+
+    if (registry.hovers) {
+      for (const [id, def] of Object.entries(registry.hovers)) {
+        registerHover(context, id, def);
+      }
     }
 
     if (registry.decorations) {
@@ -395,6 +402,44 @@ function toInlineItems(
     }
     return item;
   });
+}
+
+// --- Hovers ---
+
+function registerHover(context: vscode.ExtensionContext, id: string, def: HoverDef) {
+  const provider: vscode.HoverProvider = {
+    async provideHover(document, position, token) {
+      const line = document.lineAt(position.line).text;
+      const wordRange = document.getWordRangeAtPosition(position);
+      let markdown: string | null | undefined;
+      try {
+        markdown = await def.provide(
+          {
+            document,
+            position,
+            word: wordRange ? document.getText(wordRange) : '',
+            line,
+            lineNumber: position.line,
+            token,
+          },
+          vscode,
+          context,
+        );
+      } catch (err) {
+        console.error(`[vsceasy hover:${def.id ?? id}] provide failed:`, err);
+        return undefined;
+      }
+      if (token.isCancellationRequested || !markdown) return undefined;
+      const md = new vscode.MarkdownString(markdown, true);
+      // Let the panel carry command links and inline HTML.
+      md.isTrusted = true;
+      md.supportHtml = true;
+      return new vscode.Hover(md);
+    },
+  };
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(toDocumentSelector(def.selector), provider),
+  );
 }
 
 // --- Typing guards ---
@@ -823,10 +868,13 @@ function registerTerminal(context: vscode.ExtensionContext, id: string, def: Ter
   const ensureVisible = () => {
     // A terminal the user closed is disposed but our reference survives.
     if (!visible || visible.exitStatus !== undefined) {
+      // Deliberately NOT `def.env`: that carries parsing-friendly settings like
+      // NO_COLOR, which would strip the colour the user relies on to read a
+      // failing test run.
       visible = vscode.window.createTerminal({
         name,
         cwd: def.cwd ?? defaultCwd(),
-        env: def.env,
+        env: def.terminalEnv,
       });
     }
     return visible;

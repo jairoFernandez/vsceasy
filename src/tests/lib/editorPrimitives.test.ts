@@ -41,6 +41,7 @@ describe('editor primitives', () => {
     ['completions', 'defineCompletion', 'completions'],
     ['inlineCompletions', 'defineInlineCompletion', 'inlineCompletions'],
     ['typingGuards', 'defineTypingGuard', 'typingGuards'],
+    ['hovers', 'defineHover', 'hovers'],
     ['decorations', 'defineDecoration', 'decorations'],
     ['terminals', 'defineTerminal', 'terminals'],
   ] as const;
@@ -177,6 +178,17 @@ describe('editor primitives', () => {
     );
     expect(def).toContain('onDelete?:');
     expect(def).toContain('interface DeleteEvent');
+  });
+
+  test('the visible terminal does not inherit exec-only env', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),
+      'utf8',
+    );
+    // `env` carries NO_COLOR for parseable captured output; applying it to the
+    // visible terminal would strip the colour the user reads failures by.
+    expect(src).toContain('env: def.terminalEnv');
+    expect(src).not.toContain('env: def.env,');
   });
 
   test('decoration spans are clamped to the document', () => {
