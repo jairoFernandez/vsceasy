@@ -64,6 +64,7 @@ export default defineConfig({
             { label: 'The mini-ORM', slug: 'guides/orm' },
             { label: 'Relations', slug: 'guides/relations' },
             { label: 'Reactivity', slug: 'guides/reactivity' },
+            { label: 'Editor surface', slug: 'guides/editor-surface' },
             { label: 'Publishing', slug: 'guides/publishing' },
           ],
         },

@@ -20,6 +20,11 @@ const STATUS_BARS_DIR = path.join(SRC, 'statusBars');
 const SUBPANELS_DIR = path.join(SRC, 'subpanels');
 const TREE_VIEWS_DIR = path.join(SRC, 'treeViews');
 const JOBS_DIR = path.join(SRC, 'jobs');
+const COMPLETIONS_DIR = path.join(SRC, 'completions');
+const INLINE_COMPLETIONS_DIR = path.join(SRC, 'inlineCompletions');
+const TYPING_GUARDS_DIR = path.join(SRC, 'typingGuards');
+const DECORATIONS_DIR = path.join(SRC, 'decorations');
+const TERMINALS_DIR = path.join(SRC, 'terminals');
 const OUT = path.join(SRC, 'extension', '_registry.ts');
 const PKG_PATH = path.join(ROOT, 'package.json');
 const EXTRA_PATH = path.join(ROOT, 'contributes.extra.json');
@@ -46,50 +51,45 @@ function scan(dir: string, registryDir: string): Discovered[] {
     });
 }
 
-function writeRegistry(
-  panels: Discovered[],
-  commands: Discovered[],
-  menus: Discovered[],
-  statusBars: Discovered[],
-  subpanels: Discovered[],
-  treeViews: Discovered[],
-  jobs: Discovered[],
-  prefix: string,
-) {
+/** Registry key → local import alias used in the generated file. */
+const REGISTRY_KINDS = [
+  ['panels', 'panel'],
+  ['commands', 'command'],
+  ['menus', 'menu'],
+  ['statusBars', 'statusBar'],
+  ['subpanels', 'subpanel'],
+  ['treeViews', 'treeView'],
+  ['jobs', 'job'],
+  ['completions', 'completion'],
+  ['inlineCompletions', 'inlineCompletion'],
+  ['typingGuards', 'typingGuard'],
+  ['decorations', 'decoration'],
+  ['terminals', 'terminal'],
+] as const;
+
+type RegistryKind = (typeof REGISTRY_KINDS)[number][0];
+type Scanned = Record<RegistryKind, Discovered[]>;
+
+function writeRegistry(found: Scanned, prefix: string) {
+  const imports: string[] = [];
+  const body: string[] = [];
+
+  for (const [key, alias] of REGISTRY_KINDS) {
+    const entries = found[key];
+    entries.forEach((e, i) => imports.push(`import ${alias}${i} from '${e.importPath}';`));
+    body.push(`  ${key}: {`);
+    entries.forEach((e, i) => body.push(`    ${JSON.stringify(e.id)}: ${alias}${i},`));
+    body.push('  },');
+  }
+
   const lines: string[] = [
     '// AUTO-GENERATED — do not edit. Run `bun run gen`.',
     `import type { Registry } from '../shared/vsceasy';`,
-    ...panels.map((p, i) => `import panel${i} from '${p.importPath}';`),
-    ...commands.map((c, i) => `import command${i} from '${c.importPath}';`),
-    ...menus.map((m, i) => `import menu${i} from '${m.importPath}';`),
-    ...statusBars.map((s, i) => `import statusBar${i} from '${s.importPath}';`),
-    ...subpanels.map((w, i) => `import subpanel${i} from '${w.importPath}';`),
-    ...treeViews.map((t, i) => `import treeView${i} from '${t.importPath}';`),
-    ...jobs.map((j, i) => `import job${i} from '${j.importPath}';`),
+    ...imports,
     '',
     'export const registry: Registry = {',
     `  prefix: ${JSON.stringify(prefix)},`,
-    '  panels: {',
-    ...panels.map((p, i) => `    ${JSON.stringify(p.id)}: panel${i},`),
-    '  },',
-    '  commands: {',
-    ...commands.map((c, i) => `    ${JSON.stringify(c.id)}: command${i},`),
-    '  },',
-    '  menus: {',
-    ...menus.map((m, i) => `    ${JSON.stringify(m.id)}: menu${i},`),
-    '  },',
-    '  statusBars: {',
-    ...statusBars.map((s, i) => `    ${JSON.stringify(s.id)}: statusBar${i},`),
-    '  },',
-    '  subpanels: {',
-    ...subpanels.map((w, i) => `    ${JSON.stringify(w.id)}: subpanel${i},`),
-    '  },',
-    '  treeViews: {',
-    ...treeViews.map((t, i) => `    ${JSON.stringify(t.id)}: treeView${i},`),
-    '  },',
-    '  jobs: {',
-    ...jobs.map((j, i) => `    ${JSON.stringify(j.id)}: job${i},`),
-    '  },',
+    ...body,
     '};',
     '',
   ];
@@ -217,6 +217,48 @@ function syncPackageJson(
   mergeExtraContributes(contributes);
 
   fs.writeFileSync(PKG_PATH, JSON.stringify(pkg, null, 2) + '\n');
+}
+
+/**
+ * Kinds that must be registered before the user does anything. VS Code
+ * auto-activates on a contributed command, which covers panels and commands —
+ * but a status bar item, a typing guard, a completion provider, a decoration,
+ * a terminal or a job has nothing to activate *on*. Those need
+ * `onStartupFinished`, or they silently never run.
+ */
+const EAGER_KINDS: RegistryKind[] = [
+  'statusBars',
+  'jobs',
+  'completions',
+  'inlineCompletions',
+  'typingGuards',
+  'decorations',
+  'terminals',
+];
+
+const STARTUP_EVENT = 'onStartupFinished';
+
+/**
+ * Add or remove `onStartupFinished` to match what's on disk, leaving every
+ * other activation event (onLanguage:, workspaceContains:, …) untouched.
+ */
+function syncActivationEvents(found: Scanned) {
+  const pkg = JSON.parse(fs.readFileSync(PKG_PATH, 'utf8'));
+  const current: string[] = Array.isArray(pkg.activationEvents) ? pkg.activationEvents : [];
+  const needsStartup = EAGER_KINDS.some((k) => found[k].length > 0);
+  const hasStartup = current.includes(STARTUP_EVENT);
+
+  if (needsStartup === hasStartup) return;
+
+  pkg.activationEvents = needsStartup
+    ? [...current, STARTUP_EVENT]
+    : current.filter((e) => e !== STARTUP_EVENT);
+  fs.writeFileSync(PKG_PATH, JSON.stringify(pkg, null, 2) + '\n');
+  console.log(
+    needsStartup
+      ? `✓ added ${STARTUP_EVENT} — required by ${EAGER_KINDS.filter((k) => found[k].length).join(', ')}`
+      : `✓ removed ${STARTUP_EVENT} — no eagerly-registered kinds left`,
+  );
 }
 
 /**
@@ -429,22 +471,31 @@ function main() {
   const displayName: string = pkg.displayName ?? pkg.name;
 
   const registryDir = path.dirname(OUT);
-  const panels = scan(PANELS_DIR, registryDir);
-  const commands = scan(COMMANDS_DIR, registryDir);
-  const menus = scan(MENUS_DIR, registryDir);
-  const statusBars = scan(STATUS_BARS_DIR, registryDir);
-  const subpanels = scan(SUBPANELS_DIR, registryDir);
-  const treeViews = scan(TREE_VIEWS_DIR, registryDir);
-  const jobs = scan(JOBS_DIR, registryDir);
+  const found: Scanned = {
+    panels: scan(PANELS_DIR, registryDir),
+    commands: scan(COMMANDS_DIR, registryDir),
+    menus: scan(MENUS_DIR, registryDir),
+    statusBars: scan(STATUS_BARS_DIR, registryDir),
+    subpanels: scan(SUBPANELS_DIR, registryDir),
+    treeViews: scan(TREE_VIEWS_DIR, registryDir),
+    jobs: scan(JOBS_DIR, registryDir),
+    completions: scan(COMPLETIONS_DIR, registryDir),
+    inlineCompletions: scan(INLINE_COMPLETIONS_DIR, registryDir),
+    typingGuards: scan(TYPING_GUARDS_DIR, registryDir),
+    decorations: scan(DECORATIONS_DIR, registryDir),
+    terminals: scan(TERMINALS_DIR, registryDir),
+  };
 
-  writeRegistry(panels, commands, menus, statusBars, subpanels, treeViews, jobs, prefix);
-  syncPackageJson(panels, commands, menus, subpanels, treeViews, prefix, displayName);
-  ensurePanelHtml(panels);
-  ensureSubpanelHtml(subpanels);
+  writeRegistry(found, prefix);
+  syncPackageJson(found.panels, found.commands, found.menus, found.subpanels, found.treeViews, prefix, displayName);
+  syncActivationEvents(found);
+  ensurePanelHtml(found.panels);
+  ensureSubpanelHtml(found.subpanels);
 
-  console.log(
-    `✓ vsceasy gen → ${panels.length} panel(s), ${commands.length} command(s), ${menus.length} menu(s), ${statusBars.length} statusBar(s), ${subpanels.length} subpanel(s), ${treeViews.length} treeView(s), ${jobs.length} job(s)`,
-  );
+  const summary = REGISTRY_KINDS.map(([key]) => `${found[key].length} ${key}`)
+    .filter((s) => !s.startsWith('0 '))
+    .join(', ');
+  console.log(`✓ vsceasy gen → ${summary || 'nothing found'}`);
 }
 
 main();

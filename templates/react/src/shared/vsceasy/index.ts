@@ -1,6 +1,55 @@
-export { definePanel, defineCommand, defineMenu, defineStatusBar, defineSubpanel, defineTreeView, defineJob } from './define';
-export type { PanelDef, CommandDef, MenuDef, MenuItem, MenuIcon, StatusBarDef, StatusBarMenuItem, KeybindingDef, SubpanelDef, TreeViewDef, TreeNode, JobDef, JobSchedule, CodiconName, RpcEmit } from './define';
-export { bootstrap } from './bootstrap';
+export {
+  definePanel,
+  defineCommand,
+  defineMenu,
+  defineStatusBar,
+  defineSubpanel,
+  defineTreeView,
+  defineJob,
+  defineCompletion,
+  defineInlineCompletion,
+  defineTypingGuard,
+  defineDecoration,
+  defineTerminal,
+} from './define';
+export type {
+  PanelDef,
+  CommandDef,
+  MenuDef,
+  MenuItem,
+  MenuIcon,
+  StatusBarDef,
+  StatusBarMenuItem,
+  StatusBarState,
+  KeybindingDef,
+  SubpanelDef,
+  TreeViewDef,
+  TreeNode,
+  JobDef,
+  JobSchedule,
+  CodiconName,
+  RpcEmit,
+  DocSelector,
+  CompletionDef,
+  CompletionItemDef,
+  CompletionContext,
+  InlineCompletionDef,
+  InlineCompletionContext,
+  InlineSuggestion,
+  TypingGuardDef,
+  TypingEvent,
+  PasteEvent,
+  DeleteEvent,
+  TypingVerdict,
+  DecorationDef,
+  DecorationStyle,
+  DecorationSpan,
+  TerminalDef,
+  TerminalHandle,
+  TerminalRunOptions,
+  TerminalRunResult,
+} from './define';
+export { bootstrap, refreshDecoration, useTerminal } from './bootstrap';
 export type { Registry, BootstrapOptions, ActivateHook } from './bootstrap';
 export {
   createRpcClient,
@@ -14,3 +63,5 @@ export type { Transport, RpcClient, Handlers, RpcClientOptions, WebviewApi } fro
 export { defineStore, watch } from './store';
 export type { Store, Watchable } from './store';
 export { listen } from './client';
+export { createLlm, initLlm, useLlm } from './llm';
+export type { LlmClient, LlmOptions, LlmMessage, LlmChatOptions, LlmModel } from './llm';

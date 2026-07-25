@@ -59,14 +59,25 @@ flowchart LR
 
 `scripts/gen.ts` scans the convention dirs:
 
-| Dir              | API              | Becomes …                                       |
-|------------------|------------------|-------------------------------------------------|
-| `panels/`        | `definePanel`    | webview panel + auto `<prefix>.open<Name>` cmd |
-| `commands/`      | `defineCommand`  | palette command + keybindings                  |
-| `menus/`         | `defineMenu`     | activity-bar viewContainer + tree view         |
-| `treeViews/`     | `defineTreeView` | data-driven view inside a menu container       |
-| `subpanels/`     | `defineSubpanel` | inline webview section inside a menu           |
-| `statusBars/`    | `defineStatusBar`| status bar item                                |
+| Dir                  | API                      | Becomes …                                       |
+|----------------------|--------------------------|-------------------------------------------------|
+| `panels/`            | `definePanel`            | webview panel + auto `<prefix>.open<Name>` cmd |
+| `commands/`          | `defineCommand`          | palette command + keybindings                  |
+| `menus/`             | `defineMenu`             | activity-bar viewContainer + tree view         |
+| `treeViews/`         | `defineTreeView`         | data-driven view inside a menu container       |
+| `subpanels/`         | `defineSubpanel`         | inline webview section inside a menu           |
+| `statusBars/`        | `defineStatusBar`        | status bar item (optionally reactive)          |
+| `jobs/`              | `defineJob`              | recurring / event-triggered task               |
+| `completions/`       | `defineCompletion`       | `CompletionItemProvider` (delay + gate)        |
+| `inlineCompletions/` | `defineInlineCompletion` | `InlineCompletionItemProvider` (ghost text)    |
+| `typingGuards/`      | `defineTypingGuard`      | `type` / paste override + change observer      |
+| `decorations/`       | `defineDecoration`       | `TextEditorDecorationType` + reactive apply    |
+| `terminals/`         | `defineTerminal`         | captured `exec` + visible integrated terminal  |
+
+The last five are the **editor surface** — they act on the editor itself rather
+than adding UI beside it (see `docs/guides/editor-surface.md`). The runtime also
+ships `createLlm` / `initLlm` / `useLlm`: a dependency-free client for Ollama and
+any OpenAI-compatible endpoint, with streaming and JSON-repair built in.
 
 `gen` writes `src/extension/_registry.ts` and syncs `package.json#contributes` (commands, keybindings, viewsContainers, views) to match what's on disk.
 
