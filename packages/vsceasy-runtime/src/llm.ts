@@ -68,8 +68,17 @@ export interface LlmClient {
   json: <T = unknown>(messages: LlmMessage[], opts?: LlmChatOptions) => Promise<T>;
   /** List models the endpoint has available. */
   models: () => Promise<LlmModel[]>;
-  /** Cheap reachability probe — never throws. */
-  ping: () => Promise<{ ok: boolean; error?: string }>;
+  /**
+   * Reachability probe — never throws. Also checks that the configured model is
+   * actually installed, reporting the one that will really be used.
+   */
+  ping: () => Promise<{ ok: boolean; model?: string; warning?: string; error?: string }>;
+  /**
+   * The model name requests will really use. On Ollama a configured name
+   * without a tag resolves to an installed `name:tag`, and a missing model
+   * falls back to an installed one.
+   */
+  resolveModel: () => Promise<string>;
 }
 
 const DEFAULT_BASE: Record<LlmProvider, string> = {
@@ -102,8 +111,68 @@ export function createLlm(options: LlmOptions): LlmClient {
     };
   };
 
+  /**
+   * Cache of the resolved model name, so the tag lookup happens once per client
+   * rather than on every request.
+   */
+  let resolvedModel: string | undefined;
+
+  /**
+   * Ollama addresses models by their full `name:tag`. A configured
+   * `qwen2.5-coder` does NOT match an installed `qwen2.5-coder:0.5b` — the
+   * request 404s. Resolve the configured name against what's actually
+   * installed, so a missing tag (or a model the user never pulled) degrades to
+   * something that works instead of failing every call.
+   */
+  async function resolveModel(requested: string): Promise<string> {
+    if (provider !== 'ollama') return requested;
+    if (resolvedModel) return resolvedModel;
+
+    let installed: LlmModel[];
+    try {
+      installed = await models();
+    } catch {
+      // Server unreachable — let the request itself produce the real error.
+      return requested;
+    }
+    const names = installed.map((m) => m.name);
+    if (!names.length) return requested;
+
+    // Empty means "auto" — the user hasn't chosen, so pick something usable.
+    if (!requested.trim()) {
+      resolvedModel = pickFallback(names);
+      return resolvedModel;
+    }
+
+    // Exact match wins.
+    if (names.includes(requested)) {
+      resolvedModel = requested;
+      return resolvedModel;
+    }
+    // Configured without a tag: take the first installed tag of that model.
+    if (!requested.includes(':')) {
+      const tagged = names.find((n) => n.split(':')[0] === requested);
+      if (tagged) {
+        resolvedModel = tagged;
+        console.warn(`[vsceasy llm] "${requested}" is not installed; using "${tagged}".`);
+        return resolvedModel;
+      }
+    }
+    // Nothing close — fall back to an installed model rather than 404ing.
+    const fallback = pickFallback(names);
+    console.warn(
+      `[vsceasy llm] "${requested}" is not installed; falling back to "${fallback}". ` +
+        `Installed: ${names.join(', ')}`,
+    );
+    resolvedModel = fallback;
+    return resolvedModel;
+  }
+
   async function chat(messages: LlmMessage[], opts: LlmChatOptions = {}): Promise<string> {
-    const model = opts.model ?? options.model;
+    const model = await resolveModel(opts.model ?? options.model);
+    // Resolution may have to fetch the model list first; a caller who aborted
+    // during that window must still get a rejection rather than a live request.
+    if (opts.signal?.aborted) throw new Error('Request aborted');
     const stream = typeof opts.onToken === 'function';
     const t = withTimeout(opts.timeoutMs ?? defaultTimeout, opts.signal);
 
@@ -191,15 +260,42 @@ export function createLlm(options: LlmOptions): LlmClient {
       return parseJson<T>(raw);
     },
     models,
+    resolveModel: () => resolveModel(options.model),
     ping: async () => {
       try {
-        await models();
-        return { ok: true };
+        const installed = await models();
+        // Reaching the server isn't enough: the configured model has to exist,
+        // or every call 404s while `ping` cheerfully reports OK.
+        if (provider === 'ollama' && installed.length) {
+          const names = installed.map((m) => m.name);
+          const actual = await resolveModel(options.model);
+          // An empty setting is "auto", not a mismatch — don't warn about it.
+          if (options.model.trim() && !names.includes(options.model)) {
+            return {
+              ok: true,
+              model: actual,
+              warning: `"${options.model}" is not installed — using "${actual}".`,
+            };
+          }
+          return { ok: true, model: actual };
+        }
+        return { ok: true, model: options.model };
       } catch (err) {
         return { ok: false, error: (err as Error).message };
       }
     },
   };
+}
+
+/**
+ * Choose the most useful installed model when the configured one is missing.
+ * Prefers coding models, then general chat models; never picks an embedding
+ * model (it can't chat) or a `:cloud` alias (it needs credentials).
+ */
+function pickFallback(names: string[]): string {
+  const usable = names.filter((n) => !/embed/i.test(n) && !/:cloud$/i.test(n));
+  const pool = usable.length ? usable : names;
+  return pool.find((n) => /cod(er|e)/i.test(n)) ?? pool[0];
 }
 
 /** Read an NDJSON (ollama) or SSE (openai) stream, feeding tokens to `onToken`. */
@@ -311,7 +407,9 @@ export function initLlm(
     shared = createLlm({
       provider: cfg.get<LlmProvider>('provider') ?? 'ollama',
       baseUrl: cfg.get<string>('baseUrl') || undefined,
-      model: cfg.get<string>('model') || 'qwen2.5-coder',
+      // Empty means "auto": `resolveModel` picks an installed model rather
+      // than guessing a name the user may never have pulled.
+      model: cfg.get<string>('model') || '',
       apiKey: cfg.get<string>('apiKey') || undefined,
       temperature: cfg.get<number>('temperature'),
       timeoutMs: cfg.get<number>('timeoutMs'),
