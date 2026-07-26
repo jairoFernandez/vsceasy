@@ -191,6 +191,41 @@ describe('editor primitives', () => {
     expect(src).not.toContain('env: def.env,');
   });
 
+  test('subpanels and tree views share one ordering in a container', async () => {
+    const project = await scaffoldProject();
+    fs.mkdirSync(path.join(project, 'src/menus'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'src/menus/side.ts'),
+      "export default { title: 'Side', icon: 'beaker', items: [] };\n",
+    );
+    fs.mkdirSync(path.join(project, 'src/subpanels'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'src/subpanels/chat.ts'),
+      "export default { title: 'Chat', menu: 'side', order: 2 };\n",
+    );
+    fs.mkdirSync(path.join(project, 'src/treeViews'), { recursive: true });
+    fs.writeFileSync(
+      path.join(project, 'src/treeViews/list.ts'),
+      "export default { title: 'List', menu: 'side', order: 1, getChildren: () => [] };\n",
+    );
+
+    runGen(project);
+    const views = JSON.parse(fs.readFileSync(path.join(project, 'package.json'), 'utf8'))
+      .contributes.views['demo-side'];
+    // The tree view is ordered first even though subpanels used to be hardcoded above.
+    expect(views.map((v: { name: string }) => v.name)).toEqual(['Side', 'List', 'Chat']);
+  });
+
+  test('a tree node forwards itself to its command', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),
+      'utf8',
+    );
+    // Without the node, a data-driven tree's command cannot tell which item
+    // was clicked, which makes TreeNode.command useless for anything dynamic.
+    expect(src).toContain('c.run(vscode, context, node)');
+  });
+
   test('decoration spans are clamped to the document', () => {
     const src = fs.readFileSync(
       path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),

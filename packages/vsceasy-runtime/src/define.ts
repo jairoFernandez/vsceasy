@@ -136,6 +136,12 @@ export interface SubpanelDef<H extends Handlers = Handlers> {
   title: string;
   /** Menu (activity bar container) this view lives in — basename in src/menus/. */
   menu: string;
+  /**
+   * Position within the container, low first. Subpanels and tree views share
+   * one ordering, so a tree view with `order: 1` sits above a subpanel with
+   * `order: 2`. Unset views keep their discovery order, after the ordered ones.
+   */
+  order?: number;
   /** Webview bundle name under dist/webview/<ui>/. Default: same as id. */
   ui?: string;
   /** Keep DOM alive when hidden. Default: true. */
@@ -272,6 +278,11 @@ export interface TreeViewDef {
   title: string;
   /** Activity bar container id (menu basename in src/menus/). */
   menu: string;
+  /**
+   * Position within the container, low first — shared with subpanels, so the
+   * two kinds can be interleaved deliberately.
+   */
+  order?: number;
   /** Show "Collapse All" button. Default: true. */
   showCollapseAll?: boolean;
   /** Initial / refreshed nodes. Called on mount and whenever the view is refreshed. */

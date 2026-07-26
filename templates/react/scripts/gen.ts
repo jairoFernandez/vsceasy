@@ -164,26 +164,25 @@ function syncPackageJson(
   const containers: Array<{ id: string; title: string; icon: string }> = [];
   const views: Record<string, Array<{ id: string; name: string; type?: 'webview' }>> = {};
 
-  // Index subpanels by menu they belong to
-  const wvByMenu: Record<string, Array<{ id: string; name: string }>> = {};
+  // Index subpanels and tree views together: they share one ordering inside a
+  // container, so a tree view can be placed above a subpanel and vice versa.
+  const wvByMenu: Record<string, Array<{ id: string; name: string; order: number; webview: boolean }>> = {};
   for (const w of subpanels) {
     const def = loadSubpanelDef(path.join(SUBPANELS_DIR, w.id + '.ts'))
       ?? loadSubpanelDef(path.join(SUBPANELS_DIR, w.id + '.tsx'));
     if (!def?.menu) continue;
     const viewId = `${prefix}-${def.menu}-${def.id ?? w.id}`;
     const name = def.title ?? w.id;
-    (wvByMenu[def.menu] ??= []).push({ id: viewId, name });
+    (wvByMenu[def.menu] ??= []).push({ id: viewId, name, order: def.order ?? Number.MAX_SAFE_INTEGER, webview: true });
   }
 
-  // Index tree views by their menu container
-  const tvByMenu: Record<string, Array<{ id: string; name: string }>> = {};
   for (const t of treeViews) {
     const def = loadSubpanelDef(path.join(TREE_VIEWS_DIR, t.id + '.ts'))
       ?? loadSubpanelDef(path.join(TREE_VIEWS_DIR, t.id + '.tsx'));
     if (!def?.menu) continue;
     const viewId = `${prefix}-${def.menu}-${def.id ?? t.id}`;
     const name = def.title ?? t.id;
-    (tvByMenu[def.menu] ??= []).push({ id: viewId, name });
+    (wvByMenu[def.menu] ??= []).push({ id: viewId, name, order: def.order ?? Number.MAX_SAFE_INTEGER, webview: false });
   }
 
   for (const m of menus) {
@@ -197,11 +196,10 @@ function syncPackageJson(
     const containerViews: Array<{ id: string; name: string; type?: 'webview' }> = [
       { id: containerId, name: title }, // primary tree view
     ];
-    for (const v of wvByMenu[menuId] ?? []) {
-      containerViews.push({ id: v.id, name: v.name, type: 'webview' });
-    }
-    for (const t of tvByMenu[menuId] ?? []) {
-      containerViews.push({ id: t.id, name: t.name });
+    // Stable sort by `order`; unordered views keep discovery order after them.
+    const ordered = [...(wvByMenu[menuId] ?? [])].sort((a, b) => a.order - b.order);
+    for (const v of ordered) {
+      containerViews.push(v.webview ? { id: v.id, name: v.name, type: 'webview' } : { id: v.id, name: v.name });
     }
     views[containerId] = containerViews;
   }
@@ -415,6 +413,7 @@ interface SubpanelLoaded {
   id?: string;
   title?: string;
   menu?: string;
+  order?: number;
 }
 
 function loadSubpanelDef(file: string): SubpanelLoaded | null {
@@ -424,7 +423,14 @@ function loadSubpanelDef(file: string): SubpanelLoaded | null {
     const m = new RegExp(`\\b${key}\\s*:\\s*(['"\`])((?:\\\\.|(?!\\1).)*)\\1`).exec(src);
     return m?.[2];
   };
-  return { id: grab('id'), title: grab('title'), menu: grab('menu') };
+  // `order` is numeric, so it needs its own pattern — `grab` only reads strings.
+  const orderMatch = /\border\s*:\s*(-?\d+)/.exec(src);
+  return {
+    id: grab('id'),
+    title: grab('title'),
+    menu: grab('menu'),
+    ...(orderMatch ? { order: Number(orderMatch[1]) } : {}),
+  };
 }
 
 function resolveIconForPkg(icon: MenuLoaded['icon']): string {

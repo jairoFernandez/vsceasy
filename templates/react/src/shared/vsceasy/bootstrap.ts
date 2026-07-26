@@ -1113,7 +1113,10 @@ function registerTreeView(
       }
       if (node.command) {
         const c = registry.commands[node.command];
-        if (c) return c.run(vscode, context);
+        // Forward the node: a data-driven tree's command is almost always
+        // about *which* item was clicked, and dropping it here would make
+        // `TreeNode.command` useless for anything but a fixed action.
+        if (c) return c.run(vscode, context, node);
       }
     }),
   );
