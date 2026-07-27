@@ -261,8 +261,17 @@ export interface TreeNode {
   contextValue?: string;
   /** Initial state when this node has children. Default: 'collapsed'. */
   collapsed?: 'expanded' | 'collapsed';
-  /** Eagerly provided children. If omitted, getChildren(this) is called lazily. */
+  /** Eagerly provided children. If omitted, the node is a leaf unless `expandable`. */
   children?: TreeNode[];
+  /**
+   * Mark a node as having children that are fetched lazily — `getChildren(this)`
+   * is called when the user expands it.
+   *
+   * Required because an omitted `children` cannot mean both "leaf" and "load
+   * later": most leaves never set the field, so treating undefined as lazy
+   * would put a useless expand arrow on every one of them.
+   */
+  expandable?: boolean;
   /** Click handler — run an arbitrary callback when the node is selected. */
   run?: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext) => unknown | Promise<unknown>;
   /** Click → open a panel by id. */

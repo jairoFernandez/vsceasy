@@ -216,6 +216,17 @@ describe('editor primitives', () => {
     expect(views.map((v: { name: string }) => v.name)).toEqual(['Side', 'List', 'Chat']);
   });
 
+  test('a leaf tree node is not collapsible', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),
+      'utf8',
+    );
+    // Treating an absent `children` as "load lazily" put an expand arrow on
+    // every leaf, opening nothing. Laziness must be opt-in.
+    expect(src).toContain('node.expandable === true');
+    expect(src).not.toContain('node.children === undefined');
+  });
+
   test('a tree node forwards itself to its command', () => {
     const src = fs.readFileSync(
       path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),

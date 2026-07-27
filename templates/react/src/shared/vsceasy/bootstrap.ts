@@ -1139,8 +1139,11 @@ class DataTreeProvider implements vscode.TreeDataProvider<TreeNode> {
   }
 
   getTreeItem(node: TreeNode): vscode.TreeItem {
-    const hasChildren = !!node.children?.length;
-    const state = hasChildren || node.children === undefined
+    // A node is collapsible only if it actually has children, or says it will
+    // load them lazily. Treating an absent `children` as lazy would decorate
+    // every leaf with an expand arrow that opens nothing.
+    const collapsible = !!node.children?.length || node.expandable === true;
+    const state = collapsible
       ? node.collapsed === 'expanded'
         ? vscode.TreeItemCollapsibleState.Expanded
         : vscode.TreeItemCollapsibleState.Collapsed
