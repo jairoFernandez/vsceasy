@@ -257,6 +257,23 @@ describe('editor primitives', () => {
     expect(src).not.toContain('node.children === undefined');
   });
 
+  test('commands resolve by declared id, not only by filename', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),
+      'utf8',
+    );
+    // The registry is keyed by filename, but a def is free to declare a
+    // different `id`. Menus, status bars and trees reference whichever the
+    // author wrote, so all of them go through one resolver.
+    expect(src).toContain('function lookupCommand(');
+    expect(src).toContain('if (def.id === ref) return { key, def };');
+    // No direct registry indexing left in the dispatch paths.
+    expect(src).not.toContain('registry.commands[item.command]');
+    expect(src).not.toContain('registry.commands[it.command]');
+    expect(src).not.toContain('registry.commands[node.command]');
+    expect(src).not.toContain('registry.commands[def.command]');
+  });
+
   test('a tree node forwards itself to its command', () => {
     const src = fs.readFileSync(
       path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),
@@ -264,7 +281,7 @@ describe('editor primitives', () => {
     );
     // Without the node, a data-driven tree's command cannot tell which item
     // was clicked, which makes TreeNode.command useless for anything dynamic.
-    expect(src).toContain('c.run(vscode, context, node)');
+    expect(src).toContain('found.def.run(vscode, context, node)');
   });
 
   test('decoration spans are clamped to the document', () => {

@@ -1193,11 +1193,11 @@ function registerTreeView(
         if (p) return openPanel(context, registry.prefix, node.panel, p);
       }
       if (node.command) {
-        const c = registry.commands[node.command];
+        const found = lookupCommand(registry, node.command);
         // Forward the node: a data-driven tree's command is almost always
         // about *which* item was clicked, and dropping it here would make
         // `TreeNode.command` useless for anything but a fixed action.
-        if (c) return c.run(vscode, context, node);
+        if (found) return found.def.run(vscode, context, node);
       }
     }),
   );
@@ -1343,9 +1343,8 @@ function registerStatusBar(
       console.warn(`[vsceasy] statusBar "${id}" references unknown panel "${def.panel}"`);
     }
   } else if (def.command) {
-    item.command = registry.commands[def.command]
-      ? `${registry.prefix}.${registry.commands[def.command].id ?? def.command}`
-      : def.command;
+    const found = lookupCommand(registry, def.command);
+    item.command = found ? `${registry.prefix}.${found.def.id ?? found.key}` : def.command;
   }
 
   paint();
@@ -1384,10 +1383,10 @@ async function openStatusBarMenu(
     return;
   }
   if (it.command) {
-    const cmd = registry.commands[it.command]
-      ? `${registry.prefix}.${registry.commands[it.command].id ?? it.command}`
-      : it.command;
-    await vscode.commands.executeCommand(cmd);
+    const found = lookupCommand(registry, it.command);
+    await vscode.commands.executeCommand(
+      found ? `${registry.prefix}.${found.def.id ?? found.key}` : it.command,
+    );
   }
 }
 
@@ -1420,6 +1419,24 @@ function registerMenu(
   provider.setDispatchCommand(dispatchCmd);
 }
 
+/**
+ * Find a command by the key the registry uses (its filename) or by the `id`
+ * declared on the def. A menu that references the declared id would otherwise
+ * fail at runtime with "unknown command", because the registry is keyed by
+ * filename and the two are free to differ.
+ */
+function lookupCommand(
+  registry: Registry,
+  ref: string,
+): { key: string; def: CommandDef } | undefined {
+  const direct = registry.commands[ref];
+  if (direct) return { key: ref, def: direct };
+  for (const [key, def] of Object.entries(registry.commands)) {
+    if (def.id === ref) return { key, def };
+  }
+  return undefined;
+}
+
 async function dispatchMenuItem(
   context: vscode.ExtensionContext,
   registry: Registry,
@@ -1439,12 +1456,12 @@ async function dispatchMenuItem(
     return;
   }
   if (item.command) {
-    const cmd = registry.commands[item.command];
-    if (!cmd) {
+    const found = lookupCommand(registry, item.command);
+    if (!found) {
       vscode.window.showErrorMessage(`Menu item references unknown command: ${item.command}`);
       return;
     }
-    await cmd.run(vscode, context);
+    await found.def.run(vscode, context);
     return;
   }
   if (item.run) {
