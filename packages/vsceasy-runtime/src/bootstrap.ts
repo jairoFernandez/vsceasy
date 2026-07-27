@@ -529,8 +529,9 @@ function registerTypingGuards(
   if (entries.some(([, d]) => d.onDelete)) {
     /**
      * Deletions never reach the `type` override — VS Code routes each one as
-     * its own command. Override them individually and fall back to the
-     * `default:` variant when every guard allows, exactly as `type` does.
+     * its own command. Override them individually; when every guard allows,
+     * `applyDeletion` performs the edit, because (unlike `type`) these commands
+     * have no `default:` twin to delegate back to.
      */
     const DELETE_COMMANDS: Array<{ command: string; kind: DeleteEvent['kind'] }> = [
       { command: 'deleteLeft', kind: 'deleteLeft' },
@@ -541,17 +542,15 @@ function registerTypingGuards(
     ];
 
     for (const { command, kind } of DELETE_COMMANDS) {
-      // Only `deleteLeft`/`deleteRight` and friends have a `default:` twin;
-      // the cut action is a normal command and must be re-dispatched by hand.
-      const isCoreDelete = kind !== 'cut';
       context.subscriptions.push(
         vscode.commands.registerCommand(command, () =>
           serialize(async () => {
             const editor = vscode.window.activeTextEditor;
-            const fallback = () =>
-              isCoreDelete
-                ? vscode.commands.executeCommand(`default:${command}`)
-                : cutSelection(editor);
+            // There is NO `default:deleteLeft` — VS Code only provides
+            // `default:` twins for `type`, `cut`, `copy` and `paste`. Once we
+            // override a delete command we own it, so the deletion has to be
+            // performed through the edit API.
+            const fallback = () => applyDeletion(editor, kind);
             if (!editor) return fallback();
 
             const document = editor.document;
@@ -684,6 +683,88 @@ function deletionText(editor: vscode.TextEditor, kind: DeleteEvent['kind']): str
     default:
       return '';
   }
+}
+
+/**
+ * Perform a deletion ourselves.
+ *
+ * Overriding `deleteLeft` and friends means we own them: unlike `type`, VS Code
+ * exposes no `default:deleteLeft` to hand the work back to, so calling one
+ * throws "command not found" and the user simply cannot delete.
+ *
+ * Handles every selection in the editor so multi-cursor keeps working.
+ */
+async function applyDeletion(
+  editor: vscode.TextEditor | undefined,
+  kind: DeleteEvent['kind'],
+): Promise<void> {
+  if (!editor) return;
+  if (kind === 'cut') return cutSelection(editor);
+
+  const doc = editor.document;
+  const ranges = editor.selections.map((sel) => {
+    // A non-empty selection is deleted as-is, whichever key was pressed.
+    if (!sel.isEmpty) return new vscode.Range(sel.start, sel.end);
+
+    const pos = sel.active;
+    const line = doc.lineAt(pos.line);
+
+    switch (kind) {
+      case 'deleteLeft': {
+        // At column 0, backspace joins with the end of the previous line.
+        if (pos.character === 0) {
+          if (pos.line === 0) return undefined;
+          const prev = doc.lineAt(pos.line - 1);
+          return new vscode.Range(prev.range.end, pos);
+        }
+        return new vscode.Range(pos.translate(0, -1), pos);
+      }
+      case 'deleteRight': {
+        if (pos.character >= line.text.length) {
+          if (pos.line >= doc.lineCount - 1) return undefined;
+          return new vscode.Range(pos, new vscode.Position(pos.line + 1, 0));
+        }
+        return new vscode.Range(pos, pos.translate(0, 1));
+      }
+      case 'deleteWordLeft': {
+        const word = pos.character > 0 ? doc.getWordRangeAtPosition(pos.translate(0, -1)) : undefined;
+        // No word before the cursor (whitespace, punctuation), or one that
+        // starts exactly at it and would give an empty range: fall back to a
+        // single character, which beats doing nothing.
+        if (!word || word.start.isEqual(pos)) {
+          return pos.character === 0
+            ? pos.line === 0
+              ? undefined
+              : new vscode.Range(doc.lineAt(pos.line - 1).range.end, pos)
+            : new vscode.Range(pos.translate(0, -1), pos);
+        }
+        return new vscode.Range(word.start, pos);
+      }
+      case 'deleteWordRight': {
+        const word = doc.getWordRangeAtPosition(pos);
+        // `word.end === pos` when the cursor sits just *after* a word, which
+        // would produce an empty range and delete nothing. Treat that like
+        // having no word: step forward one character instead.
+        if (!word || word.end.isEqual(pos)) {
+          return pos.character >= line.text.length
+            ? pos.line >= doc.lineCount - 1
+              ? undefined
+              : new vscode.Range(pos, new vscode.Position(pos.line + 1, 0))
+            : new vscode.Range(pos, pos.translate(0, 1));
+        }
+        return new vscode.Range(pos, word.end);
+      }
+      default:
+        return undefined;
+    }
+  });
+
+  const toDelete = ranges.filter((r): r is vscode.Range => !!r && !r.isEmpty);
+  if (!toDelete.length) return;
+
+  await editor.edit((b) => {
+    for (const range of toDelete) b.delete(range);
+  });
 }
 
 /** Perform a clipboard cut, since `editor.action.clipboardCutAction` has no `default:` twin. */

@@ -171,6 +171,36 @@ describe('editor primitives', () => {
     expect(src.indexOf('let queue: Promise<unknown>')).toBeLessThan(src.indexOf("registerCommand('type'"));
   });
 
+  test('deletions are performed, not delegated to a nonexistent default:', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),
+      'utf8',
+    );
+    // VS Code has no `default:deleteLeft` — calling one throws "command not
+    // found" and the user cannot delete at all. Check what is *executed*, not
+    // what the comments mention.
+    const executed = [...src.matchAll(/executeCommand\(\s*[`'"]default:([^`'"$]*)/g)].map(
+      (m) => m[1],
+    );
+    const interpolated = /executeCommand\(\s*`default:\$\{/.test(src);
+    expect(interpolated).toBe(false);
+    // Only `type`, `cut`, `copy` and `paste` have real `default:` twins.
+    expect(executed.every((d) => d === 'type')).toBe(true);
+    expect(src).toContain('async function applyDeletion(');
+  });
+
+  test('deletion never issues an empty edit', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/bootstrap.ts'),
+      'utf8',
+    );
+    // A word range that starts/ends exactly at the cursor collapses to nothing,
+    // so Delete would silently do nothing at a word boundary.
+    expect(src).toContain('word.end.isEqual(pos)');
+    expect(src).toContain('word.start.isEqual(pos)');
+    expect(src).toContain('!r.isEmpty');
+  });
+
   test('onDelete is part of the typing guard contract', () => {
     const def = fs.readFileSync(
       path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/define.ts'),
