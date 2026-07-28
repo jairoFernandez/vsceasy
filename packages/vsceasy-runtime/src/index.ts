@@ -26,6 +26,7 @@ export type {
   SubpanelDef,
   TreeViewDef,
   TreeNode,
+  TitleAction,
   JobDef,
   JobSchedule,
   CodiconName,

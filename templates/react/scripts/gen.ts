@@ -110,7 +110,7 @@ function syncPackageJson(
 ) {
   const pkg = JSON.parse(fs.readFileSync(PKG_PATH, 'utf8'));
   const contributes = (pkg.contributes ??= {});
-  const cmds: Array<{ command: string; title: string; category?: string; enablement?: string }> = [];
+  const cmds: Array<{ command: string; title: string; category?: string; enablement?: string; icon?: string }> = [];
   const keybindings: Array<{ command: string; key: string; mac?: string; when?: string }> = [];
   const palette: Array<{ command: string; when?: string }> = [];
 
@@ -122,6 +122,9 @@ function syncPackageJson(
       title: def?.title ?? c.id,
       category: def?.category ?? displayName,
       ...(def?.when ? { enablement: def.when } : {}),
+      // Accepts either 'refresh' or '$(refresh)' — a title-bar entry without an
+      // icon renders as a text label.
+      ...(def?.icon ? { icon: `$(${String(def.icon).replace(/^\$\(|\)$/g, '')})` } : {}),
     });
     if (def?.when) palette.push({ command: fullId, when: def.when });
     if (def?.keybindings) {
@@ -167,6 +170,21 @@ function syncPackageJson(
   // Index subpanels and tree views together: they share one ordering inside a
   // container, so a tree view can be placed above a subpanel and vice versa.
   const wvByMenu: Record<string, Array<{ id: string; name: string; order: number; webview: boolean }>> = {};
+  // Title-bar buttons, gathered while indexing the views that declare them.
+  const viewTitle: Array<{ command: string; when: string; group: string }> = [];
+
+  const collectTitleActions = (viewId: string, def: SubpanelLoaded) => {
+    for (const action of def.titleActions ?? []) {
+      viewTitle.push({
+        command: `${prefix}.${action.command}`,
+        // The view match is the point of the entry, so a caller-supplied clause
+        // narrows it rather than replacing it.
+        when: action.when ? `view == ${viewId} && ${action.when}` : `view == ${viewId}`,
+        group: action.group ?? 'navigation',
+      });
+    }
+  };
+
   for (const w of subpanels) {
     const def = loadSubpanelDef(path.join(SUBPANELS_DIR, w.id + '.ts'))
       ?? loadSubpanelDef(path.join(SUBPANELS_DIR, w.id + '.tsx'));
@@ -174,6 +192,7 @@ function syncPackageJson(
     const viewId = `${prefix}-${def.menu}-${def.id ?? w.id}`;
     const name = def.title ?? w.id;
     (wvByMenu[def.menu] ??= []).push({ id: viewId, name, order: def.order ?? Number.MAX_SAFE_INTEGER, webview: true });
+    collectTitleActions(viewId, def);
   }
 
   for (const t of treeViews) {
@@ -183,6 +202,7 @@ function syncPackageJson(
     const viewId = `${prefix}-${def.menu}-${def.id ?? t.id}`;
     const name = def.title ?? t.id;
     (wvByMenu[def.menu] ??= []).push({ id: viewId, name, order: def.order ?? Number.MAX_SAFE_INTEGER, webview: false });
+    collectTitleActions(viewId, def);
   }
 
   for (const m of menus) {
@@ -212,6 +232,13 @@ function syncPackageJson(
       delete contributes.viewsContainers;
     }
     delete contributes.views;
+  }
+
+  if (viewTitle.length) {
+    (contributes.menus ??= {})['view/title'] = viewTitle;
+  } else if (contributes.menus) {
+    delete contributes.menus['view/title'];
+    if (Object.keys(contributes.menus).length === 0) delete contributes.menus;
   }
 
   mergeExtraContributes(contributes);
@@ -311,6 +338,7 @@ function loadDef(file: string): {
   category?: string;
   command?: any;
   when?: string;
+  icon?: string;
   keybindings?: Array<{ key: string; mac?: string; when?: string }>;
 } | null {
   if (!fs.existsSync(file)) return null;
@@ -328,6 +356,7 @@ function loadDef(file: string): {
     title: grab('title'),
     category: grab('category'),
     when: grab('when'),
+    icon: grab('icon'),
     command,
     keybindings: parseKeybindings(src),
   };
@@ -414,6 +443,7 @@ interface SubpanelLoaded {
   title?: string;
   menu?: string;
   order?: number;
+  titleActions?: Array<{ command: string; group?: string; when?: string }>;
 }
 
 function loadSubpanelDef(file: string): SubpanelLoaded | null {
@@ -430,7 +460,36 @@ function loadSubpanelDef(file: string): SubpanelLoaded | null {
     title: grab('title'),
     menu: grab('menu'),
     ...(orderMatch ? { order: Number(orderMatch[1]) } : {}),
+    titleActions: parseTitleActions(src),
   };
+}
+
+/**
+ * Extract `titleActions: [{ command: 'x', group: 'y', when: 'z' }, …]`.
+ *
+ * Reads the source rather than importing it, like every other loader here:
+ * these definitions pull in `vscode`, which does not exist outside the host.
+ */
+function parseTitleActions(src: string): Array<{ command: string; group?: string; when?: string }> {
+  const block = /\btitleActions\s*:\s*\[([\s\S]*?)\]/.exec(src);
+  if (!block) return [];
+
+  const out: Array<{ command: string; group?: string; when?: string }> = [];
+  for (const entry of block[1].matchAll(/\{([^{}]*)\}/g)) {
+    const body = entry[1];
+    const field = (key: string) => {
+      const m = new RegExp(`\\b${key}\\s*:\\s*(['"\`])((?:\\\\.|(?!\\1).)*)\\1`).exec(body);
+      return m?.[2];
+    };
+    const command = field('command');
+    if (!command) continue;
+    out.push({
+      command,
+      ...(field('group') ? { group: field('group')! } : {}),
+      ...(field('when') ? { when: field('when')! } : {}),
+    });
+  }
+  return out;
 }
 
 function resolveIconForPkg(icon: MenuLoaded['icon']): string {

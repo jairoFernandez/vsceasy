@@ -43,6 +43,13 @@ export interface CommandDef {
   title: string;
   /** Optional category prefix (default: extension displayName). */
   category?: string;
+  /**
+   * Codicon shown next to the command, written to `contributes.commands[].icon`.
+   *
+   * Required for a command listed in a view's `titleActions` to render as an
+   * icon button — VS Code falls back to the plain title text without one.
+   */
+  icon?: CodiconName | (string & {});
   /** Handler. Receives vscode + extension context. */
   run: (vscode: typeof import('vscode'), ctx: vscode.ExtensionContext, ...args: unknown[]) => unknown | Promise<unknown>;
   /**
@@ -146,6 +153,8 @@ export interface SubpanelDef<H extends Handlers = Handlers> {
   ui?: string;
   /** Keep DOM alive when hidden. Default: true. */
   retainContext?: boolean;
+  /** Commands pinned to this view's title bar. See {@link TitleAction}. */
+  titleActions?: TitleAction[];
   /**
    * RPC handlers — receives the vscode namespace, the extension context, and
    * `emit` for pushing change events to this webview (see {@link RpcEmit}).
@@ -280,6 +289,24 @@ export interface TreeNode {
   command?: string;
 }
 
+/**
+ * A command pinned to a view's title bar.
+ *
+ * `group: 'navigation'` (the default) renders it as an icon button on the title
+ * row; any other group drops it into the `…` overflow menu. Give the referenced
+ * command an `icon` — without one VS Code shows its title as text.
+ *
+ *   titleActions: [{ command: 'refreshCatalog' }],
+ */
+export interface TitleAction {
+  /** Command id *without* the extension prefix — the id you gave defineCommand. */
+  command: string;
+  /** Default: 'navigation' (inline icon button). */
+  group?: string;
+  /** VS Code `when` clause, ANDed with the view match rather than replacing it. */
+  when?: string;
+}
+
 export interface TreeViewDef {
   /** Stable id. Default: file basename. */
   id?: string;
@@ -294,6 +321,8 @@ export interface TreeViewDef {
   order?: number;
   /** Show "Collapse All" button. Default: true. */
   showCollapseAll?: boolean;
+  /** Commands pinned to this view's title bar. See {@link TitleAction}. */
+  titleActions?: TitleAction[];
   /** Initial / refreshed nodes. Called on mount and whenever the view is refreshed. */
   getChildren: (
     parent: TreeNode | undefined,
