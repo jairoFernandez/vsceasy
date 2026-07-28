@@ -398,6 +398,10 @@ export function initLlm(
   vscodeApi?: typeof import('vscode'),
   section?: string,
 ): LlmClient {
+  // `bootstrap` calls activate hooks as `(context, vscode)`, so a hook written
+  // as `initLlm` gets no section and falls back to inference. Pass one
+  // explicitly with `(ctx) => initLlm(ctx, undefined, 'myExt')` when the
+  // settings prefix is known — it removes the guesswork entirely.
   // Resolve `vscode` lazily so this module stays importable from a webview.
   const vs: typeof import('vscode') = vscodeApi ?? (require('vscode') as typeof import('vscode'));
   const key = section ?? inferSection(vs);
@@ -440,16 +444,21 @@ export function useLlm(): LlmClient {
  * that's unambiguous, and falls back to the vsceasy prefix in package.json.
  */
 function inferSection(vs: typeof import('vscode')): string {
+  // Derive the section from the *declared settings themselves*. Keying off
+  // `vsceasy.commandPrefix` was wrong: that field is optional, and without it
+  // this silently fell back to reading `vsceasy.llm.*` while the extension
+  // wrote to `<its own prefix>.llm.*` — so changing the model did nothing.
   for (const ext of vs.extensions.all) {
     const pkg: any = ext.packageJSON;
-    const prefix = pkg?.vsceasy?.commandPrefix;
-    if (!prefix) continue;
     const config = pkg?.contributes?.configuration;
-    const blocks = Array.isArray(config) ? config : config ? [config] : [];
-    const declaresLlm = blocks.some((b: any) =>
-      Object.keys(b?.properties ?? {}).some((k) => k.startsWith(`${prefix}.llm.`)),
-    );
-    if (declaresLlm) return prefix;
+    if (!config) continue;
+    const blocks = Array.isArray(config) ? config : [config];
+    for (const block of blocks) {
+      for (const key of Object.keys(block?.properties ?? {})) {
+        const match = /^(.+)\.llm\.(model|provider|baseUrl)$/.exec(key);
+        if (match) return match[1];
+      }
+    }
   }
   return 'vsceasy';
 }

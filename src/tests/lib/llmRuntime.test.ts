@@ -1,4 +1,6 @@
 import { describe, test, expect, afterEach } from 'bun:test';
+import * as fs from 'fs';
+import * as path from 'path';
 import { createLlm } from '../../../packages/vsceasy-runtime/src/llm';
 
 /**
@@ -238,6 +240,19 @@ describe('llm client', () => {
       stubOllama(['whatever']);
       expect(await createLlm({ provider: 'openai', model: 'gpt-4o-mini' }).resolveModel()).toBe('gpt-4o-mini');
     });
+  });
+
+  test('the settings section comes from the declared settings', () => {
+    const src = fs.readFileSync(
+      path.resolve(__dirname, '../../../packages/vsceasy-runtime/src/llm.ts'),
+      'utf8',
+    );
+    // Keying off `vsceasy.commandPrefix` was wrong: the field is optional, so
+    // without it the client read `vsceasy.llm.*` while the extension wrote to
+    // its own prefix — changing the model then did nothing at all.
+    const fn = src.slice(src.indexOf('function inferSection'));
+    expect(fn).not.toContain('vsceasy?.commandPrefix');
+    expect(fn).toContain('contributes?.configuration');
   });
 
   test('ping reports failure instead of throwing', async () => {

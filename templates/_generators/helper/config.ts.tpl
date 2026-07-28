@@ -21,6 +21,12 @@ import * as vscode from 'vscode';
 const SECTION = '{{commandPrefix}}';
 
 export const config = {
+  /**
+   * The settings prefix these helpers read and write. Exposed so callers that
+   * need the fully-qualified key — opening the Settings UI at a section, for
+   * instance — don't hardcode the prefix a second time and risk drifting.
+   */
+  section: SECTION,
   get<T>(key: string, fallback?: T): T {
     const v = vscode.workspace.getConfiguration(SECTION).get<T>(key);
     return (v === undefined ? (fallback as T) : v) as T;
