@@ -53,7 +53,7 @@ export type {
   TerminalRunOptions,
   TerminalRunResult,
 } from './define';
-export { bootstrap, refreshDecoration, useTerminal } from './bootstrap';
+export { bootstrap, refreshDecoration, refreshTypingGuards, useTerminal } from './bootstrap';
 export type { Registry, BootstrapOptions, ActivateHook } from './bootstrap';
 export {
   createRpcClient,

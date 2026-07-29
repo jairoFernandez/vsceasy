@@ -591,42 +591,81 @@ function registerTypingGuards(
   }
 
   if (entries.some(([, d]) => d.onPaste)) {
-    // Override the standard clipboard paste; `editor.action.clipboardPasteAction`
-    // is the command every paste keybinding funnels into.
-    context.subscriptions.push(
-      vscode.commands.registerCommand('editor.action.clipboardPasteAction', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) return;
-        const document = editor.document;
-        const text = await vscode.env.clipboard.readText();
+    /**
+     * Overriding `editor.action.clipboardPasteAction` claims paste for the
+     * WHOLE window, webview inputs and terminal included — and unlike `type`
+     * there is no `default:` twin to hand it back to. A guard that owns it
+     * permanently therefore breaks Cmd+V everywhere it does not apply.
+     *
+     * So the command is registered only while some guard is actually enabled,
+     * and disposed the moment none is. `enabled` is re-checked whenever the
+     * active editor changes, which is when focus could have moved into or out
+     * of a guarded document.
+     */
+    let override: vscode.Disposable | undefined;
 
-        for (const [id, def] of entries) {
-          if (!def.onPaste || !active(def, document)) continue;
-          let verdict: TypingVerdict;
-          try {
-            verdict = await def.onPaste({ text, editor, document }, vscode, context);
-          } catch (err) {
-            console.error(`[vsceasy typingGuard:${def.id ?? id}] onPaste failed:`, err);
-            continue;
+    const pasteHandler = async () => {
+      const editor = vscode.window.activeTextEditor;
+      // Focus left the editor between the check and the keypress.
+      if (!editor) return;
+      const document = editor.document;
+      const text = await vscode.env.clipboard.readText();
+
+      for (const [id, def] of entries) {
+        if (!def.onPaste || !active(def, document)) continue;
+        let verdict: TypingVerdict;
+        try {
+          verdict = await def.onPaste({ text, editor, document }, vscode, context);
+        } catch (err) {
+          console.error(`[vsceasy typingGuard:${def.id ?? id}] onPaste failed:`, err);
+          continue;
+        }
+        if (verdict === false) return;
+        if (verdict && typeof verdict === 'object') {
+          if ('block' in verdict && verdict.block) {
+            if (verdict.message) vscode.window.showWarningMessage(verdict.message);
+            return;
           }
-          if (verdict === false) return;
-          if (verdict && typeof verdict === 'object') {
-            if ('block' in verdict && verdict.block) {
-              if (verdict.message) vscode.window.showWarningMessage(verdict.message);
-              return;
-            }
-            if ('insert' in verdict) {
-              await editor.edit((b) => {
-                for (const sel of editor.selections) b.replace(sel, verdict.insert);
-              });
-              return;
-            }
+          if ('insert' in verdict) {
+            await editor.edit((b) => {
+              for (const sel of editor.selections) b.replace(sel, verdict.insert);
+            });
+            return;
           }
         }
-        await editor.edit((b) => {
-          for (const sel of editor.selections) b.replace(sel, text);
-        });
-      }),
+      }
+      // Allowed: perform the paste, since we own the command and there is no
+      // default to fall back on.
+      await editor.edit((b) => {
+        for (const sel of editor.selections) b.replace(sel, text);
+      });
+    };
+
+    const sync = () => {
+      const doc = vscode.window.activeTextEditor?.document;
+      const wanted = !!doc && entries.some(([, d]) => d.onPaste && active(d, doc));
+      if (wanted && !override) {
+        override = vscode.commands.registerCommand(
+          'editor.action.clipboardPasteAction',
+          pasteHandler,
+        );
+      } else if (!wanted && override) {
+        override.dispose();
+        override = undefined;
+      }
+    };
+
+    sync();
+    pasteSyncers.add(sync);
+    context.subscriptions.push(
+      vscode.window.onDidChangeActiveTextEditor(sync),
+      vscode.workspace.onDidOpenTextDocument(sync),
+      {
+        dispose: () => {
+          pasteSyncers.delete(sync);
+          override?.dispose();
+        },
+      },
     );
   }
 
@@ -782,6 +821,31 @@ async function cutSelection(editor: vscode.TextEditor | undefined): Promise<void
 }
 
 // --- Decorations ---
+
+/**
+ * Re-evaluators for the paste override — see `refreshTypingGuards`.
+ *
+ * A guard's `enabled` usually tracks session state, which changes with no
+ * editor event to hang off.
+ */
+const pasteSyncers = new Set<() => void>();
+
+/**
+ * Re-evaluate whether typing guards should currently own paste.
+ *
+ * Call it when a guard's `enabled` result changes — starting or finishing a
+ * session, typically. Without it the paste override can stay registered after
+ * a guard goes inactive, which breaks Cmd+V in webviews and the terminal.
+ */
+export function refreshTypingGuards(): void {
+  for (const sync of pasteSyncers) {
+    try {
+      sync();
+    } catch {
+      // One bad guard must not stop the others being re-evaluated.
+    }
+  }
+}
 
 /** Manual refresh handles, keyed by decoration id — see `refreshDecoration`. */
 const decorationRefreshers = new Map<string, () => void>();
