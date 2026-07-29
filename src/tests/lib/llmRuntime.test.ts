@@ -255,6 +255,35 @@ describe('llm client', () => {
     expect(fn).toContain('contributes?.configuration');
   });
 
+  test('thinking is disabled unless asked for', async () => {
+    // Ollama counts hidden reasoning against num_predict, so a thinking model
+    // burns the whole budget and returns EMPTY content.
+    const calls = stubJson({ message: { content: 'hi' } });
+    await createLlm({ model: 'm' }).chat([{ role: 'user', content: 'x' }]);
+    expect(calls[0].body.think).toBe(false);
+
+    const opted = stubJson({ message: { content: 'hi' } });
+    await createLlm({ model: 'm' }).chat([{ role: 'user', content: 'x' }], { think: true });
+    expect(opted[0].body.think).toBe(true);
+  });
+
+  test('an empty reply from an exhausted reasoning budget is explained', async () => {
+    globalThis.fetch = (async (url: string) => {
+      if (String(url).endsWith('/api/tags')) {
+        return new Response(JSON.stringify({ models: [{ name: 'm' }] }), { status: 200 });
+      }
+      // What Ollama actually returns when thinking eats the budget.
+      return new Response(
+        JSON.stringify({ message: { content: '', thinking: 'a long deliberation' }, done_reason: 'length' }),
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
+
+    await expect(
+      createLlm({ model: 'm' }).chat([{ role: 'user', content: 'x' }], { maxTokens: 100 }),
+    ).rejects.toThrow(/entire token budget on internal reasoning/);
+  });
+
   test('ping reports failure instead of throwing', async () => {
     globalThis.fetch = (async () => {
       throw new Error('ECONNREFUSED');

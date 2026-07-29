@@ -43,6 +43,15 @@ export interface LlmChatOptions {
   timeoutMs?: number;
   /** Ask the model for strict JSON. Ollama: format=json. OpenAI: response_format. */
   json?: boolean;
+  /**
+   * Let a reasoning model think before answering. Default: false.
+   *
+   * Ollama counts hidden reasoning against `num_predict`, so a thinking model
+   * given a modest budget burns all of it and returns EMPTY content. Off by
+   * default because most calls want an answer, not deliberation; turn it on
+   * for a task where the reasoning is worth the tokens.
+   */
+  think?: boolean;
   /** Stop sequences. */
   stop?: string[];
   /** Called with each token as it arrives. Presence enables streaming. */
@@ -184,6 +193,9 @@ export function createLlm(options: LlmOptions): LlmClient {
             messages,
             stream,
             ...(opts.json ? { format: 'json' } : {}),
+            // Explicitly off unless asked for: a reasoning model otherwise
+            // spends the whole token budget thinking and answers with nothing.
+            think: opts.think ?? false,
             options: {
               ...(opts.temperature ?? options.temperature !== undefined
                 ? { temperature: opts.temperature ?? options.temperature }
@@ -220,9 +232,23 @@ export function createLlm(options: LlmOptions): LlmClient {
       }
       if (!stream) {
         const data: any = await res.json();
-        return provider === 'ollama'
-          ? (data.message?.content ?? '')
-          : (data.choices?.[0]?.message?.content ?? '');
+        if (provider !== 'ollama') return data.choices?.[0]?.message?.content ?? '';
+
+        const content = data.message?.content ?? '';
+        if (content) return content;
+
+        // A reasoning model spends `num_predict` on hidden thinking before it
+        // writes anything. When the budget runs out mid-thought Ollama returns
+        // empty content with `done_reason: 'length'` — indistinguishable from a
+        // refusal unless we say so.
+        if (data.done_reason === 'length' && data.message?.thinking) {
+          throw new Error(
+            `The model used its entire token budget on internal reasoning and produced no answer. ` +
+              `Raise maxTokens (currently ${opts.maxTokens ?? options.maxTokens ?? 'unset'}) ` +
+              `or choose a non-reasoning model.`,
+          );
+        }
+        return '';
       }
       return await readStream(res, provider, opts.onToken!);
     } finally {
