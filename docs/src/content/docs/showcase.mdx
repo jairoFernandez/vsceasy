@@ -1,0 +1,47 @@
+---
+title: Showcase
+description: Real extensions built with vsceasy — filter by the framework feature you care about.
+---
+
+import ProjectShowcase from '../../components/vsceasy/ProjectShowcase.tsx';
+
+Extensions shipped on top of vsceasy. Filter by a feature to see who uses it and
+how; the mock panels are interactive — type out a solution, try to paste, toggle
+scoped colors.
+
+<ProjectShowcase client:visible />
+
+:::note[The mocks are illustrations]
+They're rendered with the same VS Code theme tokens the
+[component library](/guides/components/) uses, not screenshots. Follow the
+GitHub links for the real thing.
+:::
+
+## Worth stealing
+
+**Code Trainer — generated exercises are verified by running them.** Every
+generated or imported problem is materialised to a scratch directory and its
+tests run twice: against the reference solution (must pass) and against the
+starter (must fail). Anything else is rejected and regenerated. A model will
+happily emit tests that don't compile or that pass against an empty function —
+no static check catches that.
+
+**Code Trainer — retries are repairs, not redos.** On failure the model is shown
+its own output plus the exact complaint, rather than being asked the same
+question again. Re-asking reproduces the same mistake.
+
+**TOML — the file icon theme is opt-in.** An icon theme is global: activating one
+replaces *all* workbench file icons, not just `.toml`. The extension ships one
+and lets the user pick it, rather than hijacking the workbench on install.
+
+**TOML — recolor your language, not the editor.** Bundling a full color theme
+replaces the user's theme entirely. [Scoped token
+colors](/guides/language-extensions/#scoped-token-colors) touch only your
+language's TextMate scopes, so everything else keeps looking the way the user
+chose.
+
+## Built something?
+
+Open a [PR](https://github.com/jairoFernandez/vsceasy) or an
+[issue](https://github.com/jairoFernandez/vsceasy/issues) with the repo link and
+which vsceasy features it leans on — it goes on this page.
