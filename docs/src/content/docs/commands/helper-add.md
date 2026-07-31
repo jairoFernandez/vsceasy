@@ -13,7 +13,7 @@ vsceasy helper add --kind secrets
 
 | Flag | Type | Notes |
 | ---- | ---- | ----- |
-| `--kind` | `secrets` \| `config` \| `state` \| `notifications` \| `cache` | **Required.** Which helper. |
+| `--kind` | `secrets` \| `config` \| `state` \| `notifications` \| `cache` \| `colorize` | **Required.** Which helper. |
 | `--force` | boolean | Overwrite an existing helper file. |
 
 ## Kinds
@@ -25,6 +25,11 @@ vsceasy helper add --kind secrets
 | `state` | `globalState` / `workspaceState`. Wire `initState(context)`. |
 | `notifications` | info / warning / error message helpers. |
 | `cache` | in-memory TTL + LRU cache with a `wrap(key, fn)` helper. |
+| `colorize` | `applyTokenColors` / `removeTokenColors` — scoped TextMate colors for your own language. |
+
+The `config` helper exposes its settings prefix as `config.section`, so callers
+that need the fully-qualified key (opening the Settings UI at a section, for
+instance) don't hardcode the prefix twice.
 
 ## Examples
 
@@ -32,6 +37,7 @@ vsceasy helper add --kind secrets
 vsceasy helper add --kind config
 vsceasy helper add --kind secrets
 vsceasy helper add --kind cache
+vsceasy helper add --kind colorize
 ```
 
 ```ts title="src/helpers/cache.ts (usage)"

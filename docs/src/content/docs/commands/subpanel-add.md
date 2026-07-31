@@ -31,7 +31,13 @@ import { defineSubpanel } from '../shared/vsceasy';
 export default defineSubpanel({
   title: 'History',
   menu: 'settings',
+  order: 2,                                     // position inside the container
+  titleActions: [{ command: 'clearHistory' }],  // buttons on the title row
 });
 ```
 
 Subpanels and panels share the same RPC machinery — see [Typed RPC](/guides/rpc/).
+
+Subpanels and tree views share **one** ordering inside a container, so a tree
+view with `order: 1` sits above a subpanel with `order: 2`. See
+[Sidebar views](/guides/sidebar-views/).

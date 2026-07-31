@@ -14,7 +14,8 @@ Each one is a convention directory scanned by `bun run gen`, exactly like
 |----------------------|---------------------------|------------------------------------|
 | `completions/`       | `defineCompletion`        | `CompletionItemProvider`           |
 | `inlineCompletions/` | `defineInlineCompletion`  | `InlineCompletionItemProvider`     |
-| `typingGuards/`      | `defineTypingGuard`       | `type` / paste override + observer |
+| `hovers/`            | `defineHover`             | `HoverProvider`                    |
+| `typingGuards/`      | `defineTypingGuard`       | `type` / paste / delete overrides  |
 | `decorations/`       | `defineDecoration`        | `TextEditorDecorationType`         |
 | `terminals/`         | `defineTerminal`          | headless `exec` + visible terminal |
 
@@ -70,6 +71,30 @@ export default defineInlineCompletion({
 ```
 
 `onAccept` is the hook VS Code's own API lacks — use it for telemetry or scoring.
+
+## Hovers
+
+A hover provider returns **markdown** for the symbol under the pointer. Return
+`null` or `''` to show nothing and let other providers answer.
+
+```ts
+// src/hovers/explain.ts
+import { defineHover } from '../shared/vsceasy';
+
+export default defineHover({
+  selector: 'typescript',
+  provide: async (ctx) => {
+    const doc = lookup(ctx.word);
+    if (!doc) return null;
+    return `**${ctx.word}** — ${doc.summary}\n\n[Practise it](command:myExt.practice)`;
+  },
+});
+```
+
+The context carries `word`, the full `line`, `lineNumber`, `document`,
+`position` and a `token`. Command links (`[text](command:ext.foo)`) are enabled,
+so the panel can be interactive — a hover is a decent place to put an action the
+user shouldn't have to hunt for in the palette.
 
 ## Typing guards
 
@@ -132,6 +157,37 @@ order, so multiple guards coexist — but another extension that overrides `type
 will conflict with yours. Keep `enabled` tight so the guard is transparent
 whenever it isn't needed.
 :::
+
+### Who owns paste, and when
+
+`type` has a `default:type` twin to delegate back to. **Paste and the delete
+commands don't** — once you override `editor.action.clipboardPasteAction` you own
+it for the *whole window*, webview inputs and the terminal included, with nothing
+to hand it back to.
+
+So the runtime registers the paste override **only while a guard actually
+applies** to the active document, and disposes it the moment none does. It
+re-evaluates when the active editor changes and when a document opens.
+
+That leaves one case it can't see: a guard whose `enabled` flips on state of your
+own — a practice session starting or finishing — with no editor event to hang
+off. Tell the runtime:
+
+```ts
+import { refreshTypingGuards } from '../shared/vsceasy';
+
+session.start();
+refreshTypingGuards();   // re-evaluate paste ownership now
+```
+
+Skip it and the override can stay registered after the guard goes inactive,
+which breaks <kbd>Cmd</kbd>+<kbd>V</kbd> in webviews and the terminal.
+
+Deletions are the same story: there is no `default:deleteLeft`, so when every
+guard allows a deletion the runtime **performs it itself** through the edit API —
+backspace/delete at line boundaries, the word-wise variants, cut, and every
+selection in a multi-cursor. You get the normal editing behaviour back, but it is
+the runtime doing it, not VS Code.
 
 ## Decorations
 
@@ -196,40 +252,15 @@ no SDK dependency.
 ```ts
 import { createLlm } from '../shared/vsceasy';
 
-const llm = createLlm({ provider: 'ollama', model: 'qwen2.5-coder' });
+const llm = createLlm({ provider: 'ollama', model: 'qwen2.5-coder:7b' });
 const text = await llm.chat([{ role: 'user', content: 'hi' }]);
 const data = await llm.json<{ items: string[] }>([{ role: 'user', content: 'list 3 fruits as JSON' }]);
-await llm.chat(messages, { onToken: (t) => process.stdout.write(t) });   // streaming
+await llm.chat(messages, { onToken: (t) => append(t) });   // streaming
 ```
 
-`json()` tolerates the markdown fences and stray prose small local models emit
-even in JSON mode, and throws a clear error when the reply really isn't JSON.
-
-To make the host and model **user-configurable**, wire the shared client from
-settings instead:
-
-```ts
-// src/extension/extension.ts
-export const activate = bootstrap(registry, { onActivate: [initLlm] });
-```
-
-`initLlm` reads `<commandPrefix>.llm.*` from VS Code settings and rebuilds the
-client whenever they change; `useLlm()` returns it from anywhere. Declare the
-settings in `contributes.extra.json`:
-
-```json
-{
-  "configuration": {
-    "title": "My Extension",
-    "properties": {
-      "myExt.llm.provider": { "type": "string", "enum": ["ollama", "openai"], "default": "ollama" },
-      "myExt.llm.baseUrl":  { "type": "string", "default": "http://localhost:11434" },
-      "myExt.llm.model":    { "type": "string", "default": "qwen2.5-coder" },
-      "myExt.llm.apiKey":   { "type": "string", "default": "" }
-    }
-  }
-}
-```
+Streaming, JSON mode, model auto-resolution, `ping()`, reasoning models and the
+settings-driven shared client (`initLlm` / `useLlm`) all have their own page:
+**[The LLM client](/guides/llm/)**.
 
 ## Reactive status bar
 

@@ -29,9 +29,16 @@ That's the whole pitch in the name: VS Code, made easy.
   working screen.
 - **A mini-ORM.** `db init` + `model add` give you typed entities with a
   filesystem-backed store. `crud add` scaffolds a full list + form UI over a model.
+- **Editor-surface primitives.** Completions, ghost text, hovers, typing guards
+  (intercept keystrokes, paste and deletions), decorations, and terminals — the
+  same one-file-per-feature convention. See
+  [Editor surface](/guides/editor-surface/).
+- **A built-in LLM client.** Ollama or any OpenAI-compatible endpoint over
+  `fetch`, with streaming, JSON mode, model auto-resolution and settings-driven
+  configuration. No SDK dependency. See [The LLM client](/guides/llm/).
 - **Operational helpers.** Jobs (interval / daily / event / file watch), runtime
-  helpers (secrets, config, state, notifications), a test harness, and publish
-  tooling.
+  helpers (secrets, config, state, notifications, cache, colorize), a test
+  harness, and publish tooling.
 
 ## When to use it
 
@@ -39,6 +46,12 @@ Reach for vsceasy when you're building a webview-heavy extension and want to ski
 the boilerplate: panel registration, the RPC bridge, the build pipeline, and the
 `contributes` bookkeeping. You stay in plain VS Code APIs everywhere it matters —
 vsceasy just removes the repetitive wiring.
+
+It isn't only for webviews. `create --type language` scaffolds a full
+[language extension](/guides/language-extensions/) (grammar, snippets, file icon,
+scoped colors) with no React at all, and `--type empty` gives you a bare
+extension with the same file-based routing. See the
+[showcase](/showcase/) for one of each.
 
 ## How it fits together
 

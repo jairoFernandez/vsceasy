@@ -28,11 +28,13 @@ import { defineTreeView, TreeNode } from '../shared/vsceasy';
 export default defineTreeView({
   title: 'Files',
   menu: 'settings',
+  order: 1,                                    // position inside the container
+  titleActions: [{ command: 'refreshFiles' }], // buttons on the title row
   getChildren: async (parent, vscode, ctx) => {
     if (!parent) {
       return [
         { label: 'Item 1', icon: 'file', tooltip: 'Replace with real data' },
-        { label: 'Group', icon: 'folder', collapsed: 'collapsed', children: [] },
+        { label: 'Group', icon: 'folder', expandable: true },   // children load on expand
       ] as TreeNode[];
     }
     // Lazy children — return based on parent.id / parent.contextValue.
@@ -41,5 +43,15 @@ export default defineTreeView({
 });
 ```
 
-A `TreeNode` may carry a `panel` or `command` to run on click, plus `icon`,
-`tooltip`, `collapsed`, and `contextValue` for `when`-clause targeting.
+A `TreeNode` may carry a `panel`, `command` or `run` to fire on click (the node
+is forwarded to the command), plus `icon`, `tooltip`, `description`, `collapsed`,
+and `contextValue` for `when`-clause targeting.
+
+:::note[`expandable` marks lazy nodes]
+A node is collapsible when it has non-empty `children` **or** sets
+`expandable: true`. Without it, a node with no `children` is a leaf — that's what
+keeps every leaf from getting an expand arrow that opens nothing.
+:::
+
+`order` and `titleActions` are covered in [Sidebar views](/guides/sidebar-views/),
+along with why a title-bar command needs an `icon`.

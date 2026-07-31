@@ -64,8 +64,21 @@ import { defineCommand } from '../shared/vsceasy';
 
 export default defineCommand({
   title: 'Say Hello',
+  icon: 'megaphone',        // codicon; '$(megaphone)' also accepted
   run: async (vscode) => {
     await vscode.window.showInformationMessage('Hello!');
   },
 });
 ```
+
+## `icon` on the definition
+
+`icon` is written to `contributes.commands[].icon`. It's optional for a palette
+command, but **required** for one pinned to a view's title row via
+`titleActions` — without it VS Code renders the command's title as plain text
+instead of a button. See [Sidebar views](/guides/sidebar-views/#title-bar-buttons).
+
+Menus, status bar items and tree nodes can reference a command by **either** its
+filename or the `id` declared on the def, so
+`src/commands/refresh.ts` exporting `defineCommand({ id: 'refreshCatalog' })`
+resolves under both names.

@@ -17,6 +17,13 @@ my-extension/
 │   ├── treeViews/<name>.ts     # data-driven tree view (defineTreeView)
 │   ├── subpanels/<name>.ts     # inline webview section inside a menu
 │   ├── statusBars/<name>.ts    # status bar item (defineStatusBar)
+│   ├── jobs/<name>.ts          # scheduled / event-triggered task (defineJob)
+│   ├── completions/<name>.ts       # IntelliSense provider (defineCompletion)
+│   ├── inlineCompletions/<name>.ts # ghost text (defineInlineCompletion)
+│   ├── hovers/<name>.ts            # hover panel (defineHover)
+│   ├── typingGuards/<name>.ts      # keystroke / paste / delete guard
+│   ├── decorations/<name>.ts       # editor overlays (defineDecoration)
+│   ├── terminals/<name>.ts         # exec + visible terminal (defineTerminal)
 │   ├── webview/
 │   │   ├── panels/<name>/       # React UI per panel (App.tsx, main.tsx)
 │   │   └── components/          # shared themed components (after `components add`)
@@ -27,10 +34,17 @@ my-extension/
 │       ├── api.ts              # RPC contracts (interface per panel)
 │       └── vsceasy/            # framework runtime — synced via `vsceasy upgrade`
 ├── scripts/gen.ts              # registry + contributes generator
+├── contributes.extra.json      # optional — contributions gen doesn't own
 ├── .vscode/launch.json         # Extension Development Host launch
 ├── vite.config.ts              # webview build
 └── package.json                # esbuild for extension, vite for UI
 ```
+
+Every convention directory is optional — `gen` only writes what it finds. A
+project scaffolded with `--type language` or `--type empty` has no `webview/`,
+no `vite.config.ts` and no React dependencies; a language project adds
+`syntaxes/`, `snippets/`, `fileicons/` and `language-configuration.json` at the
+root instead. See [Language extensions](/guides/language-extensions/).
 
 ## Owned vs generated
 
@@ -57,10 +71,14 @@ VS Code). So:
 
 **Run `gen`** when a hand edit changes *what exists* or *how it's contributed*:
 
-- Add, delete, or rename a file in `src/panels/`, `src/commands/`, `src/menus/`,
-  `src/statusBars/`, `src/subpanels/`, `src/treeViews/`, or `src/jobs/`.
+- Add, delete, or rename a file in any convention directory — `src/panels/`,
+  `src/commands/`, `src/menus/`, `src/statusBars/`, `src/subpanels/`,
+  `src/treeViews/`, `src/jobs/`, `src/completions/`, `src/inlineCompletions/`,
+  `src/hovers/`, `src/typingGuards/`, `src/decorations/`, `src/terminals/`.
 - Change a panel/command/menu's `id`, `title`, `command`, `menu`, `icon`,
-  `keybinding`, or `when`.
+  `keybinding`, `when`, `order`, or `titleActions`.
+- Edit `contributes.extra.json` — `gen` merges it into
+  `package.json#contributes` on every run.
 
 **You don't need `gen`** when a hand edit only touches *logic*:
 

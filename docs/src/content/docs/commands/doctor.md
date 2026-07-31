@@ -23,6 +23,10 @@ vsceasy doctor
 - Menu items reference panels/commands that exist.
 - Codicon names are valid.
 - `package.json#contributes` is in sync with the files on disk.
+- **Language assets** — every file referenced by `languages`, `grammars`,
+  `snippets` and `iconThemes` exists, reading both `contributes.extra.json` and
+  the merged `package.json`. Silent on projects that declare none, and it flags
+  a `contributes.extra.json` that isn't valid JSON.
 
 ```bash
 # report only

@@ -9,14 +9,24 @@ Four ideas explain almost everything vsceasy does.
 
 Each feature type has a directory. A file in it *is* the feature.
 
-| Directory      | API              | Becomes…                                       |
-| -------------- | ---------------- | ---------------------------------------------- |
-| `panels/`      | `definePanel`    | webview panel + auto `<prefix>.open<Name>` cmd |
-| `commands/`    | `defineCommand`  | palette command + keybindings                  |
-| `menus/`       | `defineMenu`     | activity-bar container + tree view             |
-| `treeViews/`   | `defineTreeView` | data-driven view inside a menu container       |
-| `subpanels/`   | `defineSubpanel` | inline webview section inside a menu           |
-| `statusBars/`  | `defineStatusBar`| status bar item                                |
+| Directory             | API                      | Becomes…                                       |
+| --------------------- | ------------------------ | ---------------------------------------------- |
+| `panels/`             | `definePanel`            | webview panel + auto `<prefix>.open<Name>` cmd |
+| `commands/`           | `defineCommand`          | palette command + keybindings                  |
+| `menus/`              | `defineMenu`             | activity-bar container + tree view             |
+| `treeViews/`          | `defineTreeView`         | data-driven view inside a menu container       |
+| `subpanels/`          | `defineSubpanel`         | inline webview section inside a menu           |
+| `statusBars/`         | `defineStatusBar`        | status bar item                                |
+| `jobs/`               | `defineJob`              | scheduled / event-triggered task               |
+| `completions/`        | `defineCompletion`       | IntelliSense provider                          |
+| `inlineCompletions/`  | `defineInlineCompletion` | ghost text at the cursor                       |
+| `hovers/`             | `defineHover`            | hover panel (markdown)                         |
+| `typingGuards/`       | `defineTypingGuard`      | keystroke / paste / delete interception        |
+| `decorations/`        | `defineDecoration`       | editor overlays                                |
+| `terminals/`          | `defineTerminal`         | captured `exec` + visible terminal             |
+
+The last seven act **on the editor itself** — see
+[Editor surface](/guides/editor-surface/).
 
 ```ts title="src/panels/dashboard.ts"
 import { definePanel } from '../shared/vsceasy';
@@ -35,6 +45,12 @@ export default definePanel({
   kept in sync with the files.
 
 Run it with `bun run gen`. Generators run it for you after writing files.
+
+`gen` owns `commands`, `keybindings`, `viewsContainers` and `views`. Anything
+else VS Code contributes — languages, grammars, snippets, themes, iconThemes,
+`configuration` — goes in an optional **`contributes.extra.json`** at the project
+root, which `gen` deep-merges in on every run. See
+[`contributes.extra.json`](/guides/language-extensions/#contributesextrajson).
 
 ```mermaid
 flowchart LR

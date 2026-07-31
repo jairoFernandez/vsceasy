@@ -35,10 +35,20 @@ reject every feature.
 For the full list see the [changelog](https://github.com/jairoFernandez/vsceasy/blob/main/CHANGELOG.md).
 The headlines:
 
-- **Scaffolding** — `create` (with post-scaffold git init + dep install), presets,
-  and the interactive [wizard](/guides/wizard/).
+- **Scaffolding** — `create` (with post-scaffold git init + dep install), three
+  extension types (`ui` / [`language`](/guides/language-extensions/) / `empty`),
+  presets, and the interactive [wizard](/guides/wizard/).
 - **File-based routing** — panels, commands, menus, tree views, subpanels, status
-  bar items, RPC handlers; a `gen` step writes the registry + `contributes`.
+  bar items, RPC handlers; a `gen` step writes the registry + `contributes`, and
+  deep-merges `contributes.extra.json` for everything it doesn't own.
+- **[Editor surface](/guides/editor-surface/)** — completions, inline completions
+  (ghost text), hovers, typing guards (keystroke / paste / delete), decorations,
+  and terminals.
+- **[LLM client](/guides/llm/)** — Ollama + OpenAI-compatible endpoints over
+  `fetch`, with streaming, JSON mode, model auto-resolution, `ping`, and a
+  settings-driven shared client.
+- **[Sidebar views](/guides/sidebar-views/)** — view ordering, title-bar buttons
+  (`titleActions`), and lazily expanded tree nodes.
 - **Typed RPC** — one shared interface types both sides of the bridge. See the
   [RPC guide](/guides/rpc/).
 - **React webviews** + a [component library](/guides/components/) themed with VS

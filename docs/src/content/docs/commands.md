@@ -13,7 +13,7 @@ context and walks you through the rest.
 
 | Command | What it does |
 | ------- | ------------ |
-| [`create`](/commands/create/) | Scaffold a new extension project |
+| [`create`](/commands/create/) | Scaffold a new extension project — `--type ui` / `language` / `empty` |
 | [`wizard`](/commands/wizard/) | Interactive guided flow |
 
 ## UI features
@@ -42,11 +42,18 @@ context and walks you through the rest.
 | Command | What it does |
 | ------- | ------------ |
 | [`job add`](/commands/job-add/) | Recurring / event-triggered job |
-| [`helper add`](/commands/helper-add/) | Runtime helper (secrets/config/state/notifications) |
+| [`helper add`](/commands/helper-add/) | Runtime helper (secrets/config/state/notifications/cache/colorize) |
 | [`test setup`](/commands/test-setup/) | Vitest config + sample test |
 | [`publish init`](/commands/publish-init/) | Marketplace preflight |
 | [`doctor`](/commands/doctor/) | Diagnose project drift |
 | [`upgrade`](/commands/upgrade/) | Sync framework-owned files |
+
+:::note[No generator yet]
+The editor-surface primitives — completions, inline completions, hovers, typing
+guards, decorations and terminals — have no `add` command yet. Create the file by
+hand in the matching directory and run `bun run gen`; the shapes are documented in
+[Editor surface](/guides/editor-surface/).
+:::
 
 :::note
 There's also `vsceasy ai-guide` which prints a machine-readable spec of the whole
