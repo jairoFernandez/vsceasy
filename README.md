@@ -54,6 +54,46 @@ bunx @vsceasy/cli create \
   --install
 ```
 
+## Use with an AI agent
+
+vsceasy is built to be driven by Claude, Codex, Cursor or any other coding
+agent. Two entry points give the agent everything it needs, so it scaffolds
+with real commands instead of guessing at boilerplate:
+
+**The docs, as one plain-text file.** The documentation site publishes
+[`llms.txt`](https://vsceasy.dev/llms.txt) following the
+[llms.txt convention](https://llmstxt.org/), so an agent reads the whole thing
+in one fetch instead of crawling the site:
+
+| File                                                     | Contents                                            |
+| -------------------------------------------------------- | --------------------------------------------------- |
+| [`/llms.txt`](https://vsceasy.dev/llms.txt)               | Index: project summary plus links to the dumps below |
+| [`/llms-full.txt`](https://vsceasy.dev/llms-full.txt)     | Every documentation page, concatenated               |
+| [`/llms-small.txt`](https://vsceasy.dev/llms-small.txt)   | Same, minus the tutorial                             |
+
+Just point the agent at it:
+
+> help me build a VS Code extension, read https://vsceasy.dev/llms.txt
+
+**The CLI reference, from the CLI itself.** `ai-guide` prints the full command
+surface as JSON — all 21 commands with every flag, argument, type and default —
+for an agent to consume directly:
+
+```bash
+npx @vsceasy/cli@latest ai-guide
+```
+
+Useful when the agent is already working in a project and needs the exact
+command surface without a network fetch.
+
+> Note: the output ends with a "Star us on GitHub" banner printed after the
+> JSON, so piping straight into a parser (`| jq`) fails. Until that is fixed,
+> strip it first:
+>
+> ```bash
+> npx @vsceasy/cli@latest ai-guide | sed -n '1,/^}$/p' | jq
+> ```
+
 ### Extension types
 
 `create` asks what kind of extension you're building (`--type`):
