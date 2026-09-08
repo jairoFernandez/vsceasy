@@ -35,9 +35,26 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
       - run: bun install
-      - name: Update version in cli.ts
+      # Docs-only commits land on main without a version bump. Skip the publish
+      # instead of failing the run on "cannot publish over previously published
+      # versions".
+      - name: Check whether this version is already on npm
+        id: check
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          sed -i "s/version: '[^']*'/version: '$VERSION'/" src/cli.ts
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "@vsceasy/cli@$VERSION" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "@vsceasy/cli@$VERSION is already published — skipping publish."
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "@vsceasy/cli@$VERSION is new — will publish."
+          fi
+      - name: Update version in cli.ts
+        if: steps.check.outputs.published == 'false'
+        run: |
+          sed -i "s/version: '[^']*'/version: '${{ steps.check.outputs.version }}'/" src/cli.ts
       - run: bun run build
+        if: steps.check.outputs.published == 'false'
       - run: npm publish --provenance --access public
+        if: steps.check.outputs.published == 'false'

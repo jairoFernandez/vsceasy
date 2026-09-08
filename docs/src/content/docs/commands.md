@@ -47,6 +47,7 @@ context and walks you through the rest.
 | [`publish init`](/commands/publish-init/) | Marketplace preflight |
 | [`doctor`](/commands/doctor/) | Diagnose project drift |
 | [`upgrade`](/commands/upgrade/) | Sync framework-owned files |
+| [`ai-guide`](/commands/ai-guide/) | Machine-readable CLI spec for AI agents |
 
 :::note[No generator yet]
 The editor-surface primitives — completions, inline completions, hovers, typing
@@ -55,7 +56,9 @@ hand in the matching directory and run `bun run gen`; the shapes are documented 
 [Editor surface](/guides/editor-surface/).
 :::
 
-:::note
-There's also `vsceasy ai-guide` which prints a machine-readable spec of the whole
-CLI (`--format json` or `markdown`) — handy for AI agents and tooling.
+:::tip[Driving vsceasy with an AI agent]
+[`ai-guide`](/commands/ai-guide/) prints this whole command surface as JSON or
+markdown, so an agent working in your project knows exactly what it can run.
+Pair it with [`llms.txt`](/llms.txt), which gives the agent the conceptual
+documentation in a single fetch.
 :::

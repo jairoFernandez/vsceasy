@@ -84,7 +84,9 @@ npx @vsceasy/cli@latest ai-guide
 ```
 
 Useful when the agent is already working in a project and needs the exact
-command surface without a network fetch.
+command surface without a network fetch. `--format markdown` emits the same
+spec as prose, and `--command <name>` narrows it to one command (~4 KB instead
+of ~36 KB). Full reference: [`ai-guide`](https://vsceasy.dev/commands/ai-guide/).
 
 > Note: the output ends with a "Star us on GitHub" banner printed after the
 > JSON, so piping straight into a parser (`| jq`) fails. Until that is fixed,

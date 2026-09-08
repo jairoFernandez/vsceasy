@@ -153,6 +153,7 @@ export default defineConfig({
             { label: 'test setup', slug: 'commands/test-setup' },
             { label: 'publish init', slug: 'commands/publish-init' },
             { label: 'doctor', slug: 'commands/doctor' },
+            { label: 'ai-guide', slug: 'commands/ai-guide' },
             { label: 'upgrade', slug: 'commands/upgrade' },
           ],
         },
