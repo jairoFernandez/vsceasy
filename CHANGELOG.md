@@ -4,7 +4,11 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+## [0.1.12] — 2026-09-07
+
 ### Added
+- **`llms.txt` for the docs site.** <https://vsceasy.dev/llms.txt> now publishes the documentation in the [llms.txt](https://llmstxt.org/) format, so a coding agent reads it in one fetch instead of crawling the site. `llms-full.txt` carries every page; `llms-small.txt` drops the tutorial.
+- **`ai-guide` documentation.** The command now has its own [reference page](https://vsceasy.dev/commands/ai-guide/) covering `--format markdown`, `--command <name>` to scope the spec to a single command, and `--pretty`.
 - **Model relations — `ref(Model)` fields with populated CRUD dropdowns.** Symfony-`make:entity`-style relations.
   - `vsceasy model add --fields "…,category:ref(Category)"` emits a `categoryId` foreign key plus a `<Name>Relations` metadata block. `ref(Category, label=name)` picks the dropdown label field. The referenced model must exist (errors otherwise, naming what to create); the interactive loop lists relatable models.
   - `crud add` reads the relation metadata and generates a populated `<select>`: an `options()` RPC handler on the form panel loads the related rows, and the form webview renders a dropdown of them and stores the chosen id. Non-relational CRUD output is unchanged.
