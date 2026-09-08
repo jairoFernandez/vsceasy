@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import mermaid from 'astro-mermaid';
+import starlightLlmsTxt from 'starlight-llms-txt';
 
 export default defineConfig({
   // Set `site` to the deployed URL when publishing (enables canonical + sitemap).
@@ -22,12 +23,69 @@ export default defineConfig({
         alt: 'vsceasy octopus mascot',
       },
       favicon: '/favicon.svg',
-      social: {
-        github: 'https://github.com/jairoFernandez/vsceasy',
-      },
+      social: [
+        {
+          icon: 'github',
+          label: 'GitHub',
+          href: 'https://github.com/jairoFernandez/vsceasy',
+        },
+      ],
       editLink: {
         baseUrl: 'https://github.com/jairoFernandez/vsceasy/edit/main/docs/',
       },
+      // Let crawlers and coding agents discover the LLM-readable dumps from any page.
+      head: [
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'alternate',
+            type: 'text/plain',
+            href: 'https://vsceasy.dev/llms.txt',
+            title: 'vsceasy documentation index for LLMs',
+          },
+        },
+        {
+          tag: 'link',
+          attrs: {
+            rel: 'alternate',
+            type: 'text/plain',
+            href: 'https://vsceasy.dev/llms-full.txt',
+            title: 'Full vsceasy documentation as plain text',
+          },
+        },
+      ],
+      plugins: [
+        starlightLlmsTxt({
+          projectName: 'vsceasy',
+          description:
+            'CLI and framework to build VS Code extensions with a React webview UI, a typed RPC bridge between extension host and webview, file-based routing for panels, commands, menus, tree views and subpanels, and a mini-ORM for local persistence.',
+          details: [
+            'vsceasy scaffolds and grows a VS Code extension from the command line.',
+            'Generated projects are TypeScript + React: the extension host runs Node, the UI runs in a webview, and the two talk over a generated, fully typed RPC bridge.',
+            'Everything is file-based: adding a file under the right folder registers a panel, command, menu item, tree view or job — no manual package.json contributes editing.',
+            'The mini-ORM persists models in workspace or global storage, with relations and reactive stores that push updates to the webview.',
+          ].join('\n'),
+          optionalLinks: [
+            {
+              label: 'npm package',
+              url: 'https://www.npmjs.com/package/@vsceasy/cli',
+              description: 'Install with `npm i -g @vsceasy/cli`',
+            },
+            {
+              label: 'GitHub repository',
+              url: 'https://github.com/jairoFernandez/vsceasy',
+              description: 'Source, issues and changelog',
+            },
+          ],
+          // Emit the source Markdown instead of rendering pages to HTML first:
+          // keeps ```mermaid blocks as readable text and skips the React demos
+          // embedded in the .mdx pages, which have no renderer in this route.
+          rawContent: true,
+          // The tutorial is long and repeats the guides; drop it from the
+          // compact llms-small.txt only.
+          exclude: ['tutorial/**'],
+        }),
+      ],
       sidebar: [
         {
           label: 'Start here',
