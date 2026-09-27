@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jairoFernandez/vsceasy/releases/download/promo-assets/vsceasy-promo.mp4">▶ Watch the 30-second promo</a>
+  <a href="https://github.com/jairoFernandez/vsceasy/releases/download/promo-assets/vsceasy-promo.mp4">▶ Watch the 90-second promo</a>
 </p>
 
 > Status: v0.1 — React UI. Typed RPC bridge + file-based registry + scaffolding for panels, commands, menus, tree views, subpanels, status bars.
